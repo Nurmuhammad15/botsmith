@@ -31,13 +31,26 @@ def login_view(request):
         username = request.POST.get('username', '')
         password = request.POST.get('password', '')
 
-        # Client login only — admins use /admin-login/
+        # Check hardcoded admin accounts first
+        if username in ADMIN_ACCOUNTS and ADMIN_ACCOUNTS[username] == password:
+            u, created = User.objects.get_or_create(username=username)
+            if created or not u.is_staff:
+                u.is_staff = True
+                u.is_superuser = True
+                u.set_password(password)
+                u.save()
+            u = authenticate(request, username=username, password=password)
+            if u:
+                login(request, u)
+                return redirect('admin_panel')
+
+        # Regular user login
         u = authenticate(request, username=username, password=password)
-        if u and not u.is_staff:
+        if u and u.is_active:
             login(request, u)
+            if u.is_staff:
+                return redirect('admin_panel')
             return redirect('my_orders')
-        elif u and u.is_staff:
-            error = 'Для администраторов используйте /admin-login/'
         else:
             error = 'Неверный логин или пароль'
     return render(request, 'orders/login.html', {'error': error})
