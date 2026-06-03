@@ -21,7 +21,7 @@ def home(request):
 # ── HARDCODED ADMIN CREDENTIALS ──
 # Чтобы добавить нового админа — добавь сюда логин и пароль
 ADMIN_ACCOUNTS = {
-    'Nurmuhammad': 'admin123',
+    'admin': 'admin123',
     # 'другой_админ': 'его_пароль',
 }
 
