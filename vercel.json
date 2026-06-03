@@ -2,25 +2,22 @@
   "version": 2,
   "builds": [
     {
-      "src": "build_files.sh",
-      "use": "@vercel/static-build",
+      "src": "api/index.py",
+      "use": "@vercel/python",
       "config": {
-        "distDir": "staticfiles"
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.12"
       }
-    },
-    {
-      "src": "botsmith/wsgi.py",
-      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/static/(.*)",
-      "dest": "/staticfiles/$1"
+      "dest": "/api/index.py"
     },
     {
       "src": "/(.*)",
-      "dest": "botsmith/wsgi.py"
+      "dest": "/api/index.py"
     }
   ]
 }
