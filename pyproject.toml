@@ -1,0 +1,2 @@
+[tool.vercel]
+entrypoint = "botsmith.wsgi:application"
