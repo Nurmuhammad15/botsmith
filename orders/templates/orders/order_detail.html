@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Заказ #{{ order.order_id }} — BotSmith</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --black: #0e0e0e;
+    --white: #ffffff;
+    --bg: #f9f9fb;
+    --gray-100: #f4f4f5;
+    --gray-200: #e4e4e7;
+    --gray-400: #a1a1aa;
+    --gray-600: #52525b;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --green: #16a34a;
+    --green-bg: #f0fdf4;
+    --font-head: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+  }
+  body {
+    background: var(--bg);
+    font-family: var(--font-body);
+    font-size: 15px;
+    color: var(--black);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255,255,255,.94);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--gray-200);
+    height: 60px;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    justify-content: space-between;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-family: var(--font-head);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--black);
+    text-decoration: none;
+  }
+  .logo-box {
+    width: 30px; height: 30px;
+    background: var(--black); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 12px; font-weight: 800; letter-spacing: -1px;
+  }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .btn-sm {
+    padding: 7px 14px; border: 1.5px solid var(--gray-200); border-radius: 8px;
+    background: transparent; font-family: var(--font-body); font-size: 13px; font-weight: 600;
+    color: var(--black); cursor: pointer; text-decoration: none; display: inline-flex;
+    align-items: center; gap: 5px; transition: all .18s;
+  }
+  .btn-sm:hover { border-color: var(--black); background: var(--gray-100); }
+
+  .wrap { max-width: 620px; margin: 0 auto; padding: 36px 24px 80px; }
+
+  .order-header {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .order-id {
+    font-family: var(--font-head);
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+  }
+  .order-meta { font-size: 13px; color: var(--gray-600); margin-top: 4px; }
+  .order-price {
+    font-family: var(--font-head);
+    font-size: 26px;
+    font-weight: 800;
+    text-align: right;
+  }
+  .order-type-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    background: var(--gray-100);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-600);
+    margin-top: 6px;
+  }
+
+  /* TRACKER */
+  .tracker-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 28px 24px;
+    margin-bottom: 20px;
+  }
+  .tracker-title {
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .live-dot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--green);
+  }
+  .live-dot::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .5; transform: scale(.8); }
+  }
+
+  /* STEPS LIST */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step-row { display: flex; gap: 16px; align-items: stretch; }
+  .step-left { display: flex; flex-direction: column; align-items: center; }
+  .step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gray-400);
+    background: var(--white);
+    flex-shrink: 0;
+    transition: all .4s cubic-bezier(.34,1.56,.64,1);
+    position: relative;
+    z-index: 1;
+  }
+  .step-circle.done {
+    background: var(--black);
+    border-color: var(--black);
+    color: white;
+  }
+  .step-circle.active {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: white;
+    box-shadow: 0 0 0 5px rgba(37,99,235,.15);
+    animation: stepPulse 2.5s infinite;
+  }
+  @keyframes stepPulse {
+    0%, 100% { box-shadow: 0 0 0 5px rgba(37,99,235,.15); }
+    50% { box-shadow: 0 0 0 9px rgba(37,99,235,.05); }
+  }
+  .step-connector {
+    width: 2px;
+    flex: 1;
+    min-height: 28px;
+    background: var(--gray-200);
+    margin: 4px auto;
+    transition: background .4s;
+  }
+  .step-connector.done { background: var(--black); }
+
+  .step-content {
+    padding: 4px 0 28px;
+    flex: 1;
+  }
+  .step-row:last-child .step-content { padding-bottom: 0; }
+  .step-name {
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 3px;
+    transition: color .3s;
+  }
+  .step-name.active { color: var(--blue); }
+  .step-name.done { color: var(--black); }
+  .step-name.pending { color: var(--gray-400); }
+  .step-desc {
+    font-size: 13px;
+    transition: color .3s;
+  }
+  .step-desc.active { color: var(--blue); font-weight: 500; }
+  .step-desc.pending { color: var(--gray-400); }
+  .step-desc.done { color: var(--gray-600); }
+  .step-time {
+    font-size: 12px;
+    color: var(--gray-400);
+    margin-top: 4px;
+  }
+
+  /* STATUS CARD */
+  .status-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .status-icon { font-size: 28px; }
+  .status-label { font-family: var(--font-head); font-size: 15px; font-weight: 700; }
+  .status-sub { font-size: 13px; color: var(--gray-600); margin-top: 2px; }
+
+  .completed-banner {
+    background: var(--green-bg);
+    border: 1px solid #bbf7d0;
+    border-radius: 14px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 20px;
+  }
+  .completed-banner .icon { font-size: 32px; }
+  .completed-banner .title { font-family: var(--font-head); font-size: 16px; font-weight: 700; color: var(--green); }
+  .completed-banner .sub { font-size: 13px; color: var(--green); opacity: .8; margin-top: 2px; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@iconscout/unicons@4.0.8/css/line.css">
+</head>
+<body>
+
+<nav>
+  <div style="display:flex;align-items:center;gap:14px">
+    <a href="/" class="logo">
+      <div class="logo-box">BS</div>
+      BotSmith
+    </a>
+    <a href="/orders/" class="btn-sm" style="display:flex;align-items:center;gap:5px">
+      <i class="uil uil-arrow-left"></i> Мои заказы
+    </a>
+  </div>
+  <div class="nav-right">
+    <a href="/logout/" class="btn-sm">
+      <i class="uil uil-sign-out-alt"></i> Выйти
+    </a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ORDER HEADER -->
+  <div class="order-header">
+    <div>
+      <div class="order-id">#{{ order.order_id }}</div>
+      <div class="order-meta">{{ order.created_at|date:"d.m.Y, H:i" }}</div>
+      <div class="order-type-tag">🤖 {{ order.bot_type }}</div>
+    </div>
+    <div>
+      <div class="order-price">${{ order.price }}</div>
+    </div>
+  </div>
+
+  <!-- TRACKER CARD -->
+  <div class="tracker-card" id="trackerCard">
+    <div class="tracker-title">
+      Статус выполнения
+      <span class="live-dot">Обновляется</span>
+    </div>
+
+    <div class="steps" id="stepsContainer">
+      {% with steps="12345" %}
+      {% for step_n in steps %}
+        {% with s=forloop.counter %}
+        <div class="step-row" id="step-row-{{ s }}">
+          <div class="step-left">
+            <div class="step-circle {% if s < order.status %}done{% elif s == order.status %}active{% endif %}" id="circle-{{ s }}">
+              {% if s < order.status %}✓{% else %}{{ s }}{% endif %}
+            </div>
+            {% if not forloop.last %}
+            <div class="step-connector {% if s < order.status %}done{% endif %}" id="line-{{ s }}"></div>
+            {% endif %}
+          </div>
+          <div class="step-content">
+            <div class="step-name {% if s < order.status %}done{% elif s == order.status %}active{% else %}pending{% endif %}" id="name-{{ s }}">
+              {% if s == 1 %}Заказ подтверждён
+              {% elif s == 2 %}Бот настроен
+              {% elif s == 3 %}Деплой на сервер
+              {% elif s == 4 %}QA тестирование
+              {% elif s == 5 %}Готово
+              {% endif %}
+            </div>
+            <div class="step-desc {% if s < order.status %}done{% elif s == order.status %}active{% else %}pending{% endif %}" id="desc-{{ s }}">
+              {% if s == order.status %}
+                {% if s == 1 %}Заказ принят и обрабатывается
+                {% elif s == 2 %}Ваш бот настраивается нашей командой
+                {% elif s == 3 %}В процессе — осталось ~15 минут
+                {% elif s == 4 %}Проводим финальное тестирование
+                {% elif s == 5 %}Бот готов к работе!
+                {% endif %}
+              {% elif s < order.status %}Выполнено
+              {% else %}Ожидание
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endwith %}
+      {% endfor %}
+      {% endwith %}
+    </div>
+  </div>
+
+  <!-- COMPLETED BANNER -->
+  {% if order.status == 5 %}
+  {% if order.delivery %}
+  <div id="deliverySection" style="background:linear-gradient(135deg,#052e16,#064e3b);border:1.5px solid rgba(34,197,94,.4);border-radius:16px;padding:24px;margin-top:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:48px;height:48px;border-radius:50%;background:rgba(34,197,94,.2);border:2px solid rgba(34,197,94,.4);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="uil uil-robot" style="font-size:22px;color:#22c55e"></i>
+        </div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:#22c55e">Ваш бот готов!</div>
+          <div style="font-size:13px;color:rgba(34,197,94,.7);margin-top:2px">Данные для доступа к вашему боту</div>
+        </div>
+      </div>
+      <button onclick="document.getElementById('deliverySection').style.display='none'" 
+        style="width:32px;height:32px;border-radius:50%;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#22c55e;font-size:18px;flex-shrink:0;transition:all .18s"
+        onmouseover="this.style.background='rgba(34,197,94,.3)'"
+        onmouseout="this.style.background='rgba(34,197,94,.15)'">
+        <i class="uil uil-times"></i>
+      </button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+      <div style="background:rgba(0,0,0,.3);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px">
+        <div style="font-size:10px;font-weight:700;color:rgba(34,197,94,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px"><i class="uil uil-at"></i> Username бота</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span style="font-size:15px;font-weight:700;color:#fff">@{{ order.delivery.bot_username }}</span>
+          <button onclick="copyVal('@{{ order.delivery.bot_username }}',this)" style="padding:5px 12px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);border-radius:7px;font-size:12px;font-weight:700;color:#22c55e;cursor:pointer;font-family:inherit">Копировать</button>
+        </div>
+      </div>
+      <div style="background:rgba(0,0,0,.3);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:14px">
+        <div style="font-size:10px;font-weight:700;color:rgba(34,197,94,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px"><i class="uil uil-key-skeleton-alt"></i> Токен бота (секретный)</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span id="tokenVal" style="font-family:'Courier New',monospace;font-size:12px;color:#fff;filter:blur(4px);transition:filter .3s;cursor:pointer;flex:1" onclick="this.style.filter='blur(0)'" title="Нажми чтобы показать">{{ order.delivery.bot_token }}</span>
+          <button onclick="copyVal('{{ order.delivery.bot_token }}',this)" style="padding:5px 12px;background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);border-radius:7px;font-size:12px;font-weight:700;color:#22c55e;cursor:pointer;font-family:inherit;flex-shrink:0">Копировать</button>
+        </div>
+      </div>
+      {% if order.delivery.admin_note %}
+      <div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.15);border-radius:10px;padding:14px;font-size:13px;color:rgba(255,255,255,.8);line-height:1.6">
+        <div style="font-size:10px;font-weight:700;color:rgba(34,197,94,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px"><i class="uil uil-notes"></i> Примечание от команды</div>
+        {{ order.delivery.admin_note }}
+      </div>
+      {% endif %}
+    </div>
+
+    <a href="{{ order.delivery.bot_url }}" target="_blank" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:#22c55e;color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none">
+      <i class="uil uil-telegram-alt"></i> Открыть бота в Telegram
+    </a>
+  </div>
+  {% else %}
+  <div class="completed-banner">
+    <div style="font-size:28px"><i class="uil uil-check-circle" style="color:#22c55e"></i></div>
+    <div>
+      <div class="title">Ваш бот готов!</div>
+      <div class="sub">Данные бота скоро появятся здесь. Обновите страницу через пару минут.</div>
+    </div>
+  </div>
+  {% endif %}
+  {% endif %}
+
+</div>
+
+<script>
+// Live polling — check for status updates every 8 seconds
+const orderId = "{{ order.order_id }}";
+let currentStatus = {{ order.status }};
+
+const stepNames = {
+  1: 'Заказ подтверждён',
+  2: 'Бот настроен',
+  3: 'Деплой на сервер',
+  4: 'QA тестирование',
+  5: 'Готово'
+};
+const stepDescs = {
+  1: 'Заказ принят и обрабатывается',
+  2: 'Ваш бот настраивается нашей командой',
+  3: 'В процессе — осталось ~15 минут',
+  4: 'Проводим финальное тестирование',
+  5: 'Бот готов к работе!'
+};
+
+function updateUI(newStatus) {
+  if (newStatus === currentStatus) return;
+  currentStatus = newStatus;
+
+  for (let s = 1; s <= 5; s++) {
+    const circle = document.getElementById(`circle-${s}`);
+    const nameEl = document.getElementById(`name-${s}`);
+    const descEl = document.getElementById(`desc-${s}`);
+    const lineEl = document.getElementById(`line-${s}`);
+
+    circle.className = 'step-circle';
+    nameEl.className = 'step-name';
+    descEl.className = 'step-desc';
+
+    if (s < newStatus) {
+      circle.className = 'step-circle done';
+      circle.textContent = '✓';
+      nameEl.className = 'step-name done';
+      descEl.className = 'step-desc done';
+      descEl.textContent = 'Выполнено';
+      if (lineEl) lineEl.className = 'step-connector done';
+    } else if (s === newStatus) {
+      circle.className = 'step-circle active';
+      circle.textContent = s;
+      nameEl.className = 'step-name active';
+      descEl.className = 'step-desc active';
+      descEl.textContent = stepDescs[s];
+    } else {
+      circle.textContent = s;
+      nameEl.className = 'step-name pending';
+      descEl.className = 'step-desc pending';
+      descEl.textContent = 'Ожидание';
+      if (lineEl) lineEl.className = 'step-connector';
+    }
+  }
+
+  if (newStatus === 5) {
+    if (!document.querySelector('.completed-banner')) {
+      const banner = document.createElement('div');
+      banner.className = 'completed-banner';
+      banner.innerHTML = '<div class="icon">🎉</div><div><div class="title">Ваш бот готов!</div><div class="sub">Все этапы выполнены. Свяжитесь с нами для получения данных доступа.</div></div>';
+      document.querySelector('.wrap').appendChild(banner);
+    }
+  }
+}
+
+async function pollStatus() {
+  try {
+    const res = await fetch(`/api/status/${orderId}/`);
+    const data = await res.json();
+    updateUI(data.status);
+  } catch (e) {}
+}
+
+setInterval(pollStatus, 8000);
+
+function copyVal(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Скопировано!';
+    btn.style.color = '#fff';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = '#22c55e'; }, 2000);
+  });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Оплата прошла — BotSmith</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@iconscout/unicons@4.0.8/css/line.css">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{background:#fff;border-radius:20px;padding:48px 36px;max-width:400px;width:100%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.1)}
+  .circle{width:80px;height:80px;border-radius:50%;background:#f0fdf4;border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center;margin:0 auto 24px;animation:pop .4s cubic-bezier(.32,1.4,.45,1)}
+  @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+  .circle i{font-size:36px;color:#16a34a}
+  h1{font-size:24px;font-weight:800;margin-bottom:8px}
+  p{color:#71717a;font-size:14px;margin-bottom:28px}
+  .order-box{background:#fafafa;border:1px dashed #e4e4e7;border-radius:12px;padding:16px 20px;margin-bottom:28px;font-size:13px;color:#52525b}
+  .order-box strong{font-size:20px;font-weight:800;color:#0e0e0e;display:block;margin-top:4px;font-family:'Courier New',monospace}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;background:#0e0e0e;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;transition:opacity .2s}
+  .btn:hover{opacity:.85}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="circle"><i class="uil uil-check-circle"></i></div>
+  <h1>Оплата прошла!</h1>
+  <p>Ваш заказ подтверждён. Мы начнём деплой и сообщим вам в Telegram.</p>
+  {% if order %}
+  <div class="order-box">
+    ID вашего заказа
+    <strong>#{{ order.order_id }}</strong>
+  </div>
+  {% endif %}
+  <a href="/orders/" class="btn">
+    <i class="uil uil-list-ul"></i>
+    Мои заказы
+  </a>
+</div>
+</body>
+</html>
