@@ -739,7 +739,8 @@ function filterOrders() {
   const q  = document.getElementById('orderSearch').value.toLowerCase();
   const sf = document.getElementById('statusFilter').value;
   const pf = document.getElementById('payFilter').value;
-  document.querySelectorAll('.order-card').forEach(card => {
+  // Only filter cards inside tab-orders, not done/completed tab
+  document.querySelectorAll('#tab-orders .order-card').forEach(card => {
     const matchQ = !q  || (card.dataset.search||'').includes(q);
     const matchS = !sf || card.dataset.status === sf;
     const matchP = !pf || card.dataset.pay === pf;
@@ -753,6 +754,9 @@ async function advanceStep(orderId) {
   try {
     const res = await fetch(`/api/advance/${orderId}/`,{method:'POST',headers:{'X-CSRFToken':CSRF}});
     const data = await res.json();
+    // Reset status filter so card doesn't disappear after status change
+    const sf = document.getElementById('statusFilter');
+    if (sf && sf.value) sf.value = '';
     updateOrderUI(orderId, data.status, data.label);
     showToast(`#${orderId} → ${data.label}`);
   } catch(e) {
@@ -823,6 +827,9 @@ function updateOrderUI(orderId, newStatus) {
   if (newStatus === 5) {
     setTimeout(() => moveCardToDone(orderId, card), 800);
   }
+
+  // Re-apply filters so card doesn't disappear
+  filterOrders();
 }
 
 function moveCardToDone(orderId, card) {
