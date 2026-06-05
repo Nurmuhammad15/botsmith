@@ -101,7 +101,13 @@
     border-radius: 9px; padding: 10px 14px; font-size: 13px;
     font-weight: 500; margin-bottom: 16px;
   }
+
+  .pwd-wrap{position:relative}
+  .pwd-wrap input{padding-right:44px !important}
+  .pwd-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#a1a1aa;font-size:20px;padding:0;display:flex;align-items:center;transition:color .18s;line-height:1}
+  .pwd-eye:hover{color:#0e0e0e}
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@iconscout/unicons@4.0.8/css/line.css">
 </head>
 <body>
 <a href="/" class="back-home">← На главную</a>
@@ -134,7 +140,10 @@
       <label for="username">Логин</label>
       <input type="text" name="username" id="username" placeholder="your_username" autocomplete="username" required>
       <label for="password">Пароль</label>
-      <input type="password" name="password" id="password" placeholder="••••••••" autocomplete="current-password" required>
+      <div class="pwd-wrap" style="position:relative">
+        <input type="password" name="password" id="password" placeholder="••••••••" autocomplete="current-password" required style="width:100%">
+        <button type="button" class="pwd-eye" onclick="toggleEye('password',this)"><i class="uil uil-eye"></i></button>
+      </div>
       <button type="submit" class="btn">Войти →</button>
     </form>
   </div>
@@ -148,7 +157,10 @@
       <label for="reg_email">Email</label>
       <input type="email" name="email" id="reg_email" placeholder="you@example.com" autocomplete="email">
       <label for="reg_password">Пароль</label>
-      <input type="password" name="password" id="reg_password" placeholder="Минимум 6 символов" required>
+      <div class="pwd-wrap" style="position:relative">
+        <input type="password" name="password" id="reg_password" placeholder="Минимум 6 символов" required style="width:100%">
+        <button type="button" class="pwd-eye" onclick="toggleEye('reg_password',this)"><i class="uil uil-eye"></i></button>
+      </div>
       <button type="submit" class="btn">Создать аккаунт →</button>
     </form>
   </div>
@@ -168,5 +180,20 @@
   {% if open_register %}switchTab('register');{% endif %}
   if (window.location.search.includes('tab=register')) switchTab('register');
 </script>
+
+<script>
+function toggleEye(id, btn) {
+  const inp = document.getElementById(id);
+  const icon = btn.querySelector('i');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.className = 'uil uil-eye-slash';
+  } else {
+    inp.type = 'password';
+    icon.className = 'uil uil-eye';
+  }
+}
+</script>
+
 </body>
 </html>

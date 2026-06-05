@@ -271,7 +271,10 @@ def admin_panel(request):
     # Stats for template
     total_orders   = orders.count()
     paid_orders    = orders.filter(payment_status='paid').count()
-    revenue        = orders.filter(payment_status='paid').aggregate(s=Sum('price'))['s'] or 0
+    # Revenue = all paid orders + all completed orders (status=5)
+    revenue        = orders.filter(
+        Q(payment_status='paid') | Q(status=5)
+    ).aggregate(s=Sum('price'))['s'] or 0
     done_orders    = orders.filter(status=5).count()
     active_orders  = orders.filter(status__lt=5).count()
     total_clients  = users.count()
