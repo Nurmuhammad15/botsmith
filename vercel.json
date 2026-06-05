@@ -2,6 +2,13 @@
   "version": 2,
   "builds": [
     {
+      "src": "build_files.sh",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "staticfiles"
+      }
+    },
+    {
       "src": "api/index.py",
       "use": "@vercel/python",
       "config": {
@@ -13,7 +20,7 @@
   "routes": [
     {
       "src": "/static/(.*)",
-      "dest": "/api/index.py"
+      "dest": "/staticfiles/$1"
     },
     {
       "src": "/(.*)",
