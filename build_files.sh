@@ -7,7 +7,7 @@ echo "=== Collecting static files ==="
 python manage.py collectstatic --noinput 2>/dev/null || echo "collectstatic skipped"
 
 echo "=== Running migrations ==="
-python manage.py migrate --noinput 2>/dev/null || echo "migrate skipped"
+python manage.py migrate --noinput
 
 echo "=== Creating admin user ==="
 python manage.py shell -c "
