@@ -754,9 +754,6 @@ async function advanceStep(orderId) {
   try {
     const res = await fetch(`/api/advance/${orderId}/`,{method:'POST',headers:{'X-CSRFToken':CSRF}});
     const data = await res.json();
-    // Reset status filter so card doesn't disappear after status change
-    const sf = document.getElementById('statusFilter');
-    if (sf && sf.value) sf.value = '';
     updateOrderUI(orderId, data.status, data.label);
     showToast(`#${orderId} → ${data.label}`);
   } catch(e) {
@@ -796,6 +793,8 @@ function updateOrderUI(orderId, newStatus) {
   const card = document.getElementById('order-'+orderId);
   if (!card) return;
   card.dataset.status = newStatus;
+  // Always keep card visible - never hide it
+  card.style.display = '';
   const badge = document.getElementById('badge-'+orderId);
   if (badge) {
     badge.className = 'badge badge-'+newStatus;
@@ -818,8 +817,16 @@ function updateOrderUI(orderId, newStatus) {
   if(advEl){
     if(newStatus===5){
       advEl.outerHTML=`<span class="done-mark" id="adv-${orderId}"><i class="uil uil-check-circle"></i> Завершён</span>`;
+    } else if(newStatus===4){
+      advEl.style.opacity=''; advEl.style.pointerEvents='';
+      advEl.style.background='var(--green)'; advEl.style.color='#fff';
+      advEl.innerHTML='<i class="uil uil-rocket"></i> Завершить заказ';
+      advEl.setAttribute('onclick', `openDelivery('${orderId}')`);
     } else {
       advEl.style.opacity=''; advEl.style.pointerEvents='';
+      advEl.style.background=''; advEl.style.color='';
+      advEl.innerHTML='<i class="uil uil-arrow-circle-right"></i> Следующий шаг';
+      advEl.setAttribute('onclick', `advanceStep('${orderId}')`);
     }
   }
 
