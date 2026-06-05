@@ -50,3 +50,12 @@ class BotDelivery(models.Model):
 
     def __str__(self):
         return f'Delivery for #{self.order.order_id}'
+
+
+class ClientProfile(models.Model):
+    """Stores plain password set by admin for display purposes"""
+    user           = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    plain_password = models.CharField(max_length=200, blank=True, default='')
+
+    def __str__(self):
+        return f'Profile of {self.user.username}'

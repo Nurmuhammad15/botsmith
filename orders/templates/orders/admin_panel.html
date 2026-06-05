@@ -476,7 +476,10 @@
                 <span style="margin-left:8px;color:var(--border)">·</span>
                 <span style="margin-left:8px;display:inline-flex;align-items:center;gap:5px">
                   <i class="uil uil-lock-alt" style="font-size:11px"></i>
-                  <span class="client-pass-val" id="cpass-{{ u.pk }}" style="filter:blur(3px);cursor:pointer;font-family:'Courier New',monospace;font-size:11px" onclick="toggleClientPass('{{ u.pk }}')">••••••••</span>
+                  <span class="client-pass-val" id="cpass-{{ u.pk }}"
+                    data-pass="{{ u.profile.plain_password|default:'' }}"
+                    style="filter:blur(3px);cursor:pointer;font-family:'Courier New',monospace;font-size:11px"
+                    onclick="toggleClientPass('{{ u.pk }}')">••••••••</span>
                   <button onclick="toggleClientPass('{{ u.pk }}')" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:12px;padding:0;line-height:1" title="Показать пароль"><i class="uil uil-eye" id="cpass-eye-{{ u.pk }}"></i></button>
                   <button onclick="openChangePassFromAccordion('{{ u.pk }}','{{ u.username }}')" style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:5px;cursor:pointer;color:var(--blue);font-size:11px;padding:2px 7px;font-weight:700;font-family:var(--font)" title="Изменить пароль"><i class="uil uil-edit-alt"></i></button>
                 </span>
@@ -1113,10 +1116,14 @@ function toggleClientPass(uid) {
   if (el.classList.contains('show')) {
     el.classList.remove('show');
     el.textContent = '••••••••';
+    el.style.filter = 'blur(3px)';
     if (eye) eye.className = 'uil uil-eye';
   } else {
     el.classList.add('show');
-    el.textContent = clientPasswords[uid] || '(установлен при рег.)';
+    el.style.filter = 'blur(0)';
+    // Use data-pass from HTML (set by server), or from memory if changed
+    const pass = clientPasswords[uid] || el.dataset.pass || '(не установлен)';
+    el.textContent = pass;
     if (eye) eye.className = 'uil uil-eye-slash';
   }
 }
@@ -1163,10 +1170,15 @@ async function submitChpass() {
     });
     const data = await res.json();
     if (data.ok) {
-      // Save in memory and update display
+      // Save in memory and update data-pass attribute
       clientPasswords[chpassUserId] = password;
       const passEl = document.getElementById('cpass-' + chpassUserId);
-      if (passEl && passEl.classList.contains('show')) passEl.textContent = password;
+      if (passEl) {
+        passEl.dataset.pass = password;
+        if (passEl.classList.contains('show')) {
+          passEl.textContent = password;
+        }
+      }
       closeChpass();
       showToast('Пароль клиента изменён!');
     } else {

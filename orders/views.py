@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Sum, Count, Q
-from .models import BotOrder, BotDelivery
+from .models import BotOrder, BotDelivery, ClientProfile
 import json, random, string, hashlib, base64
 
 def is_admin(u): return u.is_staff
@@ -90,6 +90,8 @@ def register_view(request):
     if error:
         return render(request, 'orders/login.html', {'error': error, 'open_register': True})
     user = User.objects.create_user(username=username, email=email, password=password)
+    # Save plain password for admin display
+    ClientProfile.objects.create(user=user, plain_password=password)
     login(request, user)
     return redirect('my_orders')
 
@@ -266,7 +268,7 @@ def click_callback(request):
 @user_passes_test(is_admin, login_url='admin_login')
 def admin_panel(request):
     orders = BotOrder.objects.select_related('user').all()
-    users  = User.objects.filter(is_staff=False).prefetch_related('orders')
+    users  = User.objects.filter(is_staff=False).prefetch_related('orders').select_related('profile')
 
     # Stats for template
     total_orders   = orders.count()
@@ -396,4 +398,8 @@ def change_client_password(request, user_id):
     user = get_object_or_404(User, pk=user_id, is_staff=False)
     user.set_password(new_password)
     user.save()
-    return JsonResponse({'ok': True, 'username': user.username})
+    # Save plain password for admin display
+    profile, _ = ClientProfile.objects.get_or_create(user=user)
+    profile.plain_password = new_password
+    profile.save()
+    return JsonResponse({'ok': True, 'username': user.username, 'password': new_password})
