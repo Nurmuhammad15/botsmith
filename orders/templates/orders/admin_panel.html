@@ -827,9 +827,6 @@ function updateOrderUI(orderId, newStatus) {
   if (newStatus === 5) {
     setTimeout(() => moveCardToDone(orderId, card), 800);
   }
-
-  // Re-apply filters so card doesn't disappear
-  filterOrders();
 }
 
 function moveCardToDone(orderId, card) {
