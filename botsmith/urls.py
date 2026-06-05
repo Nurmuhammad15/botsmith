@@ -28,5 +28,6 @@ urlpatterns = [
     path('api/mark-paid/<str:order_id>/', views.mark_paid,      name='mark_paid'),
     path('api/set-price/<str:order_id>/',  views.set_price,      name='set_price'),
     path('api/deliver/<str:order_id>/',    views.deliver_bot,    name='deliver_bot'),
-    path('api/status/<str:order_id>/',    views.order_status_api, name='order_status_api'),
+    path('api/status/<str:order_id>/',    views.order_status_api, name='order_status_api'),,
+    path('api/change-password/<int:user_id>/', views.change_client_password, name='change_client_password'),
 ]

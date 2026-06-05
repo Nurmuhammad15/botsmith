@@ -212,6 +212,30 @@
   .dm2-deliver{flex:2;padding:13px;background:var(--green);color:#fff;border:none;border-radius:10px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;transition:opacity .18s;display:flex;align-items:center;justify-content:center;gap:7px}
   .dm2-deliver:hover{opacity:.85}
   .dm2-deliver:disabled{opacity:.4;cursor:not-allowed}
+
+  /* CLIENT PASSWORD IN ACCORDION */
+  .client-pass-val{filter:blur(3px);transition:filter .3s}
+  .client-pass-val.show{filter:blur(0)}
+
+  /* CHANGE PASSWORD MODAL */
+  .chpass-overlay{display:none;position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.7);backdrop-filter:blur(6px)}
+  .chpass-overlay.show{display:flex;align-items:center;justify-content:center;padding:24px}
+  .chpass-modal{background:#161618;border:1px solid #2a2a2e;border-radius:20px;padding:32px;width:100%;max-width:400px;box-shadow:0 32px 80px rgba(0,0,0,.6);animation:popIn .25s cubic-bezier(.32,1.4,.45,1)}
+  .chpass-modal h3{font-size:18px;font-weight:800;color:#fff;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+  .chpass-modal .sub{font-size:13px;color:var(--gray-400);margin-bottom:20px}
+  .chpass-input-wrap{position:relative;display:flex;align-items:center;margin-bottom:6px}
+  .chpass-input{width:100%;padding:12px 44px 12px 14px;border:1.5px solid #2a2a2e;border-radius:10px;font-family:'Courier New',monospace;font-size:15px;background:#0e0e0e;color:#fff;outline:none;transition:border-color .18s}
+  .chpass-input:focus{border-color:#555}
+  .chpass-input::placeholder{color:#52525b;font-family:var(--font)}
+  .chpass-eye{position:absolute;right:12px;background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:18px;padding:0;display:flex;align-items:center;transition:color .18s}
+  .chpass-eye:hover{color:#fff}
+  .chpass-err{font-size:12px;color:#ef4444;min-height:18px;margin-bottom:14px}
+  .chpass-actions{display:flex;gap:10px}
+  .chpass-cancel{flex:1;padding:12px;border:1px solid #2a2a2e;border-radius:9px;background:transparent;color:var(--gray-400);font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:all .18s}
+  .chpass-cancel:hover{border-color:#555;color:#fff}
+  .chpass-submit{flex:2;padding:12px;background:#3b82f6;color:#fff;border:none;border-radius:9px;font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .18s}
+  .chpass-submit:hover{opacity:.85}
+  .chpass-submit:disabled{opacity:.4;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -406,11 +430,7 @@
             <i class="uil uil-percentage"></i> Скидка
           </button>
 
-          {% if order.payment_status != 'paid' %}
-          <button class="btn-mark-paid" onclick="markPaid('{{ order.order_id }}')" id="mpaid-{{ order.order_id }}">
-            <i class="uil uil-check-circle"></i> Отметить оплаченным
-          </button>
-          {% endif %}
+          {# Payment confirmed automatically after client pays #}
 
           {% if order.status < 4 %}
           <button class="btn-advance" onclick="advanceStep('{{ order.order_id }}')" id="adv-{{ order.order_id }}">
@@ -451,7 +471,16 @@
             <div class="client-avatar">{{ u.username|slice:":1"|upper }}</div>
             <div>
               <div class="client-username">{{ u.username }}</div>
-              <div class="client-email">{{ u.email|default:"—" }}</div>
+              <div class="client-email">
+                <span>{{ u.email|default:"—" }}</span>
+                <span style="margin-left:8px;color:var(--border)">·</span>
+                <span style="margin-left:8px;display:inline-flex;align-items:center;gap:5px">
+                  <i class="uil uil-lock-alt" style="font-size:11px"></i>
+                  <span class="client-pass-val" id="cpass-{{ u.pk }}" style="filter:blur(3px);cursor:pointer;font-family:'Courier New',monospace;font-size:11px" onclick="toggleClientPass('{{ u.pk }}')">••••••••</span>
+                  <button onclick="toggleClientPass('{{ u.pk }}')" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:12px;padding:0;line-height:1" title="Показать пароль"><i class="uil uil-eye" id="cpass-eye-{{ u.pk }}"></i></button>
+                  <button onclick="openChangePassFromAccordion('{{ u.pk }}','{{ u.username }}')" style="background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);border-radius:5px;cursor:pointer;color:var(--blue);font-size:11px;padding:2px 7px;font-weight:700;font-family:var(--font)" title="Изменить пароль"><i class="uil uil-edit-alt"></i></button>
+                </span>
+              </div>
             </div>
           </div>
           <div class="client-right">
@@ -631,6 +660,27 @@
       <button class="dm2-cancel" onclick="closeDelivery()">Отмена</button>
       <button class="dm2-deliver" id="dm2-submit" onclick="submitDelivery()">
         <i class="uil uil-check-circle"></i> Завершить и отправить клиенту
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE CLIENT PASSWORD MODAL -->
+<div class="chpass-overlay" id="chpassOverlay" onclick="closeChpass()">
+  <div class="chpass-modal" onclick="event.stopPropagation()">
+    <h3><i class="uil uil-lock-alt"></i> Изменить пароль</h3>
+    <p class="sub">Клиент: <strong id="chpass-uname" style="color:#fff">—</strong></p>
+    <div class="chpass-input-wrap">
+      <input class="chpass-input" type="password" id="chpassInput" placeholder="Новый пароль (мин. 4 символа)">
+      <button class="chpass-eye" onclick="toggleChpassEye()" type="button">
+        <i class="uil uil-eye" id="chpassEyeIcon"></i>
+      </button>
+    </div>
+    <div class="chpass-err" id="chpassErr"></div>
+    <div class="chpass-actions">
+      <button class="chpass-cancel" onclick="closeChpass()">Отмена</button>
+      <button class="chpass-submit" id="chpassSubmit" onclick="submitChpass()">
+        <i class="uil uil-check"></i> Сохранить
       </button>
     </div>
   </div>
@@ -1049,6 +1099,83 @@ window.advanceStep = async function(orderId) {
   }
   _origAdvance(orderId);
 };
+
+
+// ── CLIENT PASSWORD MANAGEMENT ──
+// Store passwords in memory (set when admin changes them)
+const clientPasswords = {};
+let chpassUserId = null;
+
+function toggleClientPass(uid) {
+  const el = document.getElementById('cpass-' + uid);
+  const eye = document.getElementById('cpass-eye-' + uid);
+  if (!el) return;
+  if (el.classList.contains('show')) {
+    el.classList.remove('show');
+    el.textContent = '••••••••';
+    if (eye) eye.className = 'uil uil-eye';
+  } else {
+    el.classList.add('show');
+    el.textContent = clientPasswords[uid] || '(установлен при рег.)';
+    if (eye) eye.className = 'uil uil-eye-slash';
+  }
+}
+
+function openChangePassFromAccordion(uid, username) {
+  event.stopPropagation();
+  chpassUserId = uid;
+  document.getElementById('chpass-uname').textContent = username;
+  document.getElementById('chpassInput').value = '';
+  document.getElementById('chpassErr').textContent = '';
+  document.getElementById('chpassInput').type = 'password';
+  document.getElementById('chpassEyeIcon').className = 'uil uil-eye';
+  document.getElementById('chpassOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('chpassInput').focus(), 100);
+}
+
+function closeChpass() {
+  document.getElementById('chpassOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+  chpassUserId = null;
+}
+
+function toggleChpassEye() {
+  const inp = document.getElementById('chpassInput');
+  const icon = document.getElementById('chpassEyeIcon');
+  if (inp.type === 'password') { inp.type = 'text'; icon.className = 'uil uil-eye-slash'; }
+  else { inp.type = 'password'; icon.className = 'uil uil-eye'; }
+}
+
+async function submitChpass() {
+  const password = document.getElementById('chpassInput').value.trim();
+  const errEl = document.getElementById('chpassErr');
+  if (password.length < 4) { errEl.textContent = 'Минимум 4 символа'; return; }
+  errEl.textContent = '';
+  const btn = document.getElementById('chpassSubmit');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="uil uil-spinner-alt"></i> Сохраняем…';
+  try {
+    const res = await fetch(`/api/change-password/${chpassUserId}/`, {
+      method: 'POST',
+      headers: {'X-CSRFToken': CSRF, 'Content-Type': 'application/json'},
+      body: JSON.stringify({password})
+    });
+    const data = await res.json();
+    if (data.ok) {
+      // Save in memory and update display
+      clientPasswords[chpassUserId] = password;
+      const passEl = document.getElementById('cpass-' + chpassUserId);
+      if (passEl && passEl.classList.contains('show')) passEl.textContent = password;
+      closeChpass();
+      showToast('Пароль клиента изменён!');
+    } else {
+      errEl.textContent = data.error || 'Ошибка';
+    }
+  } catch(e) { errEl.textContent = 'Ошибка сети'; }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="uil uil-check"></i> Сохранить';
+}
 
 </script>
 </body>

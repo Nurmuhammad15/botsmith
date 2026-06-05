@@ -381,3 +381,16 @@ def order_status_api(request, order_id):
         return JsonResponse({'error': 'forbidden'}, status=403)
     return JsonResponse({'status': order.status, 'label': order.get_status_display(),
                          'payment_status': order.payment_status})
+
+@require_POST
+def change_client_password(request, user_id):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+    data = json.loads(request.body)
+    new_password = data.get('password', '').strip()
+    if len(new_password) < 4:
+        return JsonResponse({'error': 'Минимум 4 символа'}, status=400)
+    user = get_object_or_404(User, pk=user_id, is_staff=False)
+    user.set_password(new_password)
+    user.save()
+    return JsonResponse({'ok': True, 'username': user.username})
