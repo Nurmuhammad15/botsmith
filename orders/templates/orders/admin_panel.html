@@ -739,8 +739,10 @@ function filterOrders() {
   const q  = document.getElementById('orderSearch').value.toLowerCase();
   const sf = document.getElementById('statusFilter').value;
   const pf = document.getElementById('payFilter').value;
-  // Only filter cards inside tab-orders, not done/completed tab
+  // Only filter cards in orders tab, not done tab
   document.querySelectorAll('#tab-orders .order-card').forEach(card => {
+    // Don't hide cards being animated to done tab
+    if (card.dataset.moving === '1') return;
     const matchQ = !q  || (card.dataset.search||'').includes(q);
     const matchS = !sf || card.dataset.status === sf;
     const matchP = !pf || card.dataset.pay === pf;
@@ -763,8 +765,18 @@ async function advanceStep(orderId) {
 }
 
 async function setStep(orderId, step) {
+  const intStep = parseInt(step);
+  // If setting to 5, open delivery modal instead
+  if (intStep === 5) {
+    openDelivery(orderId);
+    // Reset select to previous value
+    const sel = document.getElementById('sel-'+orderId);
+    const card = document.getElementById('order-'+orderId);
+    if (sel && card) sel.value = card.dataset.status;
+    return;
+  }
   try {
-    const res = await fetch(`/api/set-step/${orderId}/`,{method:'POST',headers:{'X-CSRFToken':CSRF,'Content-Type':'application/json'},body:JSON.stringify({step:parseInt(step)})});
+    const res = await fetch(`/api/set-step/${orderId}/`,{method:'POST',headers:{'X-CSRFToken':CSRF,'Content-Type':'application/json'},body:JSON.stringify({step:intStep})});
     const data = await res.json();
     updateOrderUI(orderId, data.status, data.label);
     showToast(`#${orderId} → ${data.label}`);
@@ -793,8 +805,6 @@ function updateOrderUI(orderId, newStatus) {
   const card = document.getElementById('order-'+orderId);
   if (!card) return;
   card.dataset.status = newStatus;
-  // Always keep card visible - never hide it
-  card.style.display = '';
   const badge = document.getElementById('badge-'+orderId);
   if (badge) {
     badge.className = 'badge badge-'+newStatus;
@@ -817,16 +827,8 @@ function updateOrderUI(orderId, newStatus) {
   if(advEl){
     if(newStatus===5){
       advEl.outerHTML=`<span class="done-mark" id="adv-${orderId}"><i class="uil uil-check-circle"></i> Завершён</span>`;
-    } else if(newStatus===4){
-      advEl.style.opacity=''; advEl.style.pointerEvents='';
-      advEl.style.background='var(--green)'; advEl.style.color='#fff';
-      advEl.innerHTML='<i class="uil uil-rocket"></i> Завершить заказ';
-      advEl.setAttribute('onclick', `openDelivery('${orderId}')`);
     } else {
       advEl.style.opacity=''; advEl.style.pointerEvents='';
-      advEl.style.background=''; advEl.style.color='';
-      advEl.innerHTML='<i class="uil uil-arrow-circle-right"></i> Следующий шаг';
-      advEl.setAttribute('onclick', `advanceStep('${orderId}')`);
     }
   }
 
@@ -834,9 +836,16 @@ function updateOrderUI(orderId, newStatus) {
   if (newStatus === 5) {
     setTimeout(() => moveCardToDone(orderId, card), 800);
   }
+
+  // Re-apply filters only if NOT moving to done tab
+  if (newStatus !== 5) {
+    filterOrders();
+  }
 }
 
 function moveCardToDone(orderId, card) {
+  // Mark as moving so filterOrders ignores it
+  card.dataset.moving = '1';
   // Build done card clone
   const doneTab = document.getElementById('tab-done');
   const emptyMsg = document.getElementById('done-empty-msg');
