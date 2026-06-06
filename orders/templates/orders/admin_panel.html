@@ -324,7 +324,7 @@
       </button>
     </div>
     <div class="tab-filters" id="ordersFilters">
-      <input class="search-input" type="text" id="orderSearch" placeholder="Поиск по ID, клиенту, боту…" oninput="filterOrders()">
+      <input class="search-input" type="text" id="orderSearch" placeholder="Поиск по ID, клиенту, боту…" oninput="filterOrders()" autocomplete="off" autocorrect="off" spellcheck="false">
       <select class="filter-select" id="statusFilter" onchange="filterOrders()">
         <option value="">Все статусы</option>
         <option value="1">Подтверждён</option>
@@ -422,7 +422,7 @@
               <option value="2" {% if order.status == 2 %}selected{% endif %}>2 — Бот настроен</option>
               <option value="3" {% if order.status == 3 %}selected{% endif %}>3 — Деплой</option>
               <option value="4" {% if order.status == 4 %}selected{% endif %}>4 — QA тест</option>
-              <option value="5" {% if order.status == 5 %}selected{% endif %}>5 — Готово</option>
+              {# 5 = Готово: only via Delivery Modal, not dropdown #}
             </select>
           </div>
 
@@ -1015,6 +1015,10 @@ async function applyDiscount() {
 
 // Auto-move status=5 orders to Done tab on load
 document.addEventListener('DOMContentLoaded', () => {
+  // Clear search field (browser may autofill it)
+  const searchEl = document.getElementById('orderSearch');
+  if (searchEl) { searchEl.value = ''; }
+
   populateBotInfo();
   let hasDone = false;
   document.querySelectorAll('#tab-orders .order-card').forEach(card => {
