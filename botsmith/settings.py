@@ -70,4 +70,20 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Session ends when browser/tab closes
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app', 'https://botsmith-orcin.vercel.app']
+CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app', 'https://botsmith-orcin.vercel.app', 'http://localhost:8000', 'http://127.0.0.1:8000', 'https://*.pythonanywhere.com']
+
+# CSRF fix for Vercel serverless
+CSRF_COOKIE_SECURE = False
+SESSION_COOKIE_SECURE = False
+CSRF_USE_SESSIONS = False
+
+# Session engine - use database for Vercel
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_NAME = 'botsmith_session'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Vercel HTTPS proxy fix
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
