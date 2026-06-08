@@ -351,20 +351,24 @@ def deliver_bot(request, order_id):
         return JsonResponse({'error': 'forbidden'}, status=403)
     order = get_object_or_404(BotOrder, order_id=order_id)
     data = json.loads(request.body)
+    bot_name     = data.get('bot_name', '').strip()
     bot_token    = data.get('bot_token', '').strip()
     bot_username = data.get('bot_username', '').strip().lstrip('@')
+    bot_description = data.get('bot_description', '').strip()
     admin_note   = data.get('admin_note', '').strip()
 
-    if not bot_token or not bot_username:
-        return JsonResponse({'error': 'token and username required'}, status=400)
+    if not bot_name or not bot_token or not bot_username:
+        return JsonResponse({'error': 'bot name, token and username required'}, status=400)
 
     # Save delivery info
     BotDelivery.objects.update_or_create(
         order=order,
         defaults={
+            'bot_name': bot_name,
             'bot_token': bot_token,
             'bot_username': bot_username,
             'bot_url': f'https://t.me/{bot_username}',
+            'bot_description': bot_description,
             'admin_note': admin_note,
         }
     )

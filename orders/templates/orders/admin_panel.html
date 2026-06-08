@@ -324,7 +324,7 @@
       </button>
     </div>
     <div class="tab-filters" id="ordersFilters">
-      <input class="search-input" type="text" id="orderSearch" placeholder="Поиск по ID, клиенту, боту…" oninput="filterOrders()" autocomplete="off" autocorrect="off" spellcheck="false">
+      <input class="search-input" type="text" id="orderSearch" placeholder="Поиск по ID, клиенту, боту…" oninput="filterOrders()">
       <select class="filter-select" id="statusFilter" onchange="filterOrders()">
         <option value="">Все статусы</option>
         <option value="1">Подтверждён</option>
@@ -422,7 +422,7 @@
               <option value="2" {% if order.status == 2 %}selected{% endif %}>2 — Бот настроен</option>
               <option value="3" {% if order.status == 3 %}selected{% endif %}>3 — Деплой</option>
               <option value="4" {% if order.status == 4 %}selected{% endif %}>4 — QA тест</option>
-              {# 5 = Готово: only via Delivery Modal, not dropdown #}
+              <option value="5" {% if order.status == 5 %}selected{% endif %}>5 — Готово</option>
             </select>
           </div>
 
@@ -511,7 +511,8 @@
                 <span class="pay-badge {% if order.payment_status == 'paid' %}pay-paid{% else %}pay-pending{% endif %}">
                   {% if order.payment_status == 'paid' %}<i class="uil uil-check"></i> Оплачен{% else %}<i class="uil uil-clock-three"></i> Ожидает{% endif %}
                 </span>
-                <span class="cord-price">${{ order.price }}</span>
+                <span class="cord-price" id="cprice-{{ order.order_id }}">${{ order.price }}</span>
+                <button onclick="openSetPrice('{{ order.order_id }}','{{ order.price }}')" style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:6px;cursor:pointer;color:#818cf8;font-size:11px;padding:3px 8px;font-weight:700;font-family:var(--font)"><i class="uil uil-dollar-sign"></i> Цена</button>
                 <a href="/admin-panel/client/{{ u.pk }}/" class="cord-link">
                   Открыть <i class="uil uil-external-link-alt"></i>
                 </a>
@@ -641,6 +642,12 @@
     </div>
 
     <div class="dm2-field">
+      <div class="dm2-label"><i class="uil uil-robot"></i> Имя бота <span style="color:var(--red)">*</span></div>
+      <input class="dm2-input" type="text" id="dm2-botname" placeholder="Например: MyShopBot">
+      <div class="dm2-hint"><i class="uil uil-info-circle"></i> Публичное имя бота в Telegram</div>
+    </div>
+
+    <div class="dm2-field">
       <div class="dm2-label"><i class="uil uil-key-skeleton-alt"></i> Токен бота <span style="color:var(--red)">*</span></div>
       <input class="dm2-input" type="text" id="dm2-token"
         placeholder="1234567890:ABCDEFGhijklmnopqrstuvwxyz">
@@ -651,6 +658,12 @@
       <div class="dm2-label"><i class="uil uil-at"></i> Username бота <span style="color:var(--red)">*</span></div>
       <input class="dm2-input" type="text" id="dm2-username" placeholder="@my_awesome_bot">
       <div class="dm2-hint"><i class="uil uil-link"></i> Ссылка: t.me/<span id="dm2-preview">username</span></div>
+    </div>
+
+    <div class="dm2-field">
+      <div class="dm2-label"><i class="uil uil-align-left"></i> Описание бота для клиента</div>
+      <textarea class="dm2-textarea" id="dm2-description"
+        placeholder="Краткое описание что умеет бот, как запустить и т.д."></textarea>
     </div>
 
     <div class="dm2-field">
@@ -733,21 +746,30 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
+  // Clear search when switching tabs so orders don't stay hidden
+  if (name === 'orders') {
+    const el = document.getElementById('orderSearch');
+    if (el) { el.value = ''; filterOrders(); }
+  }
 }
 
 function filterOrders() {
-  const q  = document.getElementById('orderSearch').value.toLowerCase();
+  const q  = document.getElementById('orderSearch').value.toLowerCase().trim();
   const sf = document.getElementById('statusFilter').value;
   const pf = document.getElementById('payFilter').value;
-  // Only filter cards in orders tab, not done tab
+  // Only filter cards inside tab-orders, not done/completed tab
   document.querySelectorAll('#tab-orders .order-card').forEach(card => {
-    // Don't hide cards being animated to done tab
-    if (card.dataset.moving === '1') return;
-    const matchQ = !q  || (card.dataset.search||'').includes(q);
-    const matchS = !sf || card.dataset.status === sf;
+    const searchStr = (card.dataset.search||'').toLowerCase();
+    const matchQ = !q  || searchStr.includes(q);
+    const matchS = !sf || String(card.dataset.status) === String(sf);
     const matchP = !pf || card.dataset.pay === pf;
     card.style.display = matchQ && matchS && matchP ? '' : 'none';
   });
+}
+
+function clearOrderSearch() {
+  const el = document.getElementById('orderSearch');
+  if (el) { el.value = ''; filterOrders(); }
 }
 
 async function advanceStep(orderId) {
@@ -765,18 +787,8 @@ async function advanceStep(orderId) {
 }
 
 async function setStep(orderId, step) {
-  const intStep = parseInt(step);
-  // If setting to 5, open delivery modal instead
-  if (intStep === 5) {
-    openDelivery(orderId);
-    // Reset select to previous value
-    const sel = document.getElementById('sel-'+orderId);
-    const card = document.getElementById('order-'+orderId);
-    if (sel && card) sel.value = card.dataset.status;
-    return;
-  }
   try {
-    const res = await fetch(`/api/set-step/${orderId}/`,{method:'POST',headers:{'X-CSRFToken':CSRF,'Content-Type':'application/json'},body:JSON.stringify({step:intStep})});
+    const res = await fetch(`/api/set-step/${orderId}/`,{method:'POST',headers:{'X-CSRFToken':CSRF,'Content-Type':'application/json'},body:JSON.stringify({step:parseInt(step)})});
     const data = await res.json();
     updateOrderUI(orderId, data.status, data.label);
     showToast(`#${orderId} → ${data.label}`);
@@ -805,6 +817,8 @@ function updateOrderUI(orderId, newStatus) {
   const card = document.getElementById('order-'+orderId);
   if (!card) return;
   card.dataset.status = newStatus;
+  // Always keep card visible - never hide it
+  card.style.display = '';
   const badge = document.getElementById('badge-'+orderId);
   if (badge) {
     badge.className = 'badge badge-'+newStatus;
@@ -827,8 +841,16 @@ function updateOrderUI(orderId, newStatus) {
   if(advEl){
     if(newStatus===5){
       advEl.outerHTML=`<span class="done-mark" id="adv-${orderId}"><i class="uil uil-check-circle"></i> Завершён</span>`;
+    } else if(newStatus===4){
+      advEl.style.opacity=''; advEl.style.pointerEvents='';
+      advEl.style.background='var(--green)'; advEl.style.color='#fff';
+      advEl.innerHTML='<i class="uil uil-rocket"></i> Завершить заказ';
+      advEl.setAttribute('onclick', `openDelivery('${orderId}')`);
     } else {
       advEl.style.opacity=''; advEl.style.pointerEvents='';
+      advEl.style.background=''; advEl.style.color='';
+      advEl.innerHTML='<i class="uil uil-arrow-circle-right"></i> Следующий шаг';
+      advEl.setAttribute('onclick', `advanceStep('${orderId}')`);
     }
   }
 
@@ -836,16 +858,9 @@ function updateOrderUI(orderId, newStatus) {
   if (newStatus === 5) {
     setTimeout(() => moveCardToDone(orderId, card), 800);
   }
-
-  // Re-apply filters only if NOT moving to done tab
-  if (newStatus !== 5) {
-    filterOrders();
-  }
 }
 
 function moveCardToDone(orderId, card) {
-  // Mark as moving so filterOrders ignores it
-  card.dataset.moving = '1';
   // Build done card clone
   const doneTab = document.getElementById('tab-done');
   const emptyMsg = document.getElementById('done-empty-msg');
@@ -1015,10 +1030,6 @@ async function applyDiscount() {
 
 // Auto-move status=5 orders to Done tab on load
 document.addEventListener('DOMContentLoaded', () => {
-  // Clear search field (browser may autofill it)
-  const searchEl = document.getElementById('orderSearch');
-  if (searchEl) { searchEl.value = ''; }
-
   populateBotInfo();
   let hasDone = false;
   document.querySelectorAll('#tab-orders .order-card').forEach(card => {
@@ -1044,8 +1055,10 @@ let deliveryOrderId = null;
 function openDelivery(orderId) {
   deliveryOrderId = orderId;
   document.getElementById('dm2-badge').innerHTML = `<i class="uil uil-box"></i> #${orderId}`;
+  document.getElementById('dm2-botname').value = '';
   document.getElementById('dm2-token').value = '';
   document.getElementById('dm2-username').value = '';
+  document.getElementById('dm2-description').value = '';
   document.getElementById('dm2-note').value = '';
   document.getElementById('dm2-preview').textContent = 'username';
   document.querySelectorAll('.dm2-input').forEach(i => i.classList.remove('required-err'));
@@ -1077,12 +1090,16 @@ document.addEventListener('click', e => {
 });
 
 async function submitDelivery() {
+  const botname  = document.getElementById('dm2-botname').value.trim();
   const token    = document.getElementById('dm2-token').value.trim();
   const username = document.getElementById('dm2-username').value.replace('@','').trim();
+  const description = document.getElementById('dm2-description').value.trim();
   const note     = document.getElementById('dm2-note').value.trim();
 
   // Validate
   let valid = true;
+  if (!botname) { document.getElementById('dm2-botname').classList.add('required-err'); valid = false; }
+  else document.getElementById('dm2-botname').classList.remove('required-err');
   if (!token) { document.getElementById('dm2-token').classList.add('required-err'); valid = false; }
   else document.getElementById('dm2-token').classList.remove('required-err');
   if (!username) { document.getElementById('dm2-username').classList.add('required-err'); valid = false; }
@@ -1097,7 +1114,7 @@ async function submitDelivery() {
     const res = await fetch(`/api/deliver/${deliveryOrderId}/`, {
       method: 'POST',
       headers: {'X-CSRFToken': CSRF, 'Content-Type': 'application/json'},
-      body: JSON.stringify({bot_token: token, bot_username: username, admin_note: note})
+      body: JSON.stringify({bot_name: botname, bot_token: token, bot_username: username, bot_description: description, admin_note: note})
     });
     const data = await res.json();
     if (data.ok) {
@@ -1213,6 +1230,69 @@ async function submitChpass() {
   btn.innerHTML = '<i class="uil uil-check"></i> Сохранить';
 }
 
+</script>
+
+<!-- SET PRICE MODAL -->
+<div class="chpass-overlay" id="setPriceOverlay" onclick="closeSetPrice()">
+  <div class="chpass-modal" onclick="event.stopPropagation()">
+    <h3><i class="uil uil-dollar-sign"></i> Изменить цену</h3>
+    <p class="sub">Заказ: <strong id="setprice-orderid" style="color:#fff">—</strong></p>
+    <div class="chpass-input-wrap">
+      <input class="chpass-input" type="number" id="setPriceInput" placeholder="Новая цена в $" min="0" step="0.01">
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:var(--gray-400)">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" id="setPriceFree" onchange="if(this.checked){document.getElementById('setPriceInput').value='0';document.getElementById('setPriceInput').disabled=true;}else{document.getElementById('setPriceInput').disabled=false;}">
+        Сделать бесплатным для этого клиента
+      </label>
+    </div>
+    <div class="chpass-actions" style="margin-top:20px">
+      <button class="chpass-cancel" onclick="closeSetPrice()">Отмена</button>
+      <button class="chpass-save" onclick="submitSetPrice()"><i class="uil uil-check"></i> Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let setPriceOrderId = null;
+
+function openSetPrice(orderId, currentPrice) {
+  setPriceOrderId = orderId;
+  document.getElementById('setprice-orderid').textContent = '#' + orderId;
+  document.getElementById('setPriceInput').value = parseFloat(currentPrice).toFixed(2);
+  document.getElementById('setPriceInput').disabled = false;
+  document.getElementById('setPriceFree').checked = false;
+  document.getElementById('setPriceOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('setPriceInput').focus(), 100);
+}
+
+function closeSetPrice() {
+  document.getElementById('setPriceOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+async function submitSetPrice() {
+  const price = parseFloat(document.getElementById('setPriceInput').value);
+  if (isNaN(price) || price < 0) { showToast('Введите корректную цену', true); return; }
+  try {
+    const res = await fetch(`/api/set-price/${setPriceOrderId}/`, {
+      method: 'POST',
+      headers: {'X-CSRFToken': CSRF, 'Content-Type': 'application/json'},
+      body: JSON.stringify({price: price})
+    });
+    const data = await res.json();
+    if (data.ok) {
+      // Update price display
+      const el = document.getElementById('cprice-' + setPriceOrderId);
+      if (el) el.textContent = '$' + parseFloat(data.price).toFixed(2);
+      closeSetPrice();
+      showToast(`Цена заказа #${setPriceOrderId} изменена на $${parseFloat(data.price).toFixed(2)}`);
+    } else {
+      showToast(data.error || 'Ошибка', true);
+    }
+  } catch(e) { showToast('Ошибка сети', true); }
+}
 </script>
 </body>
 </html>

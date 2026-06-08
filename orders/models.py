@@ -42,9 +42,11 @@ class BotOrder(models.Model):
 class BotDelivery(models.Model):
     """Bot credentials delivered to client after completion"""
     order       = models.OneToOneField(BotOrder, on_delete=models.CASCADE, related_name='delivery')
+    bot_name    = models.CharField(max_length=200, blank=True, default='')  # display name
     bot_token   = models.CharField(max_length=200)
     bot_username = models.CharField(max_length=100)   # @username
     bot_url     = models.CharField(max_length=300, blank=True)  # t.me/username
+    bot_description = models.TextField(blank=True, default='')  # description for client
     admin_note  = models.TextField(blank=True)
     delivered_at = models.DateTimeField(auto_now_add=True)
 
