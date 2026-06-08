@@ -172,7 +172,7 @@
   {% if orders %}
     {% for order in orders %}
     <div class="order-wrap {% if order.status != 5 or not order.delivery %}order-wrap-single{% endif %}">
-    <a href="/orders/{{ order.order_id }}/" class="order-card" id="card-{{ order.order_id }}">
+    <a href="{% if order.payment_status == 'paid' %}/orders/{{ order.order_id }}/{% else %}/payment/payme/{{ order.order_id }}/{% endif %}" class="order-card" id="card-{{ order.order_id }}">
       <div class="order-head">
         <div>
           <div class="order-id">#{{ order.order_id }}</div>
@@ -209,9 +209,19 @@
       </div>
       <div class="order-date">
         <span><i class="uil uil-calendar-alt"></i> {{ order.created_at|date:"d.m.Y H:i" }}</span>
-        <span class="view-link">Подробнее <i class="uil uil-arrow-right"></i></span>
+        {% if order.payment_status == 'paid' %}
+          <span class="view-link">Подробнее <i class="uil uil-arrow-right"></i></span>
+        {% else %}
+          <span class="view-link" style="color:#f59e0b;"><i class="uil uil-credit-card"></i> Оплатить</span>
+        {% endif %}
       </div>
     </a>
+    {% if order.payment_status != 'paid' %}
+    <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px;margin-top:8px;display:flex;align-items:center;gap:10px;">
+      <i class="uil uil-exclamation-triangle" style="color:#f59e0b;font-size:18px;flex-shrink:0"></i>
+      <p style="margin:0;font-size:13px;color:#f59e0b;">Пока не оплатите заказ — бот не будет разрабатываться. Нажмите <strong>«Оплатить»</strong> чтобы начать разработку.</p>
+    </div>
+    {% endif %}
 
     {% if order.status == 5 %}
     {% if order.delivery %}

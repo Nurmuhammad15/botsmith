@@ -324,7 +324,6 @@
       </button>
     </div>
     <div class="tab-filters" id="ordersFilters">
-      <input class="search-input" type="text" id="orderSearch" placeholder="Поиск по ID, клиенту, боту…" oninput="filterOrders()">
       <select class="filter-select" id="statusFilter" onchange="filterOrders()">
         <option value="">Все статусы</option>
         <option value="1">Подтверждён</option>
@@ -746,30 +745,17 @@ function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
   btn.classList.add('active');
-  // Clear search when switching tabs so orders don't stay hidden
-  if (name === 'orders') {
-    const el = document.getElementById('orderSearch');
-    if (el) { el.value = ''; filterOrders(); }
-  }
+  if (name === 'orders') { filterOrders(); }
 }
 
 function filterOrders() {
-  const q  = document.getElementById('orderSearch').value.toLowerCase().trim();
   const sf = document.getElementById('statusFilter').value;
   const pf = document.getElementById('payFilter').value;
-  // Only filter cards inside tab-orders, not done/completed tab
   document.querySelectorAll('#tab-orders .order-card').forEach(card => {
-    const searchStr = (card.dataset.search||'').toLowerCase();
-    const matchQ = !q  || searchStr.includes(q);
     const matchS = !sf || String(card.dataset.status) === String(sf);
     const matchP = !pf || card.dataset.pay === pf;
-    card.style.display = matchQ && matchS && matchP ? '' : 'none';
+    card.style.display = matchS && matchP ? '' : 'none';
   });
-}
-
-function clearOrderSearch() {
-  const el = document.getElementById('orderSearch');
-  if (el) { el.value = ''; filterOrders(); }
 }
 
 async function advanceStep(orderId) {
