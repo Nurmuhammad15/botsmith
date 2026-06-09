@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/set-step/<str:order_id>/',         views.set_step,                name='set_step'),
     path('api/mark-paid/<str:order_id>/',        views.mark_paid,               name='mark_paid'),
     path('api/set-price/<str:order_id>/',        views.set_price,               name='set_price'),
+    path('api/confirm-price/<str:order_id>/',     views.confirm_price,           name='confirm_price'),
     path('api/deliver/<str:order_id>/',          views.deliver_bot,             name='deliver_bot'),
     path('api/status/<str:order_id>/',           views.order_status_api,        name='order_status_api'),
     path('api/change-password/<int:user_id>/',   views.change_client_password,  name='change_client_password'),

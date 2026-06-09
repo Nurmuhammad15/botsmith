@@ -321,7 +321,7 @@ def mark_paid(request, order_id):
 
 @require_POST
 def set_price(request, order_id):
-    """Admin applies discount — sets new price"""
+    """Admin sets price — requires separate confirmation"""
     if not request.user.is_authenticated or not request.user.is_staff:
         return JsonResponse({'error': 'forbidden'}, status=403)
     order = get_object_or_404(BotOrder, order_id=order_id)
@@ -330,8 +330,20 @@ def set_price(request, order_id):
     if new_price < 0:
         return JsonResponse({'error': 'invalid price'}, status=400)
     order.price = new_price
+    order.price_confirmed = False  # reset confirmation when price changes
     order.save()
     return JsonResponse({'ok': True, 'price': str(order.price)})
+
+
+@require_POST
+def confirm_price(request, order_id):
+    """Admin confirms price — client can now pay"""
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return JsonResponse({'error': 'forbidden'}, status=403)
+    order = get_object_or_404(BotOrder, order_id=order_id)
+    order.price_confirmed = True
+    order.save()
+    return JsonResponse({'ok': True, 'order_id': order_id})
 
 
 @require_POST

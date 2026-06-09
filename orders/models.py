@@ -32,6 +32,7 @@ class BotOrder(models.Model):
     created_at      = models.DateTimeField(auto_now_add=True)
     updated_at      = models.DateTimeField(auto_now=True)
     notes           = models.TextField(blank=True)
+    price_confirmed = models.BooleanField(default=False)  # admin confirmed price
 
     def __str__(self):
         return f'#{self.order_id} — {self.user.username} — {self.get_status_display()}'

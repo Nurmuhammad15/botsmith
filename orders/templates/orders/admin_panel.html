@@ -512,6 +512,11 @@
                 </span>
                 <span class="cord-price" id="cprice-{{ order.order_id }}">${{ order.price }}</span>
                 <button onclick="openSetPrice('{{ order.order_id }}','{{ order.price }}')" style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);border-radius:6px;cursor:pointer;color:#818cf8;font-size:11px;padding:3px 8px;font-weight:700;font-family:var(--font)"><i class="uil uil-dollar-sign"></i> Цена</button>
+                {% if not order.price_confirmed %}
+                <button onclick="confirmPrice('{{ order.order_id }}',this)" id="cpbtn-{{ order.order_id }}" style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);border-radius:6px;cursor:pointer;color:#22c55e;font-size:11px;padding:3px 8px;font-weight:700;font-family:var(--font)"><i class="uil uil-check"></i> Подтвердить цену</button>
+                {% else %}
+                <span id="cpbtn-{{ order.order_id }}" style="font-size:11px;color:#22c55e;font-weight:700"><i class="uil uil-check-circle"></i> Цена подтверждена</span>
+                {% endif %}
                 <a href="/admin-panel/client/{{ u.pk }}/" class="cord-link">
                   Открыть <i class="uil uil-external-link-alt"></i>
                 </a>
@@ -1276,6 +1281,24 @@ async function submitSetPrice() {
       showToast(`Цена заказа #${setPriceOrderId} изменена на $${parseFloat(data.price).toFixed(2)}`);
     } else {
       showToast(data.error || 'Ошибка', true);
+    }
+  } catch(e) { showToast('Ошибка сети', true); }
+}
+</script>
+
+<script>
+async function confirmPrice(orderId, btn) {
+  if (btn) { btn.style.opacity = '.5'; btn.style.pointerEvents = 'none'; }
+  try {
+    const res = await fetch(`/api/confirm-price/${orderId}/`, {
+      method: 'POST',
+      headers: {'X-CSRFToken': CSRF}
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const el = document.getElementById('cpbtn-' + orderId);
+      if (el) el.outerHTML = `<span id="cpbtn-${orderId}" style="font-size:11px;color:#22c55e;font-weight:700"><i class="uil uil-check-circle"></i> Цена подтверждена</span>`;
+      showToast(`Цена заказа #${orderId} подтверждена — клиент может оплатить`);
     }
   } catch(e) { showToast('Ошибка сети', true); }
 }
