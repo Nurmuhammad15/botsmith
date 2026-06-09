@@ -172,7 +172,7 @@
   {% if orders %}
     {% for order in orders %}
     <div class="order-wrap {% if order.status != 5 or not order.delivery %}order-wrap-single{% endif %}">
-    <a href="{% if order.payment_status == 'paid' %}/orders/{{ order.order_id }}/{% else %}/payment/payme/{{ order.order_id }}/{% endif %}" class="order-card" id="card-{{ order.order_id }}">
+    <a href="/orders/{{ order.order_id }}/" class="order-card" id="card-{{ order.order_id }}">
       <div class="order-head">
         <div>
           <div class="order-id">#{{ order.order_id }}</div>
@@ -209,17 +209,16 @@
       </div>
       <div class="order-date">
         <span><i class="uil uil-calendar-alt"></i> {{ order.created_at|date:"d.m.Y H:i" }}</span>
-        {% if order.payment_status == 'paid' %}
-          <span class="view-link">Подробнее <i class="uil uil-arrow-right"></i></span>
-        {% else %}
-          <span class="view-link" style="color:#f59e0b;"><i class="uil uil-credit-card"></i> Оплатить</span>
-        {% endif %}
+        <span class="view-link">Подробнее <i class="uil uil-arrow-right"></i></span>
       </div>
     </a>
     {% if order.payment_status != 'paid' %}
-    <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px;margin-top:8px;display:flex;align-items:center;gap:10px;">
-      <i class="uil uil-exclamation-triangle" style="color:#f59e0b;font-size:18px;flex-shrink:0"></i>
-      <p style="margin:0;font-size:13px;color:#f59e0b;">Пока не оплатите заказ — бот не будет разрабатываться. Нажмите <strong>«Оплатить»</strong> чтобы начать разработку.</p>
+    <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <i class="uil uil-exclamation-triangle" style="color:#f59e0b;font-size:18px;flex-shrink:0"></i>
+        <p style="margin:0;font-size:13px;color:#f59e0b;">Пока не оплатите заказ — бот не будет разрабатываться.</p>
+      </div>
+      <a href="/payment/payme/{{ order.order_id }}/" style="background:#f59e0b;color:#000;border:none;border-radius:8px;padding:8px 18px;font-weight:700;font-size:13px;cursor:pointer;text-decoration:none;white-space:nowrap;"><i class="uil uil-credit-card"></i> Оплатить</a>
     </div>
     {% endif %}
 
@@ -340,33 +339,20 @@
 <div class="modal-overlay" id="modalOverlay" onclick="closeModal()">
   <div class="modal-box" onclick="event.stopPropagation()">
     <h2 id="modalTitle">Оформить заказ</h2>
-    <p class="modal-sub" id="modalDesc">Выберите способ оплаты и подтвердите заказ</p>
+    <p class="modal-sub" id="modalDesc">Подтвердите заказ — оплатить можно позже</p>
     <div class="modal-price" id="modalPrice">$0</div>
-
-    <div class="pay-label"><i class="uil uil-credit-card"></i> Способ оплаты</div>
-    <div class="pay-methods">
-      <div class="pay-method selected" id="pm-payme" onclick="selectMethod('payme')">
-        <div class="pm-logo payme-color">P</div>
-        <div class="pm-name">Payme</div>
-        <div class="pm-sub">Visa / MC / Uzcard</div>
-      </div>
-      <div class="pay-method" id="pm-click" onclick="selectMethod('click')">
-        <div class="pm-logo click-color">C</div>
-        <div class="pm-name">Click</div>
-        <div class="pm-sub">Humo / Uzcard</div>
-      </div>
+    <div style="background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:10px;padding:12px 14px;font-size:13px;color:#a5b4fc;margin-bottom:16px;">
+      <i class="uil uil-info-circle"></i> После подтверждения заказ появится в «Мои заказы». Оплатить можно в любое время.
     </div>
-
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Отмена</button>
       <button class="btn-confirm" style="flex:2" id="confirmBtn" onclick="submitOrder()">
-        <i class="uil uil-lock-alt"></i>
-        <span id="confirmBtnText">Оплатить через Payme</span>
+        <i class="uil uil-check-circle"></i>
+        <span id="confirmBtnText">Подтвердить заказ</span>
       </button>
     </div>
     <input type="hidden" id="hiddenBotType">
     <input type="hidden" id="hiddenPrice">
-    <input type="hidden" id="hiddenMethod" value="payme">
     {% csrf_token %}
   </div>
 </div>
@@ -374,17 +360,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-let selectedMethod = 'payme';
-
-function selectMethod(m) {
-  selectedMethod = m;
-  document.querySelectorAll('.pay-method').forEach(el => el.classList.remove('selected'));
-  document.getElementById('pm-' + m).classList.add('selected');
-  document.getElementById('hiddenMethod').value = m;
-  const labels = {payme: 'Оплатить через Payme', click: 'Оплатить через Click'};
-  document.getElementById('confirmBtnText').textContent = labels[m] || 'Оплатить';
-}
-
 function confirmOrder(botType, price, e) {
   if(e) e.preventDefault();
   document.getElementById('modalTitle').textContent = botType;
@@ -403,12 +378,10 @@ async function submitOrder() {
   const btn = document.getElementById('confirmBtn');
   const botType = document.getElementById('hiddenBotType').value;
   const price   = document.getElementById('hiddenPrice').value;
-  const method  = document.getElementById('hiddenMethod').value;
 
   btn.disabled = true;
   btn.innerHTML = '<i class="uil uil-spinner-alt"></i> Оформляем…';
 
-  // Get CSRF token from cookie
   function getCookie(name) {
     let v = null;
     document.cookie.split(';').forEach(c => {
@@ -426,15 +399,17 @@ async function submitOrder() {
         'Content-Type': 'application/json',
         'X-CSRFToken': csrf,
       },
-      body: JSON.stringify({bot_type: botType, price: price, payment_method: method})
+      body: JSON.stringify({bot_type: botType, price: price})
     });
     const data = await res.json();
-    if (data.ok && data.redirect) {
-      window.location.href = data.redirect;
+    if (data.ok) {
+      closeModal();
+      showToast('Заказ оформлен! Оплатите чтобы начать разработку.');
+      setTimeout(() => window.location.reload(), 1200);
     } else {
       showToast('Ошибка при оформлении', false);
       btn.disabled = false;
-      btn.innerHTML = '<i class="uil uil-lock-alt"></i> <span id="confirmBtnText">Оплатить</span>';
+      btn.innerHTML = '<i class="uil uil-check-circle"></i> <span id="confirmBtnText">Подтвердить заказ</span>';
     }
   } catch(err) {
     showToast('Ошибка сети', false);

@@ -129,21 +129,11 @@ def place_order(request):
             payment_status='pending',
             payment_method='',
         )
-        # Return JSON with redirect URL for JS fetch
+        # Always return JSON — no redirect to payment
         if request.content_type and 'application/json' in request.content_type:
-            if method == 'payme':
-                url = f'/payment/payme/{order.order_id}/'
-            elif method == 'click':
-                url = f'/payment/click/{order.order_id}/'
-            else:
-                url = '/orders/'
-            return JsonResponse({'ok': True, 'redirect': url, 'order_id': order.order_id})
+            return JsonResponse({'ok': True, 'order_id': order.order_id})
 
-        # Normal form POST
-        if method == 'payme':
-            return redirect('pay_payme', order_id=order.order_id)
-        elif method == 'click':
-            return redirect('pay_click', order_id=order.order_id)
+        # Normal form POST — go to my orders
         return redirect('my_orders')
     return redirect('my_orders')
 
