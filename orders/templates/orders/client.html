@@ -212,7 +212,7 @@
         <span class="view-link">Подробнее <i class="uil uil-arrow-right"></i></span>
       </div>
     </a>
-    {% if order.payment_status != 'paid' %}
+    {% if order.payment_status != 'paid' and order.status != 5 %}
     <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:10px;padding:12px 16px;margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
       <div style="display:flex;align-items:center;gap:10px;">
         <i class="uil uil-exclamation-triangle" style="color:#f59e0b;font-size:18px;flex-shrink:0"></i>
