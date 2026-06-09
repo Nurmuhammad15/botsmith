@@ -102,7 +102,7 @@
       <div class="sord-label">ID заказа</div>
       <div class="sord-id">#{{ order.order_id }}</div>
     </div>
-    <a href="/orders/" class="btn-go">
+    <a href="/orders/" class="btn-go" onclick="sessionStorage.removeItem('ordersCache')">
       <i class="uil uil-list-ul"></i> Мои заказы
     </a>
   </div>

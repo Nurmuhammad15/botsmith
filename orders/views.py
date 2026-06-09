@@ -103,7 +103,10 @@ def logout_view(request):
 @login_required(login_url='login')
 def my_orders(request):
     orders = BotOrder.objects.filter(user=request.user).prefetch_related('delivery')
-    return render(request, 'orders/client.html', {'orders': orders, 'user': request.user})
+    response = render(request, 'orders/client.html', {'orders': orders, 'user': request.user})
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    return response
 
 @login_required(login_url='login')
 def place_order(request):
