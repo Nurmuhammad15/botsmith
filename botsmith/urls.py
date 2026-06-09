@@ -4,7 +4,10 @@ from django.http import HttpResponse
 from orders import views
 
 urlpatterns = [
-    path('googlefce41dd76233285b.html', lambda r: HttpResponse('google-site-verification: googlefce41dd76233285b.html', content_type='text/html; charset=utf-8')),
+    path('googlefce41dd76233285b.html', lambda r: HttpResponse(
+        '<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></head><body>google-site-verification: googlefce41dd76233285b.html</body></html>',
+        content_type='text/html; charset=utf-8'
+    )),
     path('django-admin/', admin.site.urls),
     path('',                         views.home,               name='home'),
     path('orders/',                  views.my_orders,          name='my_orders'),
