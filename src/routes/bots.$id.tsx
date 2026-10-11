@@ -216,8 +216,8 @@ function Detail() {
                   {bot.fileCount > 0 && (
                     <p className="mt-5 flex items-center gap-2 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
                       <FileArchive className="h-4 w-4 shrink-0" />
-                      Bot bilan birga {bot.fileCount} ta fayl taqdim etiladi — to‘lovdan keyin
-                      “Buyurtmalar” sahifasidan yuklab olasiz.
+                      Bot bilan birga {bot.fileCount} ta fayl taqdim etiladi — yetkazib berish
+                      boshlangach “Buyurtmalar” sahifasidan yuklab olasiz.
                     </p>
                   )}
                 </>

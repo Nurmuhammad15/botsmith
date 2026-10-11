@@ -12,7 +12,7 @@ export const buyerFaqs: Faq[] = [
   ],
   [
     "Botni qachon olaman?",
-    "To‘lovdan keyin sotuvchi botni bot sahifasida ko‘rsatilgan muddatda yetkazadi. Holatni “Buyurtmalar”da kuzating. Sotuvchi fayl biriktirgan bo‘lsa, ularni shu yerdan yuklab olasiz.",
+    "To‘lovdan keyin sotuvchi botni bot sahifasida ko‘rsatilgan muddatda yetkazadi. Holatni “Buyurtmalar”da kuzating. Sotuvchi fayl biriktirgan bo‘lsa, yetkazib berish boshlangach ularni shu yerdan yuklab olasiz.",
   ],
   [
     "Sotuvchi bilan qanday bog‘lanaman?",
@@ -43,7 +43,7 @@ export const sellerFaqs: Faq[] = [
   ],
   [
     "Rasm va fayllarni qanday boshqaraman?",
-    "Mening botlarim sahifasida botni tanlab, rasm (JPG, PNG yoki WebP, 5 MB gacha, 5 tagacha) va fayllar (50 MB gacha, 10 tagacha) qo‘shing yoki o‘chiring. Fayllarni faqat to‘lov qilgan xaridor yuklab oladi. E’lon qilingan botga yangi rasm qo‘shsangiz, u qayta tekshiruvga yuboriladi.",
+    "Mening botlarim sahifasida botni tanlab, rasm (JPG, PNG yoki WebP, 5 MB gacha, 5 tagacha) va fayllar (50 MB gacha, 10 tagacha) qo‘shing yoki o‘chiring. Fayllarni xaridor siz “Yetkazishni boshlash”ni bosgandan keyingina yuklab oladi (shundan keyin to‘lov qaytarib bo‘lmaydi). E’lon qilingan botga yangi rasm qo‘shsangiz, u qayta tekshiruvga yuboriladi.",
   ],
   [
     "Buyurtmalarni qayerda ko‘raman?",

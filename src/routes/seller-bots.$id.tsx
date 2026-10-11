@@ -265,7 +265,7 @@ function MediaManager({ bot, sellerId }: { bot: SellerBot; sellerId: string }) {
           Bot fayllari
         </h3>
         <p className="text-xs text-muted-foreground">
-          Fayllarni faqat to‘lov qilgan xaridor yuklab oladi.
+          Xaridor fayllarni siz buyurtmada “Yetkazishni boshlash”ni bosgandan keyin yuklab oladi.
         </p>
         {filesPending ? (
           <p className="text-sm text-muted-foreground">Yuklanmoqda…</p>

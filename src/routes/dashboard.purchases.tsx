@@ -146,7 +146,7 @@ function PurchasesContent() {
                 <Stepper step={orderStep(current.status)} />
               </div>
             )}
-            {["paid", "delivering", "done"].includes(current.status) && (
+            {["delivering", "done"].includes(current.status) && (
               <OrderFiles botId={current.botId} />
             )}
             <WriteToSeller botId={current.botId} />

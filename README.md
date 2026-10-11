@@ -31,6 +31,7 @@ Run the files in `supabase/migrations/` **in order** in the Supabase SQL editor 
 | `0001_marketplace.sql` | profiles/roles, bots, orders, reviews, withdrawals, support chat, row level security |
 | `0002_media_chat_favorites.sql` | cover images and bot files (Storage buckets `bot-covers` and `bot-files`), buyer–seller chat, favorites, de-duplicated view counting |
 | `0003_payments.sql` | Payme / Click payment transactions and their state machine |
+| `0005_review_fixes.sql` | fixes from the security review: refunds vs. withdrawals, file access timing, media moderation bypasses, review privacy, size limits |
 | `0004_withdrawal_card_privacy.sql` | seller card numbers are no longer readable by clients; administrators reveal them through an audited function |
 
 To create the first administrator, register normally, then run in the SQL editor:
@@ -42,7 +43,7 @@ where id = (select id from auth.users where email = 'you@example.com');
 
 Storage notes: covers are public images (JPG/PNG/WebP, 5 MB, up to 5 per bot). Bot files are
 private (50 MB each, up to 10 per bot) and can only be downloaded by the seller and by buyers whose
-order is paid. If your Supabase plan caps uploads below 50 MB, lower the bucket limit in
+order is being delivered or done (the same moment refunds close). If your Supabase plan caps uploads below 50 MB, lower the bucket limit in
 `0002_media_chat_favorites.sql`.
 
 ### Testing the SQL

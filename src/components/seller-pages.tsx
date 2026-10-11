@@ -510,7 +510,7 @@ export function SellerNewBot() {
           />
           <MediaPicker
             label="Bot fayllari (ixtiyoriy)"
-            hint={`Faqat to‘lov qilgan xaridor yuklab oladi · 50 MB gacha · ko‘pi bilan ${MAX_FILES} ta`}
+            hint={`Xaridor yetkazib berish boshlangach yuklab oladi · 50 MB gacha · ko‘pi bilan ${MAX_FILES} ta`}
             files={files}
             onChange={setFiles}
             validate={validateDeliverable}
