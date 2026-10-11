@@ -17,7 +17,11 @@ const dict = {
     ru: "Готовые Telegram-боты, надёжные разработчики и безопасная оплата. Автоматизируйте бизнес или продавайте своих ботов.",
     en: "Ready-made Telegram bots, trusted developers and secure payments. Automate your business or sell your own bots.",
   },
-  search: { uz: "Bot nomi yoki kategoriya bo'yicha qidirish...", ru: "Поиск по названию или категории...", en: "Search by bot name or category..." },
+  search: {
+    uz: "Bot nomi yoki kategoriya bo'yicha qidirish...",
+    ru: "Поиск по названию или категории...",
+    en: "Search by bot name or category...",
+  },
   viewBots: { uz: "Botlarni ko'rish", ru: "Смотреть ботов", en: "Browse bots" },
   startSelling: { uz: "Bot sotishni boshlash", ru: "Начать продавать", en: "Start selling" },
   categories: { uz: "Kategoriyalar", ru: "Категории", en: "Categories" },
@@ -30,7 +34,9 @@ const dict = {
 export type Key = keyof typeof dict;
 
 const Ctx = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: (k: Key) => string }>({
-  lang: "uz", setLang: () => {}, t: (k) => dict[k].uz,
+  lang: "uz",
+  setLang: () => {},
+  t: (k) => dict[k].uz,
 });
 export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<Lang>("uz");

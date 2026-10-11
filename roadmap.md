@@ -1,4 +1,5 @@
 # BotSmith roadmap
+
 - [x] Phase 1: UI for all pages, i18n switcher (UZ/RU/EN), mobile layout
 - [x] Phase 2: Supabase backend — profiles/roles, bots, orders, reviews, withdrawals, support chat, RLS
 - [x] Media: cover images and private bot files (Supabase Storage)

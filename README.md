@@ -26,13 +26,13 @@ npm run dev
 
 Run the files in `supabase/migrations/` **in order** in the Supabase SQL editor (each file once):
 
-| File | Adds |
-| --- | --- |
-| `0001_marketplace.sql` | profiles/roles, bots, orders, reviews, withdrawals, support chat, row level security |
-| `0002_media_chat_favorites.sql` | cover images and bot files (Storage buckets `bot-covers` and `bot-files`), buyer–seller chat, favorites, de-duplicated view counting |
-| `0003_payments.sql` | Payme / Click payment transactions and their state machine |
-| `0005_review_fixes.sql` | fixes from the security review: refunds vs. withdrawals, file access timing, media moderation bypasses, review privacy, size limits |
-| `0004_withdrawal_card_privacy.sql` | seller card numbers are no longer readable by clients; administrators reveal them through an audited function |
+| File                               | Adds                                                                                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `0001_marketplace.sql`             | profiles/roles, bots, orders, reviews, withdrawals, support chat, row level security                                                 |
+| `0002_media_chat_favorites.sql`    | cover images and bot files (Storage buckets `bot-covers` and `bot-files`), buyer–seller chat, favorites, de-duplicated view counting |
+| `0003_payments.sql`                | Payme / Click payment transactions and their state machine                                                                           |
+| `0005_review_fixes.sql`            | fixes from the security review: refunds vs. withdrawals, file access timing, media moderation bypasses, review privacy, size limits  |
+| `0004_withdrawal_card_privacy.sql` | seller card numbers are no longer readable by clients; administrators reveal them through an audited function                        |
 
 To create the first administrator, register normally, then run in the SQL editor:
 
@@ -62,10 +62,10 @@ npm test                             # also runs the payment endpoint tests agai
 Buyers pay on the provider's page; the provider then calls two endpoints of this app, which mark
 the order paid in the database. Nothing is marked paid by the browser.
 
-| Endpoint | Provider call |
-| --- | --- |
+| Endpoint          | Provider call                                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `POST /api/payme` | Payme Merchant API (JSON-RPC: CheckPerformTransaction, CreateTransaction, PerformTransaction, CancelTransaction, CheckTransaction, GetStatement) |
-| `POST /api/click` | Click Shop API (Prepare and Complete, MD5-signed) |
+| `POST /api/click` | Click Shop API (Prepare and Complete, MD5-signed)                                                                                                |
 
 Until the credentials below are set, the order page shows no pay buttons and orders are confirmed
 by an administrator (Admin → Buyurtmalar → "To'langan").
@@ -73,7 +73,7 @@ by an administrator (Admin → Buyurtmalar → "To'langan").
 1. Open a merchant account. Both providers contract with businesses (a legal entity or a
    registered self-employed merchant with a settlement account); this takes days to weeks and
    cannot be done in code.
-2. **Payme Business:** create a *web cash desk with billing*. Add one account field named
+2. **Payme Business:** create a _web cash desk with billing_. Add one account field named
    `order_id` (text). Set its endpoint URL to `https://<your-domain>/api/payme`. Copy the cash desk
    ID and Key (the sandbox gives a separate `TEST_KEY`).
 3. **Click:** in the merchant cabinet create a service whose Prepare and Complete URLs are both
