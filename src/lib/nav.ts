@@ -1,0 +1,42 @@
+import {
+  Home,
+  ShoppingBag,
+  Heart,
+  HelpCircle,
+  Bot,
+  Package,
+  Wallet,
+  History,
+  User,
+  Users,
+  CreditCard,
+  Percent,
+  MessageSquare,
+  Settings,
+} from "lucide-react";
+import type { SideItem } from "@/components/site";
+
+export const buyerNav: SideItem[] = [
+  { to: "/", label: "Bosh sahifa", icon: Home },
+  { to: "/dashboard/purchases", label: "Buyurtmalar", icon: ShoppingBag },
+  { to: "/bots", label: "Sevimlilar", icon: Heart },
+  { to: "/help", label: "Yordam", icon: HelpCircle },
+];
+export const sellerNav: SideItem[] = [
+  { to: "/seller", label: "Mening botlarim", icon: Bot },
+  { to: "/seller-orders", label: "Buyurtmalar", icon: Package },
+  { to: "/seller-earnings", label: "Daromadlar", icon: Wallet },
+  { to: "/seller-withdrawal-history", label: "Yechish tarixi", icon: History },
+  { to: "/seller-profile", label: "Profil", icon: User },
+  { to: "/help", label: "Yordam", icon: HelpCircle },
+];
+export const adminNav: SideItem[] = [
+  { to: "/", label: "Bosh sahifa", icon: Home },
+  { to: "/admin", label: "Botlar", icon: Bot },
+  { to: "/admin", label: "Foydalanuvchilar", icon: Users },
+  { to: "/admin", label: "Buyurtmalar", icon: Package },
+  { to: "/admin", label: "To'lovlar", icon: CreditCard },
+  { to: "/admin", label: "Komissiya", icon: Percent },
+  { to: "/admin", label: "Murojaatlar", icon: MessageSquare },
+  { to: "/admin", label: "Sozlamalar", icon: Settings },
+];
