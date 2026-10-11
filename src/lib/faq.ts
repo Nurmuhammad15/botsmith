@@ -39,7 +39,7 @@ export const buyerFaqs: Faq[] = [
 export const sellerFaqs: Faq[] = [
   [
     "Bot obunasini qanday joylayman?",
-    "“Yangi bot qo‘shish” orqali bot nomi, tavsifi, rasmlari, 1/7/30 kunlik obuna narxlari va HTTPS webhook sozlamalarini kiriting. Administrator tekshirgach bot katalogda e’lon qilinadi.",
+    "“Yangi bot qo‘shish” orqali bot nomi, tavsifi, rasmlari va 1/7/30 kunlik obuna narxlarini kiriting. Administrator tekshirgach bot katalogda e’lon qilinadi.",
   ],
   [
     "Rasm va obuna narxlarini qanday boshqaraman?",
@@ -47,7 +47,7 @@ export const sellerFaqs: Faq[] = [
   ],
   [
     "Botga kirishni qanday boshqaraman?",
-    "Bot serveringizdagi HTTPS webhookni sozlang. To‘lov, muddat tugashi va qaytarish so‘rovi kabi imzolangan hodisalar yuboriladi. Webhook imzosini serveringizda tekshirib, kirishni tegishli hodisa asosida boshqaring.",
+    "“Buyurtmalar” bo‘limida to‘lov, obuna muddati va qaytarish so‘rovi holatini ko‘ring. Xaridorga shu yerdan yozib, botingizga kirishni qo‘lda bering yoki obuna tugaganda bekor qiling. To‘lov va qaytarish qarorlarini BotSmith nazorat qiladi.",
   ],
   [
     "Xaridor bilan qanday gaplashaman?",

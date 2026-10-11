@@ -25,8 +25,9 @@ function Terms() {
         <h2 className="mt-8 text-xl font-semibold">Obuna xaridi</h2>
         <p className="mt-3 text-sm leading-7">
           BotSmith katalogida ko‘rsatilgan botdan 1, 7 yoki 30 kunlik muddatga obuna tanlaysiz.
-          To‘lov tasdiqlangan vaqtda obuna faollashadi va bot egasining ulangan webhook tizimiga
-          faollashtirish xabari yuboriladi. Obuna muddati to‘lov tasdiqlangan paytdan hisoblanadi.
+          To‘lov tasdiqlangach obuna muddati boshlanadi va buyurtma BotSmith hamda bot egasining
+          kabinetida qayd etiladi. Bot egasi siz bilan bog‘lanib, o‘z botiga kirishni taqdim etadi.
+          Muddat to‘lov tasdiqlangan vaqtdan hisoblanadi.
         </p>
 
         <h2 className="mt-8 text-xl font-semibold">24 soat ichida qaytarish</h2>
@@ -39,9 +40,10 @@ function Terms() {
           qilishi mumkin. 24 soat o‘tgach yangi qaytarish so‘rovi qabul qilinmaydi.
         </p>
         <p className="mt-3 text-sm leading-7">
-          Qaytarish so‘rovi ko‘rib chiqilayotgan vaqt ichida bot egasi ruxsatni vaqtincha
-          to‘xtatishi mumkin. Qaytarish tasdiqlansa obuna bekor qilinadi; rad etilsa, obuna muddati
-          tugamagan bo‘lsa, bot egasiga qayta faollashtirish hodisasi yuboriladi.
+          Qaytarish so‘rovi ko‘rib chiqilayotgan vaqtda BotSmith buyurtmani belgilaydi va ma’muriyat
+          ko‘rib chiqadi. Bot egasi buyurtmalar sahifasida holatni ko‘rib, kerak bo‘lsa kirishni
+          vaqtincha to‘xtatadi. Qaytarish tasdiqlansa obuna bekor qilinadi; rad etilsa, obuna
+          muddati tugamagan bo‘lsa, bot egasi xaridor bilan bog‘lanib kirishni davom ettiradi.
         </p>
 
         <h2 className="mt-8 text-xl font-semibold">Narx va komissiya</h2>
@@ -58,14 +60,12 @@ function Terms() {
           To‘lovga o‘tishdan oldin ushbu qoidalarni o‘qib, rozilik katagini belgilashingiz kerak.
           Rozilik va qoidalar versiyasi buyurtmaga biriktirib saqlanadi.
         </p>
-        <h2 className="mt-8 text-xl font-semibold">Bot ulanishi</h2>
+        <h2 className="mt-8 text-xl font-semibold">Botga kirish</h2>
         <p className="mt-3 text-sm leading-7">
-          Bot egasi HTTPS webhook manzilini va maxfiy kalitni taqdim etadi. BotSmith JSON
-          hodisalarini yuboradi: `subscription.activated`, `subscription.expired`,
-          `subscription.refund_requested`, `subscription.refunded` va `subscription.reactivated`.
-          Har bir so‘rov `X-BotSmith-Timestamp` hamda `X-BotSmith-Signature` sarlavhalari bilan
-          HMAC-SHA256 usulida imzolanadi. Bot egasi imzoni tekshirishi va takroriy hodisalarni
-          `X-BotSmith-Delivery` identifikatori orqali aniqlashi kerak.
+          BotSmith to‘lov, obuna muddati va qaytarish holatini nazorat qiladi. Bot egasi kirishni
+          o‘z xizmatida qo‘lda beradi va obuna tugaganda bekor qiladi; buning uchun webhook yoki
+          server manzilini ulash shart emas. BotSmith bot egasiga to‘lov yoki qaytarish qarorini
+          qayd etadi, ammo tashqi botga kirishni avtomatik yoqmaydi yoki o‘chirmaydi.
         </p>
         <p className="mt-8 text-sm">
           <Link to="/help" className="text-primary underline">

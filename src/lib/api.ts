@@ -243,8 +243,6 @@ export type NewBotInput = {
   price7Days: number;
   price30Days: number;
   desc: string;
-  webhookUrl: string;
-  webhookSecret: string;
 };
 
 export function useAddBot(sellerId: string | undefined) {
@@ -261,8 +259,6 @@ export function useAddBot(sellerId: string | undefined) {
             p_price_1_day: input.price,
             p_price_7_days: input.price7Days,
             p_price_30_days: input.price30Days,
-            p_webhook_url: input.webhookUrl.trim(),
-            p_webhook_secret: input.webhookSecret.trim(),
           }),
         ),
       );
@@ -316,22 +312,6 @@ export function useAdminResolveSubscriptionRefund() {
   });
 }
 
-export function useSetBotSubscriptionWebhook() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { botId: string; url: string; secret: string }) => {
-      check(
-        await db().rpc("set_bot_subscription_webhook", {
-          p_bot: input.botId,
-          p_url: input.url,
-          p_secret: input.secret,
-        }),
-      );
-    },
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["my-bots"] }),
-  });
-}
-
 export type SellerSubscriptionConfig = {
   price1Day: number;
   price7Days: number | null;
@@ -368,8 +348,6 @@ export function useConfigureBotSubscription() {
       price1Day: number;
       price7Days: number;
       price30Days: number;
-      webhookUrl: string;
-      webhookSecret: string;
     }) => {
       check(
         await db().rpc("configure_bot_subscription", {
@@ -377,8 +355,6 @@ export function useConfigureBotSubscription() {
           p_price_1_day: input.price1Day,
           p_price_7_days: input.price7Days,
           p_price_30_days: input.price30Days,
-          p_webhook_url: input.webhookUrl,
-          p_webhook_secret: input.webhookSecret,
         }),
       );
     },

@@ -1,8 +1,9 @@
 # BotSmith
 
 BotSmith is a marketplace for Telegram bot subscriptions. Buyers choose 1-, 7-, or 30-day access;
-sellers set each plan's price and connect an HTTPS webhook to activate or revoke access on their
-own bot service. BotSmith does not sell or deliver bot source files.
+sellers set each plan's price and manage buyer access from the order list. BotSmith tracks payments,
+subscription periods, refunds, and seller balances; sellers manually grant or revoke access on
+their own bot service. BotSmith does not sell or deliver bot source files.
 
 ## Development
 
@@ -20,15 +21,16 @@ npm run dev
 
 Run the files in `supabase/migrations/` **in order** in the Supabase SQL editor (each file once):
 
-| File                               | Adds                                                                                    |
-| ---------------------------------- | --------------------------------------------------------------------------------------- |
-| `0001_marketplace.sql`             | profiles/roles, bots, orders, reviews, withdrawals, support chat, row-level security    |
-| `0002_media_chat_favorites.sql`    | cover images, legacy bot-file storage, chat, favorites, de-duplicated view counting     |
-| `0003_payments.sql`                | Payme / Click payment transactions and their state machine                              |
-| `0004_withdrawal_card_privacy.sql` | private seller card numbers and audited admin reveal                                    |
-| `0005_review_fixes.sql`            | refund, media moderation, review privacy, and size-limit fixes                          |
-| `0006_chat_fixes.sql`              | chat access and consistency fixes                                                       |
-| `0007_subscriptions.sql`           | 1/7/30-day plans, consent and refunds, 15% commission, seller webhook outbox and expiry |
+| File                                  | Adds                                                                                 |
+| ------------------------------------- | ------------------------------------------------------------------------------------ |
+| `0001_marketplace.sql`                | profiles/roles, bots, orders, reviews, withdrawals, support chat, row-level security |
+| `0002_media_chat_favorites.sql`       | cover images, legacy bot-file storage, chat, favorites, de-duplicated view counting  |
+| `0003_payments.sql`                   | Payme / Click payment transactions and their state machine                           |
+| `0004_withdrawal_card_privacy.sql`    | private seller card numbers and audited admin reveal                                 |
+| `0005_review_fixes.sql`               | refund, media moderation, review privacy, and size-limit fixes                       |
+| `0006_chat_fixes.sql`                 | chat access and consistency fixes                                                    |
+| `0007_subscriptions.sql`              | 1/7/30-day plans, consent and refunds, 15% commission, and expiry tracking           |
+| `0008_manual_subscription_access.sql` | Removes seller webhooks; sellers manage access from paid orders                      |
 
 To create the first administrator, register normally, then run in the SQL editor:
 
@@ -86,20 +88,18 @@ transfers it to the card and marks it paid. Automating this needs a payout produ
 payment provider or bank (ask Payme/Click about split payments or payouts to cards); it is a
 separate agreement, not something the app can switch on by itself.
 
-## Subscription webhooks and refunds
+## Subscription access and refunds
 
-Each bot needs a seller-managed HTTPS webhook and a random secret of at least 32 characters.
-BotSmith sends signed JSON events (`subscription.activated`, `subscription.expired`,
-`subscription.refund_requested`, `subscription.refunded`, `subscription.reactivated`) with
-`X-BotSmith-Timestamp`, `X-BotSmith-Signature`, and idempotency key `X-BotSmith-Delivery`.
-The signature is `sha256=` followed by the hex HMAC-SHA256 of
-`<timestamp>.<raw request body>`. Verify it with a constant-time comparison and reject stale
-timestamps; process delivery IDs idempotently. Failed deliveries retry with backoff.
+No seller webhook, public seller endpoint, cron job, or webhook secret is required. BotSmith is the
+source of truth for payment, refund status, and subscription start/end times. Sellers use
+**Seller dashboard → Orders** to see paid, expiring, expired, and refund-requested subscriptions,
+then message buyers there to grant or revoke access on their bot service. Access on a seller's
+external bot is managed manually; it is not automatically changed by BotSmith. This keeps buyer
+payments and refund decisions under platform control without requiring sellers to expose a server
+endpoint or subscribe to Vercel Pro.
 
-The Vercel Cron endpoint `/api/subscription-webhooks` runs once a minute. Set `CRON_SECRET` in the
-deployment's secret environment variables; Vercel uses it to authorize cron requests. Subscription
-refund requests are reviewed by an administrator, and approved refunds must first be manually
-processed through the original payment provider before being marked complete in Admin.
+Subscription refund requests are reviewed by an administrator, and approved refunds must first be
+manually processed through the original payment provider before being marked complete in Admin.
 
 Seller revenue is 85% of the listed plan price. It becomes withdrawable 24 hours after payment if
 no refund request is under review. Each manual withdrawal also charges a separate 3% fee.

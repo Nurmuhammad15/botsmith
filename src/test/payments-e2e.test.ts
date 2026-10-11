@@ -84,6 +84,7 @@ describe.skipIf(!pgliteAvailable)("payments end to end (handlers + SQL)", () => 
         migration("0005_review_fixes.sql"),
         migration("0006_chat_fixes.sql"),
         migration("0007_subscriptions.sql"),
+        migration("0008_manual_subscription_access.sql"),
       ],
     });
     for (const [id, email, role] of [
@@ -104,11 +105,6 @@ describe.skipIf(!pgliteAvailable)("payments end to end (handlers + SQL)", () => 
         [SELLER, PRICE, PRICE * 4, PRICE * 10],
       )
     ).rows[0]!["id"] as string;
-    await db.query(
-      `insert into public.bot_subscription_webhooks (bot_id,endpoint_url,signing_secret)
-       values ($1,'https://bot.example.uz/webhook',$2)`,
-      [bot, "a".repeat(32)],
-    );
   });
 
   // ------------------------------------------------------------------ Payme

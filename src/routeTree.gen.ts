@@ -28,7 +28,6 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WithdrawRouteImport } from './routes/withdraw'
 import { Route as ApiClickRouteImport } from './routes/api.click'
 import { Route as ApiPaymeRouteImport } from './routes/api.payme'
-import { Route as ApiSubscriptionWebhooksRouteImport } from './routes/api.subscription-webhooks'
 import { Route as BotsIndexRouteImport } from './routes/bots.index'
 import { Route as BotsIdRouteImport } from './routes/bots.$id'
 import { Route as DashboardPurchasesRouteImport } from './routes/dashboard.purchases'
@@ -129,11 +128,6 @@ const ApiPaymeRoute = ApiPaymeRouteImport.update({
   path: '/api/payme',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiSubscriptionWebhooksRoute = ApiSubscriptionWebhooksRouteImport.update({
-  id: '/api/subscription-webhooks',
-  path: '/api/subscription-webhooks',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const BotsIndexRoute = BotsIndexRouteImport.update({
   id: '/bots/',
   path: '/bots/',
@@ -175,7 +169,6 @@ export interface FileRoutesByFullPath {
   '/withdraw': typeof WithdrawRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
-  '/api/subscription-webhooks': typeof ApiSubscriptionWebhooksRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -201,7 +194,6 @@ export interface FileRoutesByTo {
   '/withdraw': typeof WithdrawRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
-  '/api/subscription-webhooks': typeof ApiSubscriptionWebhooksRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -228,7 +220,6 @@ export interface FileRoutesById {
   '/withdraw': typeof WithdrawRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
-  '/api/subscription-webhooks': typeof ApiSubscriptionWebhooksRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -256,7 +247,6 @@ export interface FileRouteTypes {
     | '/withdraw'
     | '/api/click'
     | '/api/payme'
-    | '/api/subscription-webhooks'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -282,7 +272,6 @@ export interface FileRouteTypes {
     | '/withdraw'
     | '/api/click'
     | '/api/payme'
-    | '/api/subscription-webhooks'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -308,7 +297,6 @@ export interface FileRouteTypes {
     | '/withdraw'
     | '/api/click'
     | '/api/payme'
-    | '/api/subscription-webhooks'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -335,7 +323,6 @@ export interface RootRouteChildren {
   WithdrawRoute: typeof WithdrawRoute
   ApiClickRoute: typeof ApiClickRoute
   ApiPaymeRoute: typeof ApiPaymeRoute
-  ApiSubscriptionWebhooksRoute: typeof ApiSubscriptionWebhooksRoute
   BotsIdRoute: typeof BotsIdRoute
   DashboardPurchasesRoute: typeof DashboardPurchasesRoute
   SellerBotsIdRoute: typeof SellerBotsIdRoute
@@ -477,13 +464,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPaymeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/subscription-webhooks': {
-      id: '/api/subscription-webhooks'
-      path: '/api/subscription-webhooks'
-      fullPath: '/api/subscription-webhooks'
-      preLoaderRoute: typeof ApiSubscriptionWebhooksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/bots/': {
       id: '/bots/'
       path: '/bots'
@@ -535,7 +515,6 @@ const rootRouteChildren: RootRouteChildren = {
   WithdrawRoute: WithdrawRoute,
   ApiClickRoute: ApiClickRoute,
   ApiPaymeRoute: ApiPaymeRoute,
-  ApiSubscriptionWebhooksRoute: ApiSubscriptionWebhooksRoute,
   BotsIdRoute: BotsIdRoute,
   DashboardPurchasesRoute: DashboardPurchasesRoute,
   SellerBotsIdRoute: SellerBotsIdRoute,

@@ -23,7 +23,7 @@ export const Route = createFileRoute("/seller-bots/$id")({
       { title: "Bot boshqaruvi — BotSmith" },
       {
         name: "description",
-        content: "Bot statistikasi, obuna narxlari va webhook sozlamalarini boshqaring.",
+        content: "Bot statistikasi va obuna narxlarini boshqaring.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -259,8 +259,6 @@ function SubscriptionSettings({ botId }: { botId: string }) {
   const { data, isPending, isError } = useSellerSubscriptionConfig(botId);
   const configure = useConfigureBotSubscription();
   const [prices, setPrices] = useState({ one: "", seven: "", thirty: "" });
-  const [webhookUrl, setWebhookUrl] = useState("");
-  const [webhookSecret, setWebhookSecret] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -289,11 +287,8 @@ function SubscriptionSettings({ botId }: { botId: string }) {
         price1Day: amounts[0]!,
         price7Days: amounts[1]!,
         price30Days: amounts[2]!,
-        webhookUrl,
-        webhookSecret,
       });
-      setWebhookSecret("");
-      setMessage("Obuna narxlari va webhook saqlandi.");
+      setMessage("Obuna narxlari saqlandi.");
     } catch (e) {
       setError(describeError(e));
     }
@@ -302,10 +297,11 @@ function SubscriptionSettings({ botId }: { botId: string }) {
   return (
     <section className="mt-8 max-w-2xl space-y-4 rounded-xl border p-5">
       <div>
-        <h3 className="font-semibold">Obuna va ulanish sozlamalari</h3>
+        <h3 className="font-semibold">Obuna sozlamalari</h3>
         <p className="mt-1 text-xs text-muted-foreground">
           Xaridor kiritilgan narxni to‘laydi; platforma 15% komissiya oladi, sizga 85% qoladi.
-          Webhook kaliti saqlangach qayta ko‘rsatilmaydi — yo‘qolsa yangisini kiriting.
+          To‘langan obunalar “Buyurtmalar” bo‘limida ko‘rinadi. Botga kirishni o‘sha yerdan xaridor
+          bilan bog‘lanib qo‘lda boshqaring.
         </p>
       </div>
       {isPending ? (
@@ -348,32 +344,6 @@ function SubscriptionSettings({ botId }: { botId: string }) {
               </label>
             );
           })}
-          <label className="block space-y-2 text-sm">
-            <span>Webhook HTTPS manzili</span>
-            <Input
-              required
-              type="url"
-              value={webhookUrl}
-              onChange={(event) => setWebhookUrl(event.target.value)}
-              placeholder="https://example.uz/botsmith/webhook"
-            />
-          </label>
-          <label className="block space-y-2 text-sm">
-            <span>Webhook maxfiy kaliti (kamida 32 belgi)</span>
-            <Input
-              required
-              minLength={32}
-              type="password"
-              autoComplete="new-password"
-              value={webhookSecret}
-              onChange={(event) => setWebhookSecret(event.target.value)}
-            />
-            <span className="block text-xs text-muted-foreground">
-              Har bir so‘rov <code>{"<timestamp>.<raw body>"}</code> satrining HMAC-SHA256 imzosi
-              bilan yuboriladi. Imzo va yetkazish identifikatori sarlavhalarini tekshiring; kalit
-              qayta ko‘rsatilmaydi.
-            </span>
-          </label>
           {error && (
             <p role="alert" className="text-sm text-destructive">
               {error}

@@ -145,6 +145,10 @@ export function SellerOrders() {
           />
         </div>
       </div>
+      <p className="mb-5 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+        BotSmith to‘lov, obuna muddati va qaytarish holatini qayd etadi. Xaridorga shu yerdan yozib,
+        botga kirishni qo‘lda bering yoki muddati tugaganda bekor qiling.
+      </p>
       {error && (
         <p role="alert" className="mb-3 text-sm text-destructive">
           {error}
@@ -167,11 +171,15 @@ export function SellerOrders() {
           `${o.subscriptionDays} kun`,
           o.subscriptionExpiresAt ? new Date(o.subscriptionExpiresAt).toLocaleString("uz-UZ") : "—",
           formatUZS(o.amount),
-          o.status === "paid" &&
-          o.subscriptionExpiresAt &&
-          Date.parse(o.subscriptionExpiresAt) <= Date.now()
-            ? "Muddati tugagan"
-            : orderStatusLabel[o.status],
+          o.refundResolution === "rejected"
+            ? "Qaytarish rad etildi · obuna davom etmoqda"
+            : o.refundRequestedAt && o.refundResolution === null
+              ? "Qaytarish so‘rovi ko‘rib chiqilmoqda"
+              : o.status === "paid" &&
+                  o.subscriptionExpiresAt &&
+                  Date.parse(o.subscriptionExpiresAt) <= Date.now()
+                ? "Muddati tugagan"
+                : orderStatusLabel[o.status],
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="ghost" onClick={() => writeToBuyer(o)}>
               <MessageSquare />
@@ -344,16 +352,10 @@ export function SellerNewBot() {
     const price = Number(formData.get("price-1"));
     const price7Days = Number(formData.get("price-7"));
     const price30Days = Number(formData.get("price-30"));
-    const webhookUrl = String(formData.get("webhook-url") ?? "").trim();
-    const webhookSecret = String(formData.get("webhook-secret") ?? "").trim();
     if (
       ![price, price7Days, price30Days].every((value) => Number.isSafeInteger(value) && value > 0)
     ) {
       setError("Uchala obuna narxini ham musbat butun so‘m qiymatida kiriting.");
-      return;
-    }
-    if (!webhookUrl.startsWith("https://") || webhookSecret.length < 32) {
-      setError("HTTPS webhook manzili va kamida 32 belgili maxfiy kalit kiriting.");
       return;
     }
     setError("");
@@ -367,8 +369,6 @@ export function SellerNewBot() {
         price7Days,
         price30Days,
         desc: String(formData.get("description") ?? ""),
-        webhookUrl,
-        webhookSecret,
       });
     } catch (err) {
       setError(describeError(err));
@@ -510,34 +510,6 @@ export function SellerNewBot() {
               maxLength={5000}
               className="min-h-32 w-full rounded-md border bg-background p-3"
             />
-          </label>
-          <label className="block space-y-2 text-sm">
-            <span>Obunani boshqarish webhook HTTPS manzili</span>
-            <Input
-              name="webhook-url"
-              required
-              type="url"
-              placeholder="https://example.uz/botsmith/webhook"
-            />
-          </label>
-          <label className="block space-y-2 text-sm">
-            <span>Webhook maxfiy kaliti (kamida 32 belgi)</span>
-            <Input
-              name="webhook-secret"
-              required
-              minLength={32}
-              type="password"
-              autoComplete="new-password"
-              placeholder="O‘zingizning bot serveringizda ham sozlang"
-            />
-            <span className="block text-xs text-muted-foreground">
-              `subscription.activated`, `subscription.expired`, `subscription.refund_requested`,
-              `subscription.refunded` va `subscription.reactivated` hodisalari yuboriladi. Imzo
-              `X-BotSmith-Timestamp` va `X-BotSmith-Signature` sarlavhalarida; JSON tanasini
-              <code>{"<timestamp>.<raw body>"}</code> ko‘rinishida HMAC-SHA256 bilan tekshiring.
-              Kalitni faqat serveringizda saqlang va `X-BotSmith-Delivery` identifikatori bo‘yicha
-              takrorlarni oldini oling.
-            </span>
           </label>
           <MediaPicker
             label="Rasmlar (birinchisi muqova bo‘ladi)"
