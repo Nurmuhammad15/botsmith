@@ -21,6 +21,9 @@ const conversation = {
   unread: 2,
 };
 
+let lastFake: ReturnType<typeof createFakeSupabase> | undefined;
+const holderLog = () => lastFake?.log.inserts.length ?? 0;
+
 function setup(overrides: { conversations?: unknown[]; role?: "buyer" | "seller" } = {}) {
   const fake = createFakeSupabase({
     user: { id: "buyer-1", email: "b@x.uz" },
@@ -50,6 +53,7 @@ function setup(overrides: { conversations?: unknown[]; role?: "buyer" | "seller"
     },
   });
   holder.client = fake.client;
+  lastFake = fake;
   return fake;
 }
 
@@ -126,5 +130,27 @@ describe("Inbox", () => {
     expect(screen.getByRole("button", { name: "Yuborish" })).toBeDisabled();
     fireEvent.submit(input.closest("form")!);
     expect(fake.log.inserts).toHaveLength(0);
+  });
+
+  it("shows messages oldest first even though the newest 500 are fetched", async () => {
+    setup();
+    await renderApp(<Inbox selectedId="conv-1" />, { path: "/messages?c=conv-1" });
+    await screen.findByText("Salom, tayyormi?");
+    const thread = document.querySelector('[aria-live="polite"]')!;
+    const texts = Array.from(thread.querySelectorAll("p.whitespace-pre-wrap")).map(
+      (p) => p.textContent,
+    );
+    expect(texts).toEqual(["Salom, tayyormi?", "Albatta, tayyor"]);
+  });
+
+  it("keeps text typed while a message is being sent", async () => {
+    setup();
+    await renderApp(<Inbox selectedId="conv-1" />, { path: "/messages?c=conv-1" });
+    const input = await screen.findByLabelText("Xabar matni");
+    fireEvent.change(input, { target: { value: "birinchi" } });
+    fireEvent.click(screen.getByRole("button", { name: "Yuborish" }));
+    fireEvent.change(input, { target: { value: "ikkinchi" } }); // typed before the send resolves
+    await waitFor(() => expect(holderLog()).toBeGreaterThan(0));
+    expect(input).toHaveValue("ikkinchi");
   });
 });

@@ -62,15 +62,17 @@ export function useConversationMessages(conversationId: string | undefined) {
             .from("messages")
             .select("id, sender_id, body, created_at")
             .eq("conversation_id", conversationId!)
-            .order("created_at", { ascending: true })
+            .order("created_at", { ascending: false })
             .limit(500),
         ) as Row[]
-      ).map((r): ChatMessage => ({
-        id: str(r["id"]),
-        senderId: str(r["sender_id"]),
-        body: str(r["body"]),
-        createdAt: str(r["created_at"]),
-      })),
+      )
+        .reverse() // newest 500, shown oldest first
+        .map((r): ChatMessage => ({
+          id: str(r["id"]),
+          senderId: str(r["sender_id"]),
+          body: str(r["body"]),
+          createdAt: str(r["created_at"]),
+        })),
   });
 }
 

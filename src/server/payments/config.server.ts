@@ -16,10 +16,16 @@ export function getPaymentsStore(): PaymentsStore | null {
   const url = read("SUPABASE_URL") ?? import.meta.env["VITE_SUPABASE_URL"];
   const serviceKey = read("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !serviceKey) return null;
-  const client = createClient(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  return createPaymentsStore(client);
+  try {
+    const client = createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    return createPaymentsStore(client);
+  } catch (error) {
+    // A bad URL or runtime must not turn into an HTML 500 for the payment provider.
+    console.error("Could not create the payments database client", error);
+    return null;
+  }
 }
 
 export function getPaymeConfig() {

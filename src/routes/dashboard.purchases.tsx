@@ -189,9 +189,16 @@ function WriteToSeller({ botId }: { botId: string }) {
 
 /** Deliverable files the seller attached to the bot; available once the order is paid. */
 function OrderFiles({ botId }: { botId: string }) {
-  const { data: files = [], isPending } = useBotFiles(botId);
+  const { data: files = [], isPending, isError } = useBotFiles(botId);
   const [downloading, setDownloading] = useState<string | null>(null);
 
+  if (isError) {
+    return (
+      <p role="alert" className="mt-6 text-sm text-destructive">
+        Fayllarni yuklab bo‘lmadi. Sahifani yangilang.
+      </p>
+    );
+  }
   if (isPending || files.length === 0) return null;
 
   async function download(file: (typeof files)[number]) {

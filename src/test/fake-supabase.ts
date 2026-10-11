@@ -27,6 +27,7 @@ export function createFakeSupabase(options: FakeOptions = {}) {
     private listFilters: [string, unknown[]][] = [];
     private deleting = false;
     private inserted: Row | undefined;
+    private sort: { column: string; ascending: boolean } | undefined;
 
     constructor(private readonly table: string) {}
 
@@ -41,7 +42,8 @@ export function createFakeSupabase(options: FakeOptions = {}) {
     select() {
       return this;
     }
-    order() {
+    order(column: string, options?: { ascending?: boolean }) {
+      this.sort = { column, ascending: options?.ascending ?? true };
       return this;
     }
     limit() {
@@ -79,7 +81,16 @@ export function createFakeSupabase(options: FakeOptions = {}) {
         log.deletes.push({ table: this.table, filters: this.filters });
         return { data: null, error: null };
       }
-      return { data: this.inserted ? [this.inserted] : this.matching(), error: null };
+      const rows = this.inserted ? [this.inserted] : this.matching();
+      const { sort } = this;
+      if (sort) {
+        rows.sort((a, b) => {
+          const x = String(a[sort.column] ?? "");
+          const y = String(b[sort.column] ?? "");
+          return (x < y ? -1 : x > y ? 1 : 0) * (sort.ascending ? 1 : -1);
+        });
+      }
+      return { data: rows, error: null };
     }
     then<A = Result, B = never>(
       onfulfilled?: ((value: Result) => A | PromiseLike<A>) | null,

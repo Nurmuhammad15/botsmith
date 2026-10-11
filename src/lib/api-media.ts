@@ -38,9 +38,18 @@ export async function uploadCovers(
     else uploaded.push(path);
   }
   if (uploaded.length > 0) {
+    // Re-read the gallery so changes made while the upload ran are not overwritten.
+    const { data: current } = await db()
+      .from("bots")
+      .select("image_paths")
+      .eq("id", botId)
+      .single();
+    const latest: string[] = Array.isArray(current?.image_paths)
+      ? current.image_paths
+      : existingPaths;
     const { error } = await db().rpc("set_bot_images", {
       p_bot: botId,
-      p_paths: [...existingPaths, ...uploaded],
+      p_paths: [...latest, ...uploaded].slice(0, 5),
     });
     if (error) {
       await storage.remove(uploaded);

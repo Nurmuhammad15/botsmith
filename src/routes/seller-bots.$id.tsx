@@ -130,7 +130,10 @@ function summarize(result: UploadResult, noun: string): Notice {
 
 function MediaManager({ bot, sellerId }: { bot: SellerBot; sellerId: string }) {
   const media = useUploadMedia(sellerId, bot.id);
-  const { data: files = [], isPending: filesPending } = useBotFiles(bot.id);
+  const { data: files = [], isPending: filesPending, isError: filesError } = useBotFiles(bot.id);
+  // One cover change at a time: each writes the whole gallery.
+  const coverBusy =
+    media.covers.isPending || media.removeCover.isPending || media.reorderCovers.isPending;
   const [newImages, setNewImages] = useState<File[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [imageNotice, setImageNotice] = useState<Notice | null>(null);
@@ -197,7 +200,7 @@ function MediaManager({ bot, sellerId }: { bot: SellerBot; sellerId: string }) {
                   <button
                     type="button"
                     aria-label={`${i + 1}-rasmni o‘chirish`}
-                    disabled={media.removeCover.isPending}
+                    disabled={coverBusy}
                     onClick={() =>
                       run(
                         media.removeCover.mutateAsync({
@@ -215,7 +218,7 @@ function MediaManager({ bot, sellerId }: { bot: SellerBot; sellerId: string }) {
                 {i > 0 && (
                   <button
                     type="button"
-                    disabled={media.reorderCovers.isPending}
+                    disabled={coverBusy}
                     onClick={() =>
                       run(
                         media.reorderCovers.mutateAsync([
@@ -267,7 +270,11 @@ function MediaManager({ bot, sellerId }: { bot: SellerBot; sellerId: string }) {
         <p className="text-xs text-muted-foreground">
           Xaridor fayllarni siz buyurtmada “Yetkazishni boshlash”ni bosgandan keyin yuklab oladi.
         </p>
-        {filesPending ? (
+        {filesError ? (
+          <p role="alert" className="text-sm text-destructive">
+            Fayllarni yuklab bo‘lmadi. Sahifani yangilang.
+          </p>
+        ) : filesPending ? (
           <p className="text-sm text-muted-foreground">Yuklanmoqda…</p>
         ) : files.length === 0 ? (
           <p className="text-sm text-muted-foreground">Hozircha fayl yo‘q.</p>

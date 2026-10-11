@@ -95,7 +95,7 @@ export function Inbox({ selectedId }: { selectedId: string | undefined }) {
 }
 
 function Thread({ conversation, userId }: { conversation: Conversation; userId: string }) {
-  const { data: messages = [], isPending } = useConversationMessages(conversation.id);
+  const { data: messages = [], isPending, isError } = useConversationMessages(conversation.id);
   const send = useSendMessage(conversation.id, userId);
   const { mutate: markRead } = useMarkConversationRead();
   const [text, setText] = useState("");
@@ -114,12 +114,14 @@ function Thread({ conversation, userId }: { conversation: Conversation; userId: 
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const body = text.trim();
+    const draft = text;
+    const body = draft.trim();
     if (!body) return;
     setError("");
     try {
       await send.mutateAsync(body);
-      setText("");
+      // Keep anything typed while the message was being sent.
+      setText((current) => (current === draft ? "" : current));
     } catch (e) {
       setError(describeError(e));
     }
@@ -151,7 +153,12 @@ function Thread({ conversation, userId }: { conversation: Conversation; userId: 
         aria-live="polite"
       >
         {isPending && <p className="text-sm text-muted-foreground">Yuklanmoqda…</p>}
-        {!isPending && messages.length === 0 && (
+        {isError && (
+          <p role="alert" className="text-center text-sm text-destructive">
+            Xabarlarni yuklab bo‘lmadi. Sahifani yangilang.
+          </p>
+        )}
+        {!isPending && !isError && messages.length === 0 && (
           <p className="text-center text-sm text-muted-foreground">
             Birinchi xabarni yozing — {conversation.asSeller ? "xaridor" : "sotuvchi"} javob
             berganda shu yerda ko‘rasiz.
