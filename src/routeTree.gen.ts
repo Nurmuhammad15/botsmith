@@ -24,9 +24,11 @@ import { Route as SellerOrdersRouteImport } from './routes/seller-orders'
 import { Route as SellerProfileRouteImport } from './routes/seller-profile'
 import { Route as SellerWithdrawalHistoryRouteImport } from './routes/seller-withdrawal-history'
 import { Route as SupportChatRouteImport } from './routes/support-chat'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WithdrawRouteImport } from './routes/withdraw'
 import { Route as ApiClickRouteImport } from './routes/api.click'
 import { Route as ApiPaymeRouteImport } from './routes/api.payme'
+import { Route as ApiSubscriptionWebhooksRouteImport } from './routes/api.subscription-webhooks'
 import { Route as BotsIndexRouteImport } from './routes/bots.index'
 import { Route as BotsIdRouteImport } from './routes/bots.$id'
 import { Route as DashboardPurchasesRouteImport } from './routes/dashboard.purchases'
@@ -107,6 +109,11 @@ const SupportChatRoute = SupportChatRouteImport.update({
   path: '/support-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WithdrawRoute = WithdrawRouteImport.update({
   id: '/withdraw',
   path: '/withdraw',
@@ -120,6 +127,11 @@ const ApiClickRoute = ApiClickRouteImport.update({
 const ApiPaymeRoute = ApiPaymeRouteImport.update({
   id: '/api/payme',
   path: '/api/payme',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSubscriptionWebhooksRoute = ApiSubscriptionWebhooksRouteImport.update({
+  id: '/api/subscription-webhooks',
+  path: '/api/subscription-webhooks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BotsIndexRoute = BotsIndexRouteImport.update({
@@ -159,9 +171,11 @@ export interface FileRoutesByFullPath {
   '/seller-profile': typeof SellerProfileRoute
   '/seller-withdrawal-history': typeof SellerWithdrawalHistoryRoute
   '/support-chat': typeof SupportChatRoute
+  '/terms': typeof TermsRoute
   '/withdraw': typeof WithdrawRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
+  '/api/subscription-webhooks': typeof ApiSubscriptionWebhooksRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -183,9 +197,11 @@ export interface FileRoutesByTo {
   '/seller-profile': typeof SellerProfileRoute
   '/seller-withdrawal-history': typeof SellerWithdrawalHistoryRoute
   '/support-chat': typeof SupportChatRoute
+  '/terms': typeof TermsRoute
   '/withdraw': typeof WithdrawRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
+  '/api/subscription-webhooks': typeof ApiSubscriptionWebhooksRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -208,9 +224,11 @@ export interface FileRoutesById {
   '/seller-profile': typeof SellerProfileRoute
   '/seller-withdrawal-history': typeof SellerWithdrawalHistoryRoute
   '/support-chat': typeof SupportChatRoute
+  '/terms': typeof TermsRoute
   '/withdraw': typeof WithdrawRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
+  '/api/subscription-webhooks': typeof ApiSubscriptionWebhooksRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -234,9 +252,11 @@ export interface FileRouteTypes {
     | '/seller-profile'
     | '/seller-withdrawal-history'
     | '/support-chat'
+    | '/terms'
     | '/withdraw'
     | '/api/click'
     | '/api/payme'
+    | '/api/subscription-webhooks'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -258,9 +278,11 @@ export interface FileRouteTypes {
     | '/seller-profile'
     | '/seller-withdrawal-history'
     | '/support-chat'
+    | '/terms'
     | '/withdraw'
     | '/api/click'
     | '/api/payme'
+    | '/api/subscription-webhooks'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -282,9 +304,11 @@ export interface FileRouteTypes {
     | '/seller-profile'
     | '/seller-withdrawal-history'
     | '/support-chat'
+    | '/terms'
     | '/withdraw'
     | '/api/click'
     | '/api/payme'
+    | '/api/subscription-webhooks'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -307,9 +331,11 @@ export interface RootRouteChildren {
   SellerProfileRoute: typeof SellerProfileRoute
   SellerWithdrawalHistoryRoute: typeof SellerWithdrawalHistoryRoute
   SupportChatRoute: typeof SupportChatRoute
+  TermsRoute: typeof TermsRoute
   WithdrawRoute: typeof WithdrawRoute
   ApiClickRoute: typeof ApiClickRoute
   ApiPaymeRoute: typeof ApiPaymeRoute
+  ApiSubscriptionWebhooksRoute: typeof ApiSubscriptionWebhooksRoute
   BotsIdRoute: typeof BotsIdRoute
   DashboardPurchasesRoute: typeof DashboardPurchasesRoute
   SellerBotsIdRoute: typeof SellerBotsIdRoute
@@ -423,6 +449,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupportChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/withdraw': {
       id: '/withdraw'
       path: '/withdraw'
@@ -442,6 +475,13 @@ declare module '@tanstack/react-router' {
       path: '/api/payme'
       fullPath: '/api/payme'
       preLoaderRoute: typeof ApiPaymeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/subscription-webhooks': {
+      id: '/api/subscription-webhooks'
+      path: '/api/subscription-webhooks'
+      fullPath: '/api/subscription-webhooks'
+      preLoaderRoute: typeof ApiSubscriptionWebhooksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bots/': {
@@ -491,9 +531,11 @@ const rootRouteChildren: RootRouteChildren = {
   SellerProfileRoute: SellerProfileRoute,
   SellerWithdrawalHistoryRoute: SellerWithdrawalHistoryRoute,
   SupportChatRoute: SupportChatRoute,
+  TermsRoute: TermsRoute,
   WithdrawRoute: WithdrawRoute,
   ApiClickRoute: ApiClickRoute,
   ApiPaymeRoute: ApiPaymeRoute,
+  ApiSubscriptionWebhooksRoute: ApiSubscriptionWebhooksRoute,
   BotsIdRoute: BotsIdRoute,
   DashboardPurchasesRoute: DashboardPurchasesRoute,
   SellerBotsIdRoute: SellerBotsIdRoute,

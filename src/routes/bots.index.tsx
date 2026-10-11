@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Search, Star, ChevronLeft, ChevronRight, LayoutGrid } from "lucide-react";
 import { SiteLayout, BotCard } from "@/components/site";
-import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { Link } from "@tanstack/react-router";
 import { Slider } from "@/components/ui/slider";
 import { useBots } from "@/lib/api";
@@ -62,7 +61,6 @@ function Check({
 }
 
 function Catalog() {
-  const account = useMarketplaceAccount();
   const { data: bots = [], isPending, isError } = useBots();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<string | null>(null);
@@ -73,10 +71,7 @@ function Catalog() {
   const [langs, setLangs] = useState<string[]>([]);
   const [buckets, setBuckets] = useState<number[]>([]);
 
-  const priceCeiling = useMemo(
-    () => bots.reduce((top, b) => Math.max(top, b.price ?? 0), 0),
-    [bots],
-  );
+  const priceCeiling = useMemo(() => bots.reduce((top, b) => Math.max(top, b.price), 0), [bots]);
   const max = maxPrice ?? priceCeiling;
 
   const list = useMemo(() => {
@@ -84,7 +79,7 @@ function Catalog() {
     const filtered = bots.filter(
       (b) =>
         (!cat || b.category === cat) &&
-        (b.price === null || b.price <= max) &&
+        b.price <= max &&
         b.rating >= minRating &&
         (langs.length === 0 || langs.some((l) => b.lang.includes(l))) &&
         (buckets.length === 0 ||
@@ -98,9 +93,9 @@ function Catalog() {
     );
     return filtered.sort((a, b) =>
       sort === "cheap"
-        ? (a.price ?? 0) - (b.price ?? 0)
+        ? a.price - b.price
         : sort === "expensive"
-          ? (b.price ?? 0) - (a.price ?? 0)
+          ? b.price - a.price
           : sort === "rating"
             ? b.rating - a.rating
             : b.sales - a.sales,
@@ -116,19 +111,6 @@ function Catalog() {
       <div className="mx-auto max-w-7xl px-4 py-8">
         <h1 className="text-2xl font-bold">Barcha botlar</h1>
         <p className="text-sm text-muted-foreground">Siz uchun eng yaxshi Telegram botlar</p>
-        {!account && (
-          <p className="mt-3 text-sm text-muted-foreground">
-            Bot narxlarini ko‘rish uchun{" "}
-            <Link to="/login" className="font-medium text-primary">
-              tizimga kiring
-            </Link>{" "}
-            yoki{" "}
-            <Link to="/register" className="font-medium text-primary">
-              ro‘yxatdan o‘ting
-            </Link>
-            .
-          </p>
-        )}
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <div className="flex flex-1 items-center gap-2 rounded-lg border px-3">
             <Search className="h-4 w-4 text-muted-foreground" />
@@ -149,12 +131,8 @@ function Catalog() {
           >
             <option value="popular">Tartiblash: Mashhurlik</option>
             <option value="rating">Reyting</option>
-            {account && (
-              <>
-                <option value="cheap">Arzonroq</option>
-                <option value="expensive">Qimmatroq</option>
-              </>
-            )}
+            <option value="cheap">Arzonroq</option>
+            <option value="expensive">Qimmatroq</option>
           </select>
         </div>
         <div className="mt-6 flex flex-col gap-6 md:flex-row">
@@ -197,7 +175,7 @@ function Catalog() {
                 </button>
               ))}
             </div>
-            {account && priceCeiling > 0 && (
+            {priceCeiling > 0 && (
               <div>
                 <p className="mb-2 text-sm font-semibold">Narx oralig'i</p>
                 <p className="mb-3 text-xs text-muted-foreground">0 – {formatUZS(max)}</p>

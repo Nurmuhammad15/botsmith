@@ -1,14 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import {
-  ArrowLeft,
-  ChevronRight,
-  Clock,
-  FileArchive,
-  Languages,
-  MessageSquare,
-  RefreshCw,
-} from "lucide-react";
+import { ArrowLeft, ChevronRight, Languages, MessageSquare, RefreshCw } from "lucide-react";
 import { BotGallery, FavoriteButton } from "@/components/bot-media";
 import { SiteLayout, Rating, Tabs } from "@/components/site";
 import {
@@ -47,6 +39,7 @@ function Detail() {
   const { t } = useT();
   const navigate = useNavigate();
   const [tab, setTab] = useState(0);
+  const [subscriptionDays, setSubscriptionDays] = useState<1 | 7 | 30>(1);
   const createOrder = useCreateOrder();
   const openConversation = useOpenConversation();
   const [actionError, setActionError] = useState("");
@@ -91,7 +84,7 @@ function Detail() {
     if (!bot) return;
     setActionError("");
     try {
-      await createOrder.mutateAsync(bot.id);
+      await createOrder.mutateAsync({ botId: bot.id, subscriptionDays });
       await navigate({ to: "/dashboard/purchases" });
     } catch (error) {
       setActionError(describeError(error));
@@ -140,10 +133,35 @@ function Detail() {
               <Rating value={bot.rating} count={bot.reviews} />
             </div>
             <p className="mt-4 line-clamp-4 text-sm text-muted-foreground">{bot.desc}</p>
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-              {account && bot.price !== null && (
-                <p className="text-2xl font-bold text-primary">{formatUZS(bot.price)}</p>
-              )}
+            <div className="mt-5 space-y-4">
+              <fieldset>
+                <legend className="mb-2 text-sm font-semibold">Obuna muddatini tanlang</legend>
+                <div className="grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      [1, "1 kun", bot.price],
+                      [7, "7 kun", bot.price7Days],
+                      [30, "30 kun", bot.price30Days],
+                    ] as const
+                  ).map(([days, label, price]) => (
+                    <button
+                      key={days}
+                      type="button"
+                      disabled={price === null}
+                      aria-pressed={subscriptionDays === days}
+                      onClick={() => setSubscriptionDays(days)}
+                      className={`rounded-lg border p-3 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40 ${
+                        subscriptionDays === days ? "border-primary bg-primary/5" : ""
+                      }`}
+                    >
+                      <span className="block font-medium">{label}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        {price === null ? "Hozircha mavjud emas" : formatUZS(price)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
               <div className="flex flex-wrap gap-3">
                 {isOwnBot ? (
                   <Button asChild variant="outline" size="lg">
@@ -159,7 +177,7 @@ function Detail() {
                       disabled={createOrder.isPending}
                       className="px-8"
                     >
-                      {createOrder.isPending ? "Yuborilmoqda…" : t("buy")}
+                      {createOrder.isPending ? "Yuborilmoqda…" : "Obuna bo‘lish"}
                     </Button>
                     <Button
                       size="lg"
@@ -186,13 +204,12 @@ function Detail() {
                 {actionError}
               </p>
             )}
-            <div className="mt-5 grid grid-cols-3 gap-3">
+            <div className="mt-5 grid grid-cols-2 gap-3">
               {[
-                [Clock, "Yetkazib berish", `${bot.delivery} soat ichida`],
-                [RefreshCw, "Kafolat", "30 kun"],
+                [RefreshCw, "Qaytarish muddati", "To‘lovdan keyin 24 soat"],
                 [Languages, "Tillar", bot.lang.map((l) => LANGUAGE_NAMES[l] ?? l).join(", ")],
               ].map(([I, a, b]) => {
-                const Icon = I as typeof Clock;
+                const Icon = I as typeof RefreshCw;
                 return (
                   <div key={a as string} className="card-soft flex items-center gap-2 p-3">
                     <Icon className="h-4 w-4 text-primary" />
@@ -213,13 +230,6 @@ function Detail() {
               {tab === 0 ? (
                 <>
                   <p className="whitespace-pre-line text-muted-foreground">{bot.desc}</p>
-                  {bot.fileCount > 0 && (
-                    <p className="mt-5 flex items-center gap-2 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-                      <FileArchive className="h-4 w-4 shrink-0" />
-                      Bot bilan birga {bot.fileCount} ta fayl taqdim etiladi — yetkazib berish
-                      boshlangach “Buyurtmalar” sahifasidan yuklab olasiz.
-                    </p>
-                  )}
                 </>
               ) : (
                 <Reviews botId={bot.id} userId={account?.id} />
@@ -251,11 +261,9 @@ function Detail() {
                     >
                       <div className="flex-1">
                         <p className="text-sm font-medium">{b.title}</p>
-                        {account && b.price !== null ? (
-                          <p className="text-xs font-semibold text-primary">{formatUZS(b.price)}</p>
-                        ) : (
-                          <p className="text-xs text-muted-foreground">Narx uchun tizimga kiring</p>
-                        )}
+                        <p className="text-xs font-semibold text-primary">
+                          {formatUZS(b.price)} / 1 kun
+                        </p>
                       </div>
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </Link>

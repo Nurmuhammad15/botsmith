@@ -19,19 +19,12 @@ import { MediaPicker } from "@/components/media-picker";
 import { SellerSales } from "@/components/seller-sales";
 import { sellerNav } from "@/lib/nav";
 import { sellerFaqs } from "@/lib/faq";
-import { uploadCovers, uploadDeliverables } from "@/lib/api-media";
+import { uploadCovers } from "@/lib/api-media";
 import { useOpenConversation } from "@/lib/api-chat";
-import {
-  IMAGE_TYPES,
-  MAX_FILES,
-  MAX_IMAGES,
-  validateDeliverable,
-  validateImage,
-} from "@/lib/media";
+import { IMAGE_TYPES, MAX_IMAGES, validateImage } from "@/lib/media";
 import {
   describeError,
   useAddBot,
-  useAdvanceOrder,
   useMyBots,
   useOrders,
   useProfile,
@@ -53,7 +46,6 @@ import {
   calculateWithdrawalFee,
   getMaximumWithdrawal,
   MINIMUM_WITHDRAWAL,
-  MINIMUM_RETAINED_BALANCE,
   WITHDRAWAL_FEE_RATE,
 } from "@/lib/wallet";
 
@@ -73,9 +65,9 @@ export function SellerPage({ title, children }: { title: string; children: React
 
 const orderStatusLabel: Record<Order["status"], string> = {
   pending_payment: "To‘lov kutilmoqda",
-  paid: "To‘langan",
-  delivering: "Yetkazilmoqda",
-  done: "Yakunlangan",
+  paid: "Obuna faol",
+  delivering: "Faol",
+  done: "Eski buyurtma",
   cancelled: "Bekor qilingan",
 };
 
@@ -94,7 +86,6 @@ function WithdrawalBadge({ status }: { status: WithdrawalStatus }) {
 export function SellerOrders() {
   const account = useMarketplaceAccount();
   const { data: orders = [], isPending, isError } = useOrders("seller", account?.id);
-  const advance = useAdvanceOrder();
   const openConversation = useOpenConversation();
   const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
@@ -103,9 +94,12 @@ export function SellerOrders() {
   const rows = orders.filter(
     (o) =>
       (filter === "all" ||
-        (filter === "done"
-          ? o.status === "done"
-          : o.status !== "done" && o.status !== "cancelled")) &&
+        (filter === "active"
+          ? o.status === "paid" &&
+            (!o.subscriptionExpiresAt || Date.parse(o.subscriptionExpiresAt) > Date.now())
+          : filter === "pending"
+            ? o.status === "pending_payment"
+            : false)) &&
       `${orderCode(o.number)} ${o.botTitle}`.toLowerCase().includes(query.toLowerCase()),
   );
 
@@ -122,15 +116,6 @@ export function SellerOrders() {
     }
   }
 
-  async function move(order: Order, status: "delivering" | "done") {
-    setError("");
-    try {
-      await advance.mutateAsync({ orderId: order.id, status });
-    } catch (e) {
-      setError(describeError(e));
-    }
-  }
-
   return (
     <SellerPage title="Buyurtmalar">
       <div className="mb-5 flex flex-wrap items-center gap-3">
@@ -138,7 +123,7 @@ export function SellerOrders() {
           {[
             ["all", "Barchasi"],
             ["active", "Faol"],
-            ["done", "Yakunlangan"],
+            ["pending", "To‘lov kutilmoqda"],
           ].map(([value, label]) => (
             <Button
               key={value}
@@ -171,7 +156,7 @@ export function SellerOrders() {
         </p>
       )}
       <DataTable
-        head={["Buyurtma", "Bot", "Sana", "Summa", "Holat", ""]}
+        head={["Buyurtma", "Bot", "Sana", "Muddat", "Tugash vaqti", "Summa", "Holat", ""]}
         emptyMessage={isPending ? "Yuklanmoqda…" : "Buyurtma topilmadi"}
         rows={rows.map((o) => [
           orderCode(o.number),
@@ -179,19 +164,15 @@ export function SellerOrders() {
             {o.botTitle}
           </Link>,
           new Date(o.createdAt).toLocaleDateString("uz-UZ"),
+          `${o.subscriptionDays} kun`,
+          o.subscriptionExpiresAt ? new Date(o.subscriptionExpiresAt).toLocaleString("uz-UZ") : "—",
           formatUZS(o.amount),
-          orderStatusLabel[o.status],
+          o.status === "paid" &&
+          o.subscriptionExpiresAt &&
+          Date.parse(o.subscriptionExpiresAt) <= Date.now()
+            ? "Muddati tugagan"
+            : orderStatusLabel[o.status],
           <div className="flex flex-wrap gap-2">
-            {o.status === "paid" && (
-              <Button size="sm" variant="outline" onClick={() => move(o, "delivering")}>
-                Yetkazishni boshlash
-              </Button>
-            )}
-            {(o.status === "paid" || o.status === "delivering") && (
-              <Button size="sm" onClick={() => move(o, "done")}>
-                Yakunlash
-              </Button>
-            )}
             <Button size="sm" variant="ghost" onClick={() => writeToBuyer(o)}>
               <MessageSquare />
               Xaridorga yozish
@@ -229,9 +210,8 @@ export function SellerEarnings() {
         </Link>
       </Button>
       <p className="mt-4 max-w-3xl text-sm text-muted-foreground">
-        Daromad faqat to‘langan buyurtmalardan hisoblanadi. Hisobda kamida{" "}
-        {formatUZS(MINIMUM_RETAINED_BALANCE)} qolishi kerak; undan ortiq summani yechish mumkin. Har
-        bir so‘rovdan {WITHDRAWAL_FEE_RATE * 100}% komissiya ushlanadi.
+        Sotuv daromadi to‘lovdan 24 soat o‘tgach va qaytarish so‘rovi bo‘lmaganda yechish uchun
+        ochiladi. Har bir pul yechish so‘rovidan {WITHDRAWAL_FEE_RATE * 100}% komissiya ushlanadi.
       </p>
       <SellerSales bots={bots} />
       <h2 className="mb-4 mt-9 font-semibold">Sotuvlar tarixi</h2>
@@ -355,15 +335,25 @@ export function SellerNewBot() {
   const [stage, setStage] = useState("");
   const [error, setError] = useState("");
   const [images, setImages] = useState<File[]>([]);
-  const [files, setFiles] = useState<File[]>([]);
+  const [prices, setPrices] = useState({ one: "", seven: "", thirty: "" });
   const busy = stage !== "";
 
   async function submit(form: HTMLFormElement) {
     if (!account) return;
     const formData = new FormData(form);
-    const price = Number(formData.get("price"));
-    if (!Number.isSafeInteger(price) || price < 1) {
-      setError("Narxni musbat butun so‘m qiymatida kiriting.");
+    const price = Number(formData.get("price-1"));
+    const price7Days = Number(formData.get("price-7"));
+    const price30Days = Number(formData.get("price-30"));
+    const webhookUrl = String(formData.get("webhook-url") ?? "").trim();
+    const webhookSecret = String(formData.get("webhook-secret") ?? "").trim();
+    if (
+      ![price, price7Days, price30Days].every((value) => Number.isSafeInteger(value) && value > 0)
+    ) {
+      setError("Uchala obuna narxini ham musbat butun so‘m qiymatida kiriting.");
+      return;
+    }
+    if (!webhookUrl.startsWith("https://") || webhookSecret.length < 32) {
+      setError("HTTPS webhook manzili va kamida 32 belgili maxfiy kalit kiriting.");
       return;
     }
     setError("");
@@ -374,7 +364,11 @@ export function SellerNewBot() {
         title: String(formData.get("title") ?? ""),
         category: String(formData.get("category") ?? ""),
         price,
+        price7Days,
+        price30Days,
         desc: String(formData.get("description") ?? ""),
+        webhookUrl,
+        webhookSecret,
       });
     } catch (err) {
       setError(describeError(err));
@@ -393,15 +387,6 @@ export function SellerNewBot() {
     } catch {
       problems.push("Rasmlar saqlanmadi.");
     }
-    try {
-      if (files.length > 0) {
-        setStage("Fayllar yuklanmoqda…");
-        const result = await uploadDeliverables(account.id, botId, files);
-        problems.push(...result.failed.map((name) => `Fayl yuklanmadi: ${name}`));
-      }
-    } catch {
-      problems.push("Fayllar saqlanmadi.");
-    }
     void queryClient.invalidateQueries({ queryKey: ["my-bots"] });
     setStage("");
     setCreated({ id: botId, problems });
@@ -419,7 +404,7 @@ export function SellerNewBot() {
           </p>
           {created.problems.length > 0 && (
             <div role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-              <p className="font-medium">Ba’zi fayllar yuklanmadi:</p>
+              <p className="font-medium">Ba’zi rasmlar yuklanmadi:</p>
               <ul className="mt-1 list-disc pl-5">
                 {created.problems.map((problem) => (
                   <li key={problem}>{problem}</li>
@@ -442,7 +427,6 @@ export function SellerNewBot() {
               onClick={() => {
                 setCreated(null);
                 setImages([]);
-                setFiles([]);
               }}
               variant="outline"
             >
@@ -484,10 +468,40 @@ export function SellerNewBot() {
               ))}
             </select>
           </label>
-          <label className="block space-y-2 text-sm">
-            <span>Narx (so‘m)</span>
-            <Input name="price" required type="number" min="1" step="1" placeholder="450000" />
-          </label>
+          {(
+            [
+              ["price-1", "1 kunlik narx (so‘m)", "one"],
+              ["price-7", "7 kunlik narx (so‘m)", "seven"],
+              ["price-30", "30 kunlik narx (so‘m)", "thirty"],
+            ] as const
+          ).map(([name, label, key]) => {
+            const amount = Number(prices[key]);
+            const net =
+              Number.isSafeInteger(amount) && amount > 0
+                ? amount - Math.round(amount * 0.15)
+                : null;
+            return (
+              <label key={name} className="block space-y-2 text-sm">
+                <span>{label}</span>
+                <Input
+                  name={name}
+                  required
+                  type="number"
+                  min="1"
+                  step="1"
+                  placeholder="450000"
+                  value={prices[key]}
+                  onChange={(event) =>
+                    setPrices((previous) => ({ ...previous, [key]: event.target.value }))
+                  }
+                />
+                <span className="block text-xs text-muted-foreground">
+                  Platforma komissiyasi: −15%
+                  {net !== null ? ` · Sizga qoladi: ${formatUZS(net)}` : ""}
+                </span>
+              </label>
+            );
+          })}
           <label className="block space-y-2 text-sm">
             <span>Tavsif</span>
             <textarea
@@ -496,6 +510,34 @@ export function SellerNewBot() {
               maxLength={5000}
               className="min-h-32 w-full rounded-md border bg-background p-3"
             />
+          </label>
+          <label className="block space-y-2 text-sm">
+            <span>Obunani boshqarish webhook HTTPS manzili</span>
+            <Input
+              name="webhook-url"
+              required
+              type="url"
+              placeholder="https://example.uz/botsmith/webhook"
+            />
+          </label>
+          <label className="block space-y-2 text-sm">
+            <span>Webhook maxfiy kaliti (kamida 32 belgi)</span>
+            <Input
+              name="webhook-secret"
+              required
+              minLength={32}
+              type="password"
+              autoComplete="new-password"
+              placeholder="O‘zingizning bot serveringizda ham sozlang"
+            />
+            <span className="block text-xs text-muted-foreground">
+              `subscription.activated`, `subscription.expired`, `subscription.refund_requested`,
+              `subscription.refunded` va `subscription.reactivated` hodisalari yuboriladi. Imzo
+              `X-BotSmith-Timestamp` va `X-BotSmith-Signature` sarlavhalarida; JSON tanasini
+              <code>{"<timestamp>.<raw body>"}</code> ko‘rinishida HMAC-SHA256 bilan tekshiring.
+              Kalitni faqat serveringizda saqlang va `X-BotSmith-Delivery` identifikatori bo‘yicha
+              takrorlarni oldini oling.
+            </span>
           </label>
           <MediaPicker
             label="Rasmlar (birinchisi muqova bo‘ladi)"
@@ -506,15 +548,6 @@ export function SellerNewBot() {
             validate={validateImage}
             max={MAX_IMAGES}
             preview
-            disabled={busy}
-          />
-          <MediaPicker
-            label="Bot fayllari (ixtiyoriy)"
-            hint={`Xaridor yetkazib berish boshlangach yuklab oladi · 50 MB gacha · ko‘pi bilan ${MAX_FILES} ta`}
-            files={files}
-            onChange={setFiles}
-            validate={validateDeliverable}
-            max={MAX_FILES}
             disabled={busy}
           />
           {error && (
@@ -556,7 +589,7 @@ export function Withdrawal() {
       numericAmount > maximumWithdrawal
     ) {
       setError(
-        `Kamida ${formatUZS(MINIMUM_WITHDRAWAL)} va hisobda ${formatUZS(MINIMUM_RETAINED_BALANCE)} qoldiradigan summani kiriting.`,
+        `Kamida ${formatUZS(MINIMUM_WITHDRAWAL)} va mavjud balansdan oshmagan summani kiriting.`,
       );
       return;
     }
@@ -585,8 +618,7 @@ export function Withdrawal() {
               <p className="text-sm text-muted-foreground">Hisobdagi balans</p>
               <p className="mt-1 text-2xl font-bold">{formatUZS(balance)}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Hozir yechish mumkin: {formatUZS(maximumWithdrawal)} · kamida{" "}
-                {formatUZS(MINIMUM_RETAINED_BALANCE)} hisobda qoladi
+                Hozir yechish mumkin: {formatUZS(maximumWithdrawal)}
               </p>
             </div>
           </div>
@@ -691,7 +723,7 @@ export function Withdrawal() {
               )}
               <p className="text-xs text-muted-foreground">
                 Faqat karta raqami so‘raladi — CVV va amal qilish muddatini hech qachon kiritmang.
-                So‘rovdan keyin hisobda kamida {formatUZS(MINIMUM_RETAINED_BALANCE)} qoladi.
+                So‘rovdan keyin balansning yechilmagan qismi hisobda qoladi.
               </p>
               <Button
                 className="w-full"

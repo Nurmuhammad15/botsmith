@@ -22,12 +22,14 @@ export const categories: Category[] = [
   { slug: "games", name: "O'yinlar", sub: "Games", icon: Gamepad2 },
 ];
 
-/** A published bot as shown in the public catalogue. `price` is null for signed-out visitors. */
+/** A published bot and its public 1/7/30-day subscription prices. */
 export type BotItem = {
   id: string;
   title: string;
   desc: string;
-  price: number | null;
+  price: number;
+  price7Days: number | null;
+  price30Days: number | null;
   rating: number;
   reviews: number;
   category: string;
@@ -78,8 +80,16 @@ export type Order = {
   botTitle: string;
   buyerId: string;
   amount: number;
+  subscriptionDays: 1 | 7 | 30;
   status: OrderStatus;
   createdAt: string;
+  paidAt: string | null;
+  subscriptionExpiresAt: string | null;
+  refundRequestedAt: string | null;
+  refundReason: string | null;
+  refundResolution: "refunded" | "rejected" | null;
+  refundResolvedAt: string | null;
+  termsAcceptedAt: string | null;
 };
 
 export type WithdrawalStatus = "pending" | "paid" | "rejected";

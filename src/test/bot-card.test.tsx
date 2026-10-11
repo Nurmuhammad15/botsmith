@@ -16,6 +16,8 @@ const bot: BotItem = {
   title: "Shop Bot",
   desc: "Online do‘kon boti",
   price: 450_000,
+  price7Days: 2_000_000,
+  price30Days: 6_000_000,
   rating: 4.5,
   reviews: 2,
   category: "shop",
@@ -61,17 +63,16 @@ describe("BotCard", () => {
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 
-  it("hides the price from signed-out visitors", async () => {
+  it("shows the public 1-day subscription price to signed-out visitors", async () => {
     holder.client = createFakeSupabase({ user: null }).client;
-    await renderApp(<BotCard bot={{ ...bot, price: null }} />);
+    await renderApp(<BotCard bot={bot} />);
 
-    expect(screen.getByText("Narxni ko‘rish uchun kiring")).toBeInTheDocument();
-    expect(screen.queryByText(/so'm/)).not.toBeInTheDocument();
+    expect(screen.getByText("450 000 so'm / 1 kun")).toBeInTheDocument();
   });
 
   it("sends signed-out visitors to the login page from the heart", async () => {
     holder.client = createFakeSupabase({ user: null }).client;
-    await renderApp(<BotCard bot={{ ...bot, price: null }} />);
+    await renderApp(<BotCard bot={bot} />);
 
     expect(
       screen.getByRole("link", { name: /Sevimlilarga qo‘shish uchun kiring/ }),

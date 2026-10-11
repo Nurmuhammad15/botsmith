@@ -10,6 +10,7 @@ import type {
   Withdrawal,
   WithdrawalStatus,
 } from "@/lib/data";
+import { SUBSCRIPTION_TERMS_VERSION } from "@/lib/subscription";
 
 export { describeError };
 
@@ -20,7 +21,15 @@ function toBot(row: Row): BotItem {
     id: str(row["id"]),
     title: str(row["title"]),
     desc: str(row["description"]),
-    price: row["price"] === null || row["price"] === undefined ? null : num(row["price"]),
+    price: num(row["price"]),
+    price7Days:
+      row["price_7_days"] === null || row["price_7_days"] === undefined
+        ? null
+        : num(row["price_7_days"]),
+    price30Days:
+      row["price_30_days"] === null || row["price_30_days"] === undefined
+        ? null
+        : num(row["price_30_days"]),
     rating: num(row["rating"]),
     reviews: num(row["review_count"]),
     category: str(row["category"]),
@@ -137,8 +146,22 @@ function toOrder(row: Row): Order {
     botTitle: str(row["bot_title"]),
     buyerId: str(row["buyer_id"]),
     amount: num(row["amount"]),
+    subscriptionDays: num(row["subscription_days"]) as 1 | 7 | 30,
     status: str(row["status"]) as OrderStatus,
     createdAt: str(row["created_at"]),
+    paidAt: typeof row["paid_at"] === "string" ? row["paid_at"] : null,
+    subscriptionExpiresAt:
+      typeof row["subscription_expires_at"] === "string" ? row["subscription_expires_at"] : null,
+    refundRequestedAt:
+      typeof row["refund_requested_at"] === "string" ? row["refund_requested_at"] : null,
+    refundReason: typeof row["refund_reason"] === "string" ? row["refund_reason"] : null,
+    refundResolution:
+      row["refund_resolution"] === "refunded" || row["refund_resolution"] === "rejected"
+        ? row["refund_resolution"]
+        : null,
+    refundResolvedAt:
+      typeof row["refund_resolved_at"] === "string" ? row["refund_resolved_at"] : null,
+    termsAcceptedAt: typeof row["terms_accepted_at"] === "string" ? row["terms_accepted_at"] : null,
   };
 }
 
@@ -177,20 +200,15 @@ export function useOrders(
 export function useCreateOrder() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (botId: string) =>
-      toOrder(check(await db().rpc("create_order", { p_bot_id: botId })) as Row),
-    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["orders"] }),
-  });
-}
-
-export function useAdvanceOrder() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (input: { orderId: string; status: "delivering" | "done" }) => {
-      check(
-        await db().rpc("seller_advance_order", { p_order: input.orderId, p_status: input.status }),
-      );
-    },
+    mutationFn: async (input: { botId: string; subscriptionDays: 1 | 7 | 30 }) =>
+      toOrder(
+        check(
+          await db().rpc("create_order", {
+            p_bot_id: input.botId,
+            p_subscription_days: input.subscriptionDays,
+          }),
+        ) as Row,
+      ),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["orders"] }),
   });
 }
@@ -218,29 +236,157 @@ export function useMyBots(enabled = true) {
   });
 }
 
-export type NewBotInput = { title: string; category: string; price: number; desc: string };
+export type NewBotInput = {
+  title: string;
+  category: string;
+  price: number;
+  price7Days: number;
+  price30Days: number;
+  desc: string;
+  webhookUrl: string;
+  webhookSecret: string;
+};
 
 export function useAddBot(sellerId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: NewBotInput): Promise<string> => {
       if (!sellerId) throw new Error("not_authenticated");
-      const row = check(
-        await db()
-          .from("bots")
-          .insert({
-            seller_id: sellerId,
-            title: input.title.trim(),
-            description: input.desc.trim(),
-            price: input.price,
-            category: input.category,
-          })
-          .select("id")
-          .single(),
-      ) as Row;
-      return str(row["id"]);
+      return str(
+        check(
+          await db().rpc("create_sponsored_bot", {
+            p_title: input.title.trim(),
+            p_description: input.desc.trim(),
+            p_category: input.category,
+            p_price_1_day: input.price,
+            p_price_7_days: input.price7Days,
+            p_price_30_days: input.price30Days,
+            p_webhook_url: input.webhookUrl.trim(),
+            p_webhook_secret: input.webhookSecret.trim(),
+          }),
+        ),
+      );
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["my-bots"] }),
+  });
+}
+
+export function useAcceptSubscriptionTerms(orderId: string) {
+  return useMutation({
+    mutationFn: async () => {
+      check(
+        await db().rpc("accept_subscription_terms", {
+          p_order: orderId,
+          p_version: SUBSCRIPTION_TERMS_VERSION,
+        }),
+      );
+    },
+  });
+}
+
+export function useRequestSubscriptionRefund() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { orderId: string; reason: string }) => {
+      check(
+        await db().rpc("request_subscription_refund", {
+          p_order: input.orderId,
+          p_reason: input.reason,
+        }),
+      );
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["orders"] }),
+  });
+}
+
+export function useAdminResolveSubscriptionRefund() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { orderId: string; resolution: "refunded" | "rejected" }) => {
+      check(
+        await db().rpc(
+          input.resolution === "refunded"
+            ? "admin_complete_subscription_refund"
+            : "admin_reject_subscription_refund",
+          { p_order: input.orderId },
+        ),
+      );
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["admin"] }),
+  });
+}
+
+export function useSetBotSubscriptionWebhook() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { botId: string; url: string; secret: string }) => {
+      check(
+        await db().rpc("set_bot_subscription_webhook", {
+          p_bot: input.botId,
+          p_url: input.url,
+          p_secret: input.secret,
+        }),
+      );
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["my-bots"] }),
+  });
+}
+
+export type SellerSubscriptionConfig = {
+  price1Day: number;
+  price7Days: number | null;
+  price30Days: number | null;
+};
+
+export function useSellerSubscriptionConfig(botId: string) {
+  return useQuery({
+    queryKey: ["seller-subscription", botId],
+    queryFn: async (): Promise<SellerSubscriptionConfig> => {
+      const row = check(
+        await db().from("bots").select("price,price_7_days,price_30_days").eq("id", botId).single(),
+      ) as Row;
+      return {
+        price1Day: num(row["price"]),
+        price7Days:
+          row["price_7_days"] === null || row["price_7_days"] === undefined
+            ? null
+            : num(row["price_7_days"]),
+        price30Days:
+          row["price_30_days"] === null || row["price_30_days"] === undefined
+            ? null
+            : num(row["price_30_days"]),
+      };
+    },
+  });
+}
+
+export function useConfigureBotSubscription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      botId: string;
+      price1Day: number;
+      price7Days: number;
+      price30Days: number;
+      webhookUrl: string;
+      webhookSecret: string;
+    }) => {
+      check(
+        await db().rpc("configure_bot_subscription", {
+          p_bot: input.botId,
+          p_price_1_day: input.price1Day,
+          p_price_7_days: input.price7Days,
+          p_price_30_days: input.price30Days,
+          p_webhook_url: input.webhookUrl,
+          p_webhook_secret: input.webhookSecret,
+        }),
+      );
+    },
+    onSuccess: (_result, input) => {
+      void queryClient.invalidateQueries({ queryKey: ["seller-subscription", input.botId] });
+      void queryClient.invalidateQueries({ queryKey: ["bots"] });
+      void queryClient.invalidateQueries({ queryKey: ["my-bots"] });
+    },
   });
 }
 

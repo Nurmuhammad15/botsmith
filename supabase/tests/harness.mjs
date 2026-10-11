@@ -100,7 +100,9 @@ export async function boot({ migrations, preSql = "" } = {}) {
     try {
       await db.exec(fs.readFileSync(file, "utf8"));
     } catch (e) {
-      console.error(`MIGRATION FAILED: ${path.basename(file)}\n  ${e.message}`);
+      console.error(
+        `MIGRATION FAILED: ${path.basename(file)}\n  ${JSON.stringify(e, Object.getOwnPropertyNames(e))}`,
+      );
       process.exit(2);
     }
     console.log(`migration ok: ${path.basename(file)}`);

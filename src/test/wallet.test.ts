@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { orderStep } from "@/lib/data";
-import {
-  calculateWithdrawalFee,
-  getMaximumWithdrawal,
-  MINIMUM_RETAINED_BALANCE,
-  MINIMUM_WITHDRAWAL,
-} from "@/lib/wallet";
+import { calculateWithdrawalFee, getMaximumWithdrawal, MINIMUM_WITHDRAWAL } from "@/lib/wallet";
 
 describe("wallet rules", () => {
   it("uses a minimum withdrawal of 100,000 UZS", () => {
@@ -17,13 +12,13 @@ describe("wallet rules", () => {
     expect(calculateWithdrawalFee(2_350_000)).toBe(70_500);
   });
 
-  it("allows nothing when the balance does not exceed the retained amount", () => {
+  it("does not allow withdrawing more than the available balance", () => {
     expect(getMaximumWithdrawal(0)).toBe(0);
-    expect(getMaximumWithdrawal(MINIMUM_RETAINED_BALANCE)).toBe(0);
+    expect(getMaximumWithdrawal(500_000)).toBe(500_000);
   });
 
-  it("allows the balance above the retained amount", () => {
-    expect(getMaximumWithdrawal(MINIMUM_RETAINED_BALANCE + 250_000)).toBe(250_000);
+  it("allows the full available balance", () => {
+    expect(getMaximumWithdrawal(250_000)).toBe(250_000);
   });
 });
 

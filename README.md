@@ -1,18 +1,12 @@
-# Welcome to your Lovable project
+# BotSmith
 
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+BotSmith is a marketplace for Telegram bot subscriptions. Buyers choose 1-, 7-, or 30-day access;
+sellers set each plan's price and connect an HTTPS webhook to activate or revoke access on their
+own bot service. BotSmith does not sell or deliver bot source files.
 
 ## Development
 
-Prefer working locally? You need Node.js 22 and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+Use Node.js 22 and npm.
 
 ```sh
 git clone <this-repository-url>
@@ -26,13 +20,15 @@ npm run dev
 
 Run the files in `supabase/migrations/` **in order** in the Supabase SQL editor (each file once):
 
-| File                               | Adds                                                                                                                                 |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `0001_marketplace.sql`             | profiles/roles, bots, orders, reviews, withdrawals, support chat, row level security                                                 |
-| `0002_media_chat_favorites.sql`    | cover images and bot files (Storage buckets `bot-covers` and `bot-files`), buyer–seller chat, favorites, de-duplicated view counting |
-| `0003_payments.sql`                | Payme / Click payment transactions and their state machine                                                                           |
-| `0005_review_fixes.sql`            | fixes from the security review: refunds vs. withdrawals, file access timing, media moderation bypasses, review privacy, size limits  |
-| `0004_withdrawal_card_privacy.sql` | seller card numbers are no longer readable by clients; administrators reveal them through an audited function                        |
+| File                               | Adds                                                                                    |
+| ---------------------------------- | --------------------------------------------------------------------------------------- |
+| `0001_marketplace.sql`             | profiles/roles, bots, orders, reviews, withdrawals, support chat, row-level security    |
+| `0002_media_chat_favorites.sql`    | cover images, legacy bot-file storage, chat, favorites, de-duplicated view counting     |
+| `0003_payments.sql`                | Payme / Click payment transactions and their state machine                              |
+| `0004_withdrawal_card_privacy.sql` | private seller card numbers and audited admin reveal                                    |
+| `0005_review_fixes.sql`            | refund, media moderation, review privacy, and size-limit fixes                          |
+| `0006_chat_fixes.sql`              | chat access and consistency fixes                                                       |
+| `0007_subscriptions.sql`           | 1/7/30-day plans, consent and refunds, 15% commission, seller webhook outbox and expiry |
 
 To create the first administrator, register normally, then run in the SQL editor:
 
@@ -41,20 +37,18 @@ update public.profiles set role = 'admin'
 where id = (select id from auth.users where email = 'you@example.com');
 ```
 
-Storage notes: covers are public images (JPG/PNG/WebP, 5 MB, up to 5 per bot). Bot files are
-private (50 MB each, up to 10 per bot) and can only be downloaded by the seller and by buyers whose
-order is being delivered or done (the same moment refunds close). If your Supabase plan caps uploads below 50 MB, lower the bucket limit in
-`0002_media_chat_favorites.sql`.
+Storage notes: covers are public images (JPG/PNG/WebP, 5 MB, up to 5 per bot). The old private
+`bot-files` bucket may remain in the database for migration compatibility, but BotSmith no longer
+accepts, sells, or grants access to bot source files.
 
 ### Testing the SQL
 
-The migrations are covered by tests that run against a real Postgres (PGlite, in WebAssembly)
-with Supabase's roles stubbed in. It is not a project dependency, so install it on demand:
+The migrations are covered by tests that run against Postgres (PGlite, in WebAssembly) with
+Supabase's roles stubbed in:
 
 ```sh
-npm install --no-save @electric-sql/pglite
-node supabase/tests/run.mjs          # roles, RLS, storage rules, chat, payments state machine
-npm test                             # also runs the payment endpoint tests against the real SQL
+npm test
+node supabase/tests/run.mjs
 ```
 
 ## Online payments (Payme and Click)
@@ -67,8 +61,9 @@ the order paid in the database. Nothing is marked paid by the browser.
 | `POST /api/payme` | Payme Merchant API (JSON-RPC: CheckPerformTransaction, CreateTransaction, PerformTransaction, CancelTransaction, CheckTransaction, GetStatement) |
 | `POST /api/click` | Click Shop API (Prepare and Complete, MD5-signed)                                                                                                |
 
-Until the credentials below are set, the order page shows no pay buttons and orders are confirmed
-by an administrator (Admin → Buyurtmalar → "To'langan").
+Before payment, buyers must accept the versioned subscription and refund terms. Until the provider
+credentials below are set, the order page shows no online pay buttons; an administrator can confirm
+an offline payment after seeing the buyer's recorded consent.
 
 1. Open a merchant account. Both providers contract with businesses (a legal entity or a
    registered self-employed merchant with a settlement account); this takes days to weeks and
@@ -90,6 +85,24 @@ Money going **out** to sellers is still manual: a seller requests a withdrawal, 
 transfers it to the card and marks it paid. Automating this needs a payout product from your
 payment provider or bank (ask Payme/Click about split payments or payouts to cards); it is a
 separate agreement, not something the app can switch on by itself.
+
+## Subscription webhooks and refunds
+
+Each bot needs a seller-managed HTTPS webhook and a random secret of at least 32 characters.
+BotSmith sends signed JSON events (`subscription.activated`, `subscription.expired`,
+`subscription.refund_requested`, `subscription.refunded`, `subscription.reactivated`) with
+`X-BotSmith-Timestamp`, `X-BotSmith-Signature`, and idempotency key `X-BotSmith-Delivery`.
+The signature is `sha256=` followed by the hex HMAC-SHA256 of
+`<timestamp>.<raw request body>`. Verify it with a constant-time comparison and reject stale
+timestamps; process delivery IDs idempotently. Failed deliveries retry with backoff.
+
+The Vercel Cron endpoint `/api/subscription-webhooks` runs once a minute. Set `CRON_SECRET` in the
+deployment's secret environment variables; Vercel uses it to authorize cron requests. Subscription
+refund requests are reviewed by an administrator, and approved refunds must first be manually
+processed through the original payment provider before being marked complete in Admin.
+
+Seller revenue is 85% of the listed plan price. It becomes withdrawable 24 hours after payment if
+no refund request is under review. Each manual withdrawal also charges a separate 3% fee.
 
 ## Supabase authentication
 

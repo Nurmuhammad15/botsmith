@@ -3,6 +3,12 @@
   "framework": null,
   "installCommand": "npm install",
   "buildCommand": "NITRO_PRESET=vercel npm run build",
+  "crons": [
+    {
+      "path": "/api/subscription-webhooks",
+      "schedule": "* * * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

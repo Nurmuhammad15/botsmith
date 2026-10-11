@@ -249,7 +249,7 @@ export function Footer() {
       </div>
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 pb-8">
         <p className="text-xs text-muted-foreground">
-          © 2025 BotSmith. Barcha huquqlar himoyalangan.
+          © {new Date().getFullYear()} BotSmith. Barcha huquqlar himoyalangan.
         </p>
         <nav className="ml-auto flex gap-4 text-xs text-muted-foreground">
           <Link to="/help" className="hover:text-foreground">
@@ -257,6 +257,9 @@ export function Footer() {
           </Link>
           <Link to="/how-it-works" className="hover:text-foreground">
             Qanday ishlaydi
+          </Link>
+          <Link to="/terms" className="hover:text-foreground">
+            Obuna qoidalari
           </Link>
         </nav>
       </div>
@@ -314,7 +317,6 @@ export function Rating({ value, count }: { value: number; count?: number }) {
 }
 
 export function BotCard({ bot }: { bot: BotItem }) {
-  const account = useMarketplaceAccount();
   return (
     <div className="relative">
       <Link
@@ -329,11 +331,7 @@ export function BotCard({ bot }: { bot: BotItem }) {
             <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{bot.desc}</p>
           </div>
           <Rating value={bot.rating} count={bot.reviews} />
-          {account && bot.price !== null ? (
-            <p className="mt-auto font-bold text-primary">{formatUZS(bot.price)}</p>
-          ) : (
-            <p className="mt-auto text-sm font-medium text-primary">Narxni ko‘rish uchun kiring</p>
-          )}
+          <p className="mt-auto font-bold text-primary">{formatUZS(bot.price)} / 1 kun</p>
         </div>
       </Link>
       <FavoriteButton botId={bot.id} className="absolute right-3 top-3" />
@@ -341,7 +339,16 @@ export function BotCard({ bot }: { bot: BotItem }) {
   );
 }
 
-type Status = "published" | "draft" | "review" | "pending" | "ready" | "done" | "delivering";
+type Status =
+  | "published"
+  | "draft"
+  | "review"
+  | "pending"
+  | "ready"
+  | "done"
+  | "delivering"
+  | "active"
+  | "expired";
 const statusMap: Record<Status, [string, string]> = {
   published: ["Published", "bg-success-soft text-success"],
   done: ["Yakunlandi", "bg-success-soft text-success"],
@@ -350,6 +357,8 @@ const statusMap: Record<Status, [string, string]> = {
   review: ["Review", "bg-warning-soft text-warning"],
   pending: ["Tekshirish", "bg-warning-soft text-warning"],
   delivering: ["Yetkazib berilyapti", "bg-primary-soft text-primary"],
+  active: ["Obuna faol", "bg-success-soft text-success"],
+  expired: ["Muddati tugagan", "bg-muted text-muted-foreground"],
 };
 export function StatusBadge({ status }: { status: Status }) {
   const [label, cls] = statusMap[status];

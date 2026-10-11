@@ -6,7 +6,7 @@ import { DashboardLayout, StatCard, StatusBadge, DataTable } from "@/components/
 import { useMyBots, useWallet } from "@/lib/api";
 import { formatUZS } from "@/lib/data";
 import { sellerNav } from "@/lib/nav";
-import { getMaximumWithdrawal, MINIMUM_RETAINED_BALANCE } from "@/lib/wallet";
+import { getMaximumWithdrawal } from "@/lib/wallet";
 
 export const Route = createFileRoute("/seller")({
   head: () => ({
@@ -75,8 +75,7 @@ function SellerContent() {
         </div>
         <StatCard label="Balans" value={formatUZS(balance)}>
           <p className="mt-2 text-xs text-muted-foreground">
-            Yechish mumkin: {formatUZS(getMaximumWithdrawal(balance))} · hisobda kamida{" "}
-            {formatUZS(MINIMUM_RETAINED_BALANCE)} qoladi
+            Yechish mumkin: {formatUZS(getMaximumWithdrawal(balance))}
           </p>
           <Button asChild className="mt-5 w-full">
             <Link to="/withdraw">
@@ -125,10 +124,10 @@ function SellerContent() {
                   params={{ id: bot.id }}
                   aria-label={
                     published
-                      ? `${bot.title} statistikasi va fayllari`
-                      : `${bot.title} rasm va fayllari`
+                      ? `${bot.title} statistikasi va sozlamalari`
+                      : `${bot.title} rasm va sozlamalari`
                   }
-                  title={published ? "Statistika va fayllar" : "Rasm va fayllar"}
+                  title={published ? "Statistika va sozlamalar" : "Rasm va sozlamalar"}
                 >
                   {published ? <Eye /> : <ImagePlus />}
                 </Link>

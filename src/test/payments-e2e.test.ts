@@ -55,14 +55,22 @@ describe.skipIf(!pgliteAvailable)("payments end to end (handlers + SQL)", () => 
       },
     });
 
-  const newOrder = async () =>
-    (
+  const newOrder = async (consented = true) => {
+    const order = (
       await db.query(
         `insert into public.orders (bot_id,bot_title,buyer_id,seller_id,amount)
          values ($1,'Shop Bot',$2,$3,$4) returning id`,
         [bot, BUYER, SELLER, PRICE],
       )
     ).rows[0]!["id"] as string;
+    if (consented) {
+      await db.query(
+        `update public.orders set terms_accepted_at=now(),terms_version='2026-10-11' where id=$1`,
+        [order],
+      );
+    }
+    return order;
+  };
   const status = async (order: string) =>
     (await db.query(`select status from public.orders where id=$1`, [order])).rows[0]!["status"];
 
@@ -72,6 +80,10 @@ describe.skipIf(!pgliteAvailable)("payments end to end (handlers + SQL)", () => 
         migration("0001_marketplace.sql"),
         migration("0002_media_chat_favorites.sql"),
         migration("0003_payments.sql"),
+        migration("0004_withdrawal_card_privacy.sql"),
+        migration("0005_review_fixes.sql"),
+        migration("0006_chat_fixes.sql"),
+        migration("0007_subscriptions.sql"),
       ],
     });
     for (const [id, email, role] of [
@@ -86,11 +98,17 @@ describe.skipIf(!pgliteAvailable)("payments end to end (handlers + SQL)", () => 
     }
     bot = (
       await db.query(
-        `insert into public.bots (seller_id,title,description,price,category,status)
-         values ($1,'Shop Bot','d',$2,'shop','published') returning id`,
-        [SELLER, PRICE],
+        `insert into public.bots
+          (seller_id,title,description,price,price_7_days,price_30_days,category,status)
+         values ($1,'Shop Bot','d',$2,$3,$4,'shop','published') returning id`,
+        [SELLER, PRICE, PRICE * 4, PRICE * 10],
       )
     ).rows[0]!["id"] as string;
+    await db.query(
+      `insert into public.bot_subscription_webhooks (bot_id,endpoint_url,signing_secret)
+       values ($1,'https://bot.example.uz/webhook',$2)`,
+      [bot, "a".repeat(32)],
+    );
   });
 
   // ------------------------------------------------------------------ Payme
@@ -108,6 +126,13 @@ describe.skipIf(!pgliteAvailable)("payments end to end (handlers + SQL)", () => 
       error?: { code: number; data?: unknown };
     };
   };
+
+  it("refuses payment preparation if the buyer has not accepted subscription terms", async () => {
+    const order = await newOrder(false);
+    expect(await store().paymeCheckPerform(order, TIYIN)).toEqual({
+      error: "terms_not_accepted",
+    });
+  });
 
   it("Payme: the full payment lifecycle, as the Payme sandbox exercises it", async () => {
     const order = await newOrder();

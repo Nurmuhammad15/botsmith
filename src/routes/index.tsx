@@ -156,7 +156,7 @@ function Index() {
               items={[
                 ["Botni tanlang", "Katalogdan kerakli botni toping"],
                 ["To'lov qiling", "Payme yoki Click orqali xavfsiz"],
-                ["Botni oling", "Tayyor bot sizga yetkaziladi"],
+                ["Obunani faollashtiring", "To‘lovdan keyin botga kirish ochiladi"],
               ]}
             />
             <Steps
@@ -175,7 +175,7 @@ function Index() {
             {[
               [ShieldCheck, "Xavfsiz to'lov", "Payme va Click"],
               [BadgeCheck, "Tasdiqlangan dasturchilar", "Haqiqiy profil va sharhlar"],
-              [RotateCcw, "Qaytarish kafolati", "30 kun ichida"],
+              [RotateCcw, "Qaytarish so‘rovi", "To‘lovdan keyin 24 soat ichida"],
             ].map(([I, a, b]) => {
               const Icon = I as typeof ShieldCheck;
               return (

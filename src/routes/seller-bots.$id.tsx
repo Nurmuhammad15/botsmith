@@ -1,28 +1,30 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Eye, FileText, ShoppingBag, Trash2, Wallet } from "lucide-react";
-import { useState } from "react";
+import { ArrowLeft, Eye, ShoppingBag, Trash2, Wallet } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { MediaPicker } from "@/components/media-picker";
 import { SellerPage } from "@/components/seller-pages";
 import { StatusBadge } from "@/components/site";
-import { describeError, useMyBots } from "@/lib/api";
-import { coverUrl, useBotFiles, useUploadMedia, type UploadResult } from "@/lib/api-media";
+import {
+  describeError,
+  useConfigureBotSubscription,
+  useMyBots,
+  useSellerSubscriptionConfig,
+} from "@/lib/api";
+import { coverUrl, useUploadMedia, type UploadResult } from "@/lib/api-media";
 import { formatUZS, type SellerBot } from "@/lib/data";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
-import {
-  formatBytes,
-  IMAGE_TYPES,
-  MAX_FILES,
-  MAX_IMAGES,
-  validateDeliverable,
-  validateImage,
-} from "@/lib/media";
+import { IMAGE_TYPES, MAX_IMAGES, validateImage } from "@/lib/media";
 
 export const Route = createFileRoute("/seller-bots/$id")({
   head: () => ({
     meta: [
       { title: "Bot boshqaruvi — BotSmith" },
-      { name: "description", content: "Bot statistikasi, rasmlari va fayllarini boshqaring." },
+      {
+        name: "description",
+        content: "Bot statistikasi, obuna narxlari va webhook sozlamalarini boshqaring.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -77,6 +79,7 @@ function SellerBotContent() {
             </p>
           )}
 
+          <SubscriptionSettings botId={bot.id} />
           <MediaManager bot={bot} sellerId={account.id} />
         </>
       )}
@@ -130,14 +133,11 @@ function summarize(result: UploadResult, noun: string): Notice {
 
 function MediaManager({ bot, sellerId }: { bot: SellerBot; sellerId: string }) {
   const media = useUploadMedia(sellerId, bot.id);
-  const { data: files = [], isPending: filesPending, isError: filesError } = useBotFiles(bot.id);
   // One cover change at a time: each writes the whole gallery.
   const coverBusy =
     media.covers.isPending || media.removeCover.isPending || media.reorderCovers.isPending;
   const [newImages, setNewImages] = useState<File[]>([]);
-  const [newFiles, setNewFiles] = useState<File[]>([]);
   const [imageNotice, setImageNotice] = useState<Notice | null>(null);
-  const [fileNotice, setFileNotice] = useState<Notice | null>(null);
 
   async function uploadImages() {
     setImageNotice(null);
@@ -153,17 +153,6 @@ function MediaManager({ bot, sellerId }: { bot: SellerBot; sellerId: string }) {
     }
   }
 
-  async function uploadFiles() {
-    setFileNotice(null);
-    try {
-      const result = await media.files.mutateAsync(newFiles);
-      setNewFiles([]);
-      setFileNotice(summarize(result, "fayl"));
-    } catch (e) {
-      setFileNotice({ kind: "error", text: describeError(e) });
-    }
-  }
-
   async function run(action: Promise<unknown>, setNotice: (notice: Notice | null) => void) {
     setNotice(null);
     try {
@@ -174,7 +163,7 @@ function MediaManager({ bot, sellerId }: { bot: SellerBot; sellerId: string }) {
   }
 
   return (
-    <div className="mt-10 grid gap-10 lg:grid-cols-2">
+    <div className="mt-10">
       <section aria-labelledby="images-title" className="space-y-4">
         <h3 id="images-title" className="font-semibold">
           Rasmlar
@@ -262,65 +251,145 @@ function MediaManager({ bot, sellerId }: { bot: SellerBot; sellerId: string }) {
         )}
         <NoticeText notice={imageNotice} />
       </section>
-
-      <section aria-labelledby="files-title" className="space-y-4">
-        <h3 id="files-title" className="font-semibold">
-          Bot fayllari
-        </h3>
-        <p className="text-xs text-muted-foreground">
-          Xaridor fayllarni siz buyurtmada “Yetkazishni boshlash”ni bosgandan keyin yuklab oladi.
-        </p>
-        {filesError ? (
-          <p role="alert" className="text-sm text-destructive">
-            Fayllarni yuklab bo‘lmadi. Sahifani yangilang.
-          </p>
-        ) : filesPending ? (
-          <p className="text-sm text-muted-foreground">Yuklanmoqda…</p>
-        ) : files.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Hozircha fayl yo‘q.</p>
-        ) : (
-          <ul className="space-y-2">
-            {files.map((file) => (
-              <li
-                key={file.id}
-                className="flex items-center gap-3 rounded-lg border px-3 py-2 text-sm"
-              >
-                <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 flex-1 truncate">{file.name}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {formatBytes(file.size)}
-                </span>
-                <button
-                  type="button"
-                  aria-label={`${file.name} ni o‘chirish`}
-                  disabled={media.removeFile.isPending}
-                  onClick={() => run(media.removeFile.mutateAsync(file.id), setFileNotice)}
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <MediaPicker
-          label="Fayl qo‘shish"
-          hint={`50 MB gacha · jami ${MAX_FILES} tagacha`}
-          files={newFiles}
-          onChange={setNewFiles}
-          validate={validateDeliverable}
-          max={MAX_FILES}
-          used={files.length}
-          disabled={media.files.isPending}
-        />
-        {newFiles.length > 0 && (
-          <Button onClick={uploadFiles} disabled={media.files.isPending}>
-            {media.files.isPending ? "Yuklanmoqda…" : `${newFiles.length} ta faylni yuklash`}
-          </Button>
-        )}
-        <NoticeText notice={fileNotice} />
-      </section>
     </div>
+  );
+}
+
+function SubscriptionSettings({ botId }: { botId: string }) {
+  const { data, isPending, isError } = useSellerSubscriptionConfig(botId);
+  const configure = useConfigureBotSubscription();
+  const [prices, setPrices] = useState({ one: "", seven: "", thirty: "" });
+  const [webhookUrl, setWebhookUrl] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (data) {
+      setPrices({
+        one: String(data.price1Day),
+        seven: data.price7Days === null ? "" : String(data.price7Days),
+        thirty: data.price30Days === null ? "" : String(data.price30Days),
+      });
+    }
+  }, [data]);
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    const amounts = [prices.one, prices.seven, prices.thirty].map(Number);
+    if (!amounts.every((value) => Number.isSafeInteger(value) && value > 0)) {
+      setError("Uchala obuna narxini ham musbat butun so‘m qiymatida kiriting.");
+      return;
+    }
+    try {
+      await configure.mutateAsync({
+        botId,
+        price1Day: amounts[0]!,
+        price7Days: amounts[1]!,
+        price30Days: amounts[2]!,
+        webhookUrl,
+        webhookSecret,
+      });
+      setWebhookSecret("");
+      setMessage("Obuna narxlari va webhook saqlandi.");
+    } catch (e) {
+      setError(describeError(e));
+    }
+  }
+
+  return (
+    <section className="mt-8 max-w-2xl space-y-4 rounded-xl border p-5">
+      <div>
+        <h3 className="font-semibold">Obuna va ulanish sozlamalari</h3>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Xaridor kiritilgan narxni to‘laydi; platforma 15% komissiya oladi, sizga 85% qoladi.
+          Webhook kaliti saqlangach qayta ko‘rsatilmaydi — yo‘qolsa yangisini kiriting.
+        </p>
+      </div>
+      {isPending ? (
+        <p className="text-sm text-muted-foreground">Yuklanmoqda…</p>
+      ) : isError ? (
+        <p role="alert" className="text-sm text-destructive">
+          Obuna sozlamalarini yuklab bo‘lmadi.
+        </p>
+      ) : (
+        <form onSubmit={(event) => void submit(event)} className="space-y-4">
+          {(
+            [
+              ["one", "1 kunlik narx"],
+              ["seven", "7 kunlik narx"],
+              ["thirty", "30 kunlik narx"],
+            ] as const
+          ).map(([key, label]) => {
+            const amount = Number(prices[key]);
+            const net =
+              Number.isSafeInteger(amount) && amount > 0
+                ? amount - Math.round(amount * 0.15)
+                : null;
+            return (
+              <label key={key} className="block space-y-2 text-sm">
+                <span>{label} (so‘m)</span>
+                <Input
+                  required
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={prices[key]}
+                  onChange={(event) =>
+                    setPrices((previous) => ({ ...previous, [key]: event.target.value }))
+                  }
+                />
+                <span className="block text-xs text-muted-foreground">
+                  Platforma komissiyasi: −15%
+                  {net !== null ? ` · Sizga qoladi: ${formatUZS(net)}` : ""}
+                </span>
+              </label>
+            );
+          })}
+          <label className="block space-y-2 text-sm">
+            <span>Webhook HTTPS manzili</span>
+            <Input
+              required
+              type="url"
+              value={webhookUrl}
+              onChange={(event) => setWebhookUrl(event.target.value)}
+              placeholder="https://example.uz/botsmith/webhook"
+            />
+          </label>
+          <label className="block space-y-2 text-sm">
+            <span>Webhook maxfiy kaliti (kamida 32 belgi)</span>
+            <Input
+              required
+              minLength={32}
+              type="password"
+              autoComplete="new-password"
+              value={webhookSecret}
+              onChange={(event) => setWebhookSecret(event.target.value)}
+            />
+            <span className="block text-xs text-muted-foreground">
+              Har bir so‘rov <code>{"<timestamp>.<raw body>"}</code> satrining HMAC-SHA256 imzosi
+              bilan yuboriladi. Imzo va yetkazish identifikatori sarlavhalarini tekshiring; kalit
+              qayta ko‘rsatilmaydi.
+            </span>
+          </label>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          {message && (
+            <p role="status" className="text-sm text-success">
+              {message}
+            </p>
+          )}
+          <Button type="submit" disabled={configure.isPending}>
+            {configure.isPending ? "Saqlanmoqda…" : "Obuna sozlamalarini saqlash"}
+          </Button>
+        </form>
+      )}
+    </section>
   );
 }
 

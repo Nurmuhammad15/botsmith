@@ -4,15 +4,15 @@ export type Faq = readonly [question: string, answer: string];
 export const buyerFaqs: Faq[] = [
   [
     "Botni qanday xarid qilaman?",
-    "Katalogdan botni tanlang va “Xarid qilish” tugmasini bosing. Buyurtma yaratiladi va “Buyurtmalar” sahifasida holati bilan ko‘rinadi.",
+    "Katalogdan botni tanlang, 1, 7 yoki 30 kunlik obunani tanlang va “Obuna bo‘lish”ni bosing. Qoidalarni qabul qilib to‘lov qilganingizdan so‘ng botga kirish faollashadi.",
   ],
   [
     "To‘lov qanday amalga oshiriladi?",
-    "Buyurtmadagi to‘lov tugmasi orqali (Payme yoki Click, ulangan bo‘lsa). To‘lov tasdiqlangach buyurtma faollashadi. Agar onlayn to‘lov mavjud bo‘lmasa, yordam chatiga yozing — to‘lovni administrator qo‘lda tasdiqlaydi.",
+    "Buyurtmadagi to‘lov tugmasi orqali (Payme yoki Click, ulangan bo‘lsa). To‘lov tasdiqlangach tanlangan obuna muddati boshlanadi. Agar onlayn to‘lov mavjud bo‘lmasa, yordam chatiga yozing — to‘lovni administrator qo‘lda tasdiqlaydi.",
   ],
   [
-    "Botni qachon olaman?",
-    "To‘lovdan keyin sotuvchi botni bot sahifasida ko‘rsatilgan muddatda yetkazadi. Holatni “Buyurtmalar”da kuzating. Sotuvchi fayl biriktirgan bo‘lsa, yetkazib berish boshlangach ularni shu yerdan yuklab olasiz.",
+    "Obuna qachon faollashadi?",
+    "To‘lov provayder tomonidan tasdiqlanishi bilan obuna boshlanadi. Obuna muddati va tugash vaqtini “Buyurtmalar” sahifasida ko‘rasiz.",
   ],
   [
     "Sotuvchi bilan qanday bog‘lanaman?",
@@ -28,26 +28,26 @@ export const buyerFaqs: Faq[] = [
   ],
   [
     "Nega narxlarni ko‘rmayapman?",
-    "Narxlar faqat tizimga kirgan foydalanuvchilarga ko‘rsatiladi. Kirish yoki ro‘yxatdan o‘tish orqali ko‘ring.",
+    "Obuna narxlari bot sahifasida tizimga kirmagan foydalanuvchilarga ham ko‘rsatiladi.",
   ],
   [
     "Muammo yuzaga kelsa nima qilaman?",
-    "Avval sotuvchiga yozing. Kelisha olmasangiz, yordam chatiga murojaat qiling — platformada 30 kunlik kafolat e’lon qilingan.",
+    "To‘lov tasdiqlangach 24 soat ichida “Buyurtmalar” sahifasidan sababini ko‘rsatib qaytarish so‘rovini yuboring. BotSmith jamoasi uni ko‘rib chiqadi; batafsil shartlar “Obuna va qaytarish qoidalari” sahifasida.",
   ],
 ];
 
 export const sellerFaqs: Faq[] = [
   [
-    "Botni qanday joylayman?",
-    "Mening botlarim sahifasidagi “Yangi bot qo‘shish” orqali nom, kategoriya, narx, tavsif, rasmlar va (ixtiyoriy) fayllarni kiriting. Administrator tekshirgach bot katalogda e’lon qilinadi.",
+    "Bot obunasini qanday joylayman?",
+    "“Yangi bot qo‘shish” orqali bot nomi, tavsifi, rasmlari, 1/7/30 kunlik obuna narxlari va HTTPS webhook sozlamalarini kiriting. Administrator tekshirgach bot katalogda e’lon qilinadi.",
   ],
   [
-    "Rasm va fayllarni qanday boshqaraman?",
-    "Mening botlarim sahifasida botni tanlab, rasm (JPG, PNG yoki WebP, 5 MB gacha, 5 tagacha) va fayllar (50 MB gacha, 10 tagacha) qo‘shing yoki o‘chiring. Fayllarni xaridor siz “Yetkazishni boshlash”ni bosgandan keyingina yuklab oladi (shundan keyin to‘lov qaytarib bo‘lmaydi). E’lon qilingan botga yangi rasm qo‘shsangiz, u qayta tekshiruvga yuboriladi.",
+    "Rasm va obuna narxlarini qanday boshqaraman?",
+    "Bot sahifasida rasmlar va uchta obuna narxini yangilang. Xaridor 1, 7 yoki 30 kunlik rejani tanlaydi; sayt bot fayllarini sotmaydi va tarqatmaydi. E’lon qilingan botga yangi rasm qo‘shsangiz, u qayta tekshiruvga yuboriladi.",
   ],
   [
-    "Buyurtmalarni qayerda ko‘raman?",
-    "Buyurtmalar sahifasida bot nomi, summa va holat ko‘rinadi. To‘langan buyurtmani yetkazishni boshlab, tayyor bo‘lgach yakunlang.",
+    "Botga kirishni qanday boshqaraman?",
+    "Bot serveringizdagi HTTPS webhookni sozlang. To‘lov, muddat tugashi va qaytarish so‘rovi kabi imzolangan hodisalar yuboriladi. Webhook imzosini serveringizda tekshirib, kirishni tegishli hodisa asosida boshqaring.",
   ],
   [
     "Xaridor bilan qanday gaplashaman?",
@@ -55,9 +55,12 @@ export const sellerFaqs: Faq[] = [
   ],
   [
     "Pulni qanday yechaman?",
-    "Eng kamida 100 000 so‘m so‘rash mumkin, hisobda kamida 500 000 so‘m qoladi. 3% komissiya ushlanadi, qolgani kartangizga qo‘lda o‘tkaziladi; holatini yechish tarixida ko‘rasiz.",
+    "To‘langan obuna daromadi 24 soat ushlab turilgach yechish uchun ochiladi. BotSmith sotuv narxidan 15% komissiya ushlab qoladi; yechish so‘rovidan yana 3% olinadi. To‘lovni administrator qo‘lda amalga oshiradi.",
   ],
-  ["Daromad qachon hisoblanadi?", "Faqat to‘lovi tasdiqlangan buyurtmalar daromadga qo‘shiladi."],
+  [
+    "Daromad qachon hisoblanadi?",
+    "Daromad to‘lov tasdiqlangach hisoblanadi va qaytarish so‘rovi muddati o‘tib, 24 soatlik ushlab turish tugagach yechish uchun ochiladi.",
+  ],
   [
     "Ko‘rishlar qanday hisoblanadi?",
     "Har bir tashrif buyuruvchi bitta botni bir kunda bir marta hisoblanadi; sahifani qayta yangilash yoki o‘zingizning botingizni ochish hisobga olinmaydi.",

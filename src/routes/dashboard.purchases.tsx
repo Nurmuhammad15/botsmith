@@ -1,15 +1,17 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Download, MessageSquare } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { MessageSquare } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import { DashboardLayout, StatusBadge, Stepper, Tabs } from "@/components/site";
-import { describeError, useOrders } from "@/lib/api";
+import { DashboardLayout, StatusBadge, Tabs } from "@/components/site";
+import {
+  describeError,
+  useAcceptSubscriptionTerms,
+  useOrders,
+  useRequestSubscriptionRefund,
+} from "@/lib/api";
 import { useOpenConversation } from "@/lib/api-chat";
-import { getBotFileUrl, useBotFiles } from "@/lib/api-media";
-import { formatUZS, orderCode, orderStep, type Order } from "@/lib/data";
+import { formatUZS, orderCode, type Order } from "@/lib/data";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
-import { formatBytes } from "@/lib/media";
 import {
   availablePaymentMethods,
   PAYMENT_LABELS,
@@ -48,16 +50,24 @@ function Purchases() {
   );
 }
 
+const isSubscriptionActive = (order: Order) =>
+  order.status === "paid" &&
+  (!order.subscriptionExpiresAt || Date.parse(order.subscriptionExpiresAt) > Date.now());
+
 const statusBadge = (order: Order) =>
-  order.status === "done"
-    ? "done"
-    : order.status === "pending_payment" || order.status === "cancelled"
-      ? "pending"
-      : "delivering";
+  order.status === "paid"
+    ? isSubscriptionActive(order)
+      ? "active"
+      : "expired"
+    : order.status === "done"
+      ? "done"
+      : order.status === "pending_payment" || order.status === "cancelled"
+        ? "pending"
+        : "delivering";
 
 const statusLabel: Record<Order["status"], string> = {
   pending_payment: "To‘lov kutilmoqda",
-  paid: "To‘langan",
+  paid: "Obuna faol",
   delivering: "Yetkazib berilmoqda",
   done: "Yakunlangan",
   cancelled: "Bekor qilingan",
@@ -75,9 +85,7 @@ function PurchasesContent() {
   const [selected, setSelected] = useState<string | null>(null);
 
   const list = orders.filter(
-    (o) =>
-      tab === 0 ||
-      (tab === 1 ? o.status !== "done" && o.status !== "cancelled" : o.status === "done"),
+    (o) => tab === 0 || (tab === 1 ? isSubscriptionActive(o) : !isSubscriptionActive(o)),
   );
   const current = orders.find((o) => o.id === selected) ?? list[0];
 
@@ -99,7 +107,7 @@ function PurchasesContent() {
       ) : (
         <div className="mt-4 grid gap-6 lg:grid-cols-2">
           <div>
-            <Tabs tabs={["Barcha", "Faol", "Yakunlangan"]} value={tab} onChange={setTab} />
+            <Tabs tabs={["Barcha", "Faol", "Boshqa holatlar"]} value={tab} onChange={setTab} />
             <div className="mt-4 space-y-3">
               {list.map((x) => (
                 <button
@@ -113,7 +121,9 @@ function PurchasesContent() {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold">{orderCode(x.number)}</p>
                     <p className="text-xs text-muted-foreground">{x.botTitle}</p>
-                    <p className="text-xs">{formatUZS(x.amount)}</p>
+                    <p className="text-xs">
+                      {formatUZS(x.amount)} · {x.subscriptionDays} kun
+                    </p>
                   </div>
                   <StatusBadge status={statusBadge(x)} />
                 </button>
@@ -134,21 +144,49 @@ function PurchasesContent() {
             <div className="mt-4 flex items-center gap-3 rounded-xl border p-3">
               <div className="flex-1">
                 <p className="text-sm font-semibold">{current.botTitle}</p>
-                <p className="text-xs text-muted-foreground">{formatUZS(current.amount)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatUZS(current.amount)} · {current.subscriptionDays} kunlik obuna
+                </p>
               </div>
-              <span className="text-xs font-medium">{statusLabel[current.status]}</span>
+              <span className="text-xs font-medium">
+                {current.status === "paid"
+                  ? isSubscriptionActive(current)
+                    ? "Obuna faol"
+                    : "Muddati tugagan"
+                  : statusLabel[current.status]}
+              </span>
             </div>
             {current.status === "pending_payment" && (
-              <PayOrder order={current} returning={Boolean(pay)} />
+              <PayOrder key={current.id} order={current} returning={Boolean(pay)} />
             )}
-            {current.status !== "cancelled" && (
-              <div className="mt-6">
-                <Stepper step={orderStep(current.status)} />
-              </div>
+            {current.status === "paid" && current.subscriptionExpiresAt && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                {isSubscriptionActive(current) ? "Obuna faol" : "Obuna muddati tugagan"}:{" "}
+                {new Date(current.subscriptionExpiresAt).toLocaleString("uz-UZ")} gacha.
+              </p>
             )}
-            {["delivering", "done"].includes(current.status) && (
-              <OrderFiles botId={current.botId} />
-            )}
+            {current.refundResolution === "refunded" ? (
+              <p role="status" className="mt-4 rounded-lg bg-muted p-3 text-sm">
+                To‘lov qaytarildi va obuna bekor qilindi.
+              </p>
+            ) : current.refundResolution === "rejected" ? (
+              <p role="status" className="mt-4 rounded-lg bg-muted p-3 text-sm">
+                Qaytarish so‘rovi rad etildi.
+              </p>
+            ) : current.status === "paid" && current.refundRequestedAt ? (
+              <p role="status" className="mt-4 rounded-lg bg-muted p-3 text-sm">
+                Qaytarish so‘rovingiz qabul qilindi. BotSmith jamoasi uni ko‘rib chiqadi.
+              </p>
+            ) : current.status === "paid" &&
+              !current.refundRequestedAt &&
+              current.paidAt &&
+              Date.now() <= Date.parse(current.paidAt) + 24 * 60 * 60 * 1000 ? (
+              <RefundRequest order={current} />
+            ) : current.status === "paid" && !current.refundRequestedAt ? (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Qaytarish so‘rovi uchun 24 soatlik muddat yakunlangan.
+              </p>
+            ) : null}
             <WriteToSeller botId={current.botId} />
           </div>
         </div>
@@ -187,66 +225,87 @@ function WriteToSeller({ botId }: { botId: string }) {
   );
 }
 
-/** Deliverable files the seller attached to the bot; available once the order is paid. */
-function OrderFiles({ botId }: { botId: string }) {
-  const { data: files = [], isPending, isError } = useBotFiles(botId);
-  const [downloading, setDownloading] = useState<string | null>(null);
+function RefundRequest({ order }: { order: Order }) {
+  const request = useRequestSubscriptionRefund();
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
 
-  if (isError) {
-    return (
-      <p role="alert" className="mt-6 text-sm text-destructive">
-        Fayllarni yuklab bo‘lmadi. Sahifani yangilang.
-      </p>
-    );
-  }
-  if (isPending || files.length === 0) return null;
-
-  async function download(file: (typeof files)[number]) {
-    setDownloading(file.id);
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError("");
     try {
-      window.location.assign(await getBotFileUrl(file));
+      await request.mutateAsync({ orderId: order.id, reason: reason.trim() });
+      setSent(true);
     } catch (e) {
-      toast.error(describeError(e));
-    } finally {
-      setDownloading(null);
+      setError(describeError(e));
     }
   }
 
+  if (sent) {
+    return (
+      <p role="status" className="mt-4 rounded-lg bg-muted p-3 text-sm">
+        Qaytarish so‘rovingiz yuborildi. BotSmith jamoasi uni ko‘rib chiqadi.
+      </p>
+    );
+  }
+
   return (
-    <div className="mt-6">
-      <p className="text-sm font-semibold">Bot fayllari</p>
-      <ul className="mt-2 space-y-2">
-        {files.map((file) => (
-          <li key={file.id} className="flex items-center gap-3 rounded-lg border px-3 py-2 text-sm">
-            <span className="min-w-0 flex-1 truncate">{file.name}</span>
-            <span className="shrink-0 text-xs text-muted-foreground">{formatBytes(file.size)}</span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={downloading === file.id}
-              onClick={() => download(file)}
-            >
-              <Download />
-              Yuklab olish
-            </Button>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <form onSubmit={(event) => void submit(event)} className="mt-5 space-y-3 rounded-lg border p-4">
+      <p className="text-sm font-medium">Obuna mos kelmadimi?</p>
+      <p className="text-xs text-muted-foreground">
+        To‘lov tasdiqlanganidan keyin 24 soat ichida sababini yozib, qaytarish so‘rovini yuboring.
+        <Link to="/terms" className="ml-1 text-primary underline">
+          Qaytarish qoidalari
+        </Link>
+      </p>
+      <label className="block space-y-1 text-sm">
+        <span>Sabab</span>
+        <textarea
+          required
+          minLength={3}
+          maxLength={1000}
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          className="min-h-20 w-full rounded-md border bg-background p-3"
+        />
+      </label>
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <Button type="submit" variant="outline" disabled={request.isPending}>
+        {request.isPending ? "Yuborilmoqda…" : "Qaytarish so‘rovini yuborish"}
+      </Button>
+    </form>
   );
 }
 
 /** Payment buttons for an unpaid order; falls back to manual confirmation when none is set up. */
 function PayOrder({ order, returning }: { order: Order; returning: boolean }) {
   const methods = availablePaymentMethods();
+  const acceptTerms = useAcceptSubscriptionTerms(order.id);
+  const [accepted, setAccepted] = useState(Boolean(order.termsAcceptedAt));
+  const [error, setError] = useState("");
 
-  if (methods.length === 0) {
-    return (
-      <p className="mt-4 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-        Buyurtma qabul qilindi, lekin hali to‘lanmagan. Onlayn to‘lov hozircha ulanmagan — to‘lov
-        uchun yordam chatiga murojaat qiling, to‘lov tasdiqlangach buyurtma faollashadi.
-      </p>
-    );
+  useEffect(() => {
+    setAccepted(Boolean(order.termsAcceptedAt));
+    setError("");
+  }, [order.id, order.termsAcceptedAt]);
+
+  async function updateConsent(checked: boolean) {
+    setError("");
+    if (!checked) {
+      setAccepted(false);
+      return;
+    }
+    try {
+      await acceptTerms.mutateAsync();
+      setAccepted(true);
+    } catch (e) {
+      setError(describeError(e));
+    }
   }
 
   const returnBase = `${window.location.origin}/dashboard/purchases`;
@@ -257,20 +316,61 @@ function PayOrder({ order, returning }: { order: Order; returning: boolean }) {
           To‘lov tekshirilmoqda… Tasdiqlangach holat bir necha soniyada yangilanadi.
         </p>
       )}
-      <p className="text-sm font-medium">To‘lov usulini tanlang</p>
-      <div className="flex flex-wrap gap-2">
-        {methods.map((method) => (
-          <Button key={method} asChild>
-            <a href={paymentUrl(method, order, `${returnBase}?pay=${method}`) ?? "#"}>
-              {PAYMENT_LABELS[method]} orqali to‘lash
-            </a>
-          </Button>
-        ))}
-      </div>
-      <p className="text-xs text-muted-foreground">
-        To‘lovdan keyin buyurtma avtomatik faollashadi. To‘lov qilgan bo‘lsangiz-u, holat
-        o‘zgarmasa, yordam chatiga yozing.
-      </p>
+      <label className="flex items-start gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={accepted || Boolean(order.termsAcceptedAt)}
+          disabled={acceptTerms.isPending || Boolean(order.termsAcceptedAt)}
+          onChange={(event) => void updateConsent(event.target.checked)}
+          className="mt-1"
+        />
+        <span>
+          Men{" "}
+          <Link
+            to="/terms"
+            target="_blank"
+            onClick={(event) => event.stopPropagation()}
+            className="text-primary underline"
+          >
+            obuna va qaytarish qoidalarini
+          </Link>{" "}
+          o‘qidim va roziman.
+        </span>
+      </label>
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          Rozilikni saqlab bo‘lmadi: {error}
+        </p>
+      )}
+      {methods.length === 0 ? (
+        <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+          Onlayn to‘lov hozircha ulanmagan — to‘lov uchun yordam chatiga murojaat qiling, to‘lov
+          tasdiqlangach obuna faollashadi.
+        </p>
+      ) : (
+        <>
+          <p className="text-sm font-medium">To‘lov usulini tanlang</p>
+          <div className="flex flex-wrap gap-2">
+            {methods.map((method) =>
+              accepted || order.termsAcceptedAt ? (
+                <Button key={method} asChild>
+                  <a href={paymentUrl(method, order, `${returnBase}?pay=${method}`) ?? "#"}>
+                    {PAYMENT_LABELS[method]} orqali to‘lash
+                  </a>
+                </Button>
+              ) : (
+                <Button key={method} disabled>
+                  {PAYMENT_LABELS[method]} orqali to‘lash
+                </Button>
+              ),
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            To‘lovdan keyin obuna avtomatik faollashadi. To‘lov qilgan bo‘lsangiz-u, holat
+            o‘zgarmasa, yordam chatiga yozing.
+          </p>
+        </>
+      )}
     </div>
   );
 }

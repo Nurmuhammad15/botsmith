@@ -10,6 +10,7 @@ import {
   describeError,
   useAdminBots,
   useAdminOrders,
+  useAdminResolveSubscriptionRefund,
   useAdminSetBotStatus,
   useAdminSetOrderStatus,
   useAdminSetWithdrawalStatus,
@@ -173,6 +174,7 @@ function OrdersTab({
   loading: boolean;
 }) {
   const setStatus = useAdminSetOrderStatus();
+  const resolveRefund = useAdminResolveSubscriptionRefund();
   const act = (id: string, status: "paid" | "cancelled") =>
     setStatus.mutate(
       { id, status },
@@ -182,6 +184,28 @@ function OrdersTab({
         onError: fail,
       },
     );
+  const resolve = (id: string, resolution: "refunded" | "rejected") => {
+    if (
+      resolution === "refunded" &&
+      !window.confirm(
+        "To‘lov provayderida pulni xaridorga qaytarganingizni tasdiqlaysizmi? Bu amal obunani bekor qiladi.",
+      )
+    ) {
+      return;
+    }
+    resolveRefund.mutate(
+      { orderId: id, resolution },
+      {
+        onSuccess: () =>
+          toast.success(
+            resolution === "refunded"
+              ? "Qaytarish bajarildi deb qayd etildi"
+              : "Qaytarish so‘rovi rad etildi",
+          ),
+        onError: fail,
+      },
+    );
+  };
   const label = {
     pending_payment: "To‘lov kutilmoqda",
     paid: "To‘langan",
@@ -197,8 +221,10 @@ function OrdersTab({
         "Xaridor",
         "Sotuvchi",
         "Summa",
+        "Obuna",
         "Holat",
         "Onlayn to‘lov",
+        "Qaytarish so‘rovi",
         "Amallar",
       ]}
       emptyMessage={loading ? "Yuklanmoqda…" : "Buyurtmalar yo‘q."}
@@ -208,12 +234,42 @@ function OrdersTab({
         o.buyer,
         o.seller,
         formatUZS(o.amount),
+        `${o.subscriptionDays} kun`,
         label[o.status],
         o.payments.length === 0
           ? "—"
           : o.payments
               .map((p) => `${p.provider === "payme" ? "Payme" : "Click"}: ${paymentState(p.state)}`)
               .join(", "),
+        o.refundRequestedAt ? (
+          <div className="max-w-64 space-y-1 text-xs">
+            <p>
+              {o.refundResolution === "refunded"
+                ? "Qaytarildi"
+                : o.refundResolution === "rejected"
+                  ? "Rad etildi"
+                  : "Ko‘rib chiqilmoqda"}
+            </p>
+            {o.refundReason && <p className="whitespace-pre-wrap">{o.refundReason}</p>}
+            {o.refundRequestedAt && (
+              <p className="text-muted-foreground">
+                {new Date(o.refundRequestedAt).toLocaleString("uz-UZ")}
+              </p>
+            )}
+            {o.status === "paid" && o.refundResolution === null && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                <Button size="sm" onClick={() => resolve(o.id, "refunded")}>
+                  Qaytarildi
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => resolve(o.id, "rejected")}>
+                  Rad etish
+                </Button>
+              </div>
+            )}
+          </div>
+        ) : (
+          "—"
+        ),
         o.status === "pending_payment" ? (
           <div className="flex gap-2">
             <Button size="sm" onClick={() => act(o.id, "paid")}>
