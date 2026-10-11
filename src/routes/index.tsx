@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, ShieldCheck, BadgeCheck, RotateCcw, ArrowRight, Send } from "lucide-react";
 import { SiteLayout, BotCard } from "@/components/site";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
-import { bots, categories } from "@/lib/data";
+import { useBots } from "@/lib/api";
+import { categories } from "@/lib/data";
 import { useT } from "@/lib/i18n";
 import hero from "@/assets/hero.png";
 
@@ -30,6 +31,8 @@ export const Route = createFileRoute("/")({
 function Index() {
   const { t } = useT();
   const account = useMarketplaceAccount();
+  const { data: bots = [], isError } = useBots();
+  const popular = [...bots].sort((a, b) => b.sales - a.sales).slice(0, 4);
   return (
     <SiteLayout>
       <section className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-10 md:grid-cols-2 md:py-16">
@@ -129,15 +132,17 @@ function Index() {
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        {bots.length ? (
+        {popular.length ? (
           <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {bots.slice(0, 4).map((b) => (
+            {popular.map((b) => (
               <BotCard key={b.id} bot={b} />
             ))}
           </div>
         ) : (
           <p className="mt-4 rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-            Hozircha botlar qo‘shilmagan.
+            {isError
+              ? "Botlarni yuklab bo‘lmadi. Keyinroq qayta urinib ko‘ring."
+              : "Hozircha botlar qo‘shilmagan."}
           </p>
         )}
       </section>

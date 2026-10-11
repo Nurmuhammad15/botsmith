@@ -5,7 +5,8 @@ import { SiteLayout, BotCard } from "@/components/site";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { Link } from "@tanstack/react-router";
 import { Slider } from "@/components/ui/slider";
-import { bots, categories, formatUZS } from "@/lib/data";
+import { useBots } from "@/lib/api";
+import { categories, formatUZS } from "@/lib/data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/bots/")({
@@ -25,39 +26,90 @@ export const Route = createFileRoute("/bots/")({
   component: Catalog,
 });
 
-function Catalog() {
-  const account = useMarketplaceAccount();
-  const [q, setQ] = useState("");
-  const [cat, setCat] = useState<string | null>(null);
-  const [max, setMax] = useState(1500000);
-  const [minRating, setMinRating] = useState(0);
-  const [sort, setSort] = useState("popular");
-  const [page, setPage] = useState(1);
-  const list = useMemo(() => {
-    const r = bots.filter(
-      (b) =>
-        (!cat || b.category === cat) &&
-        b.price <= max &&
-        b.rating >= minRating &&
-        b.title.toLowerCase().includes(q.toLowerCase()),
-    );
-    return [...r].sort((a, b) =>
-      sort === "cheap"
-        ? a.price - b.price
-        : sort === "expensive"
-          ? b.price - a.price
-          : sort === "rating"
-            ? b.rating - a.rating
-            : b.reviews - a.reviews,
-    );
-  }, [q, cat, max, minRating, sort]);
+const PAGE_SIZE = 12;
+const LANGUAGES = [
+  ["uz", "O'zbek"],
+  ["ru", "Русский"],
+  ["en", "English"],
+] as const;
+// [label, exclusive lower bound, inclusive upper bound] in hours
+const DELIVERY_BUCKETS = [
+  ["1 soat", 0, 1],
+  ["1–3 soat", 1, 3],
+  ["3–6 soat", 3, 6],
+  ["6+ soat", 6, Infinity],
+] as const;
 
-  const Check = ({ label }: { label: string }) => (
+function toggle<T>(items: T[], item: T) {
+  return items.includes(item) ? items.filter((x) => x !== item) : [...items, item];
+}
+
+function Check({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
     <label className="flex items-center gap-2 text-sm text-muted-foreground">
-      <input type="checkbox" className="accent-primary" />
+      <input type="checkbox" className="accent-primary" checked={checked} onChange={onChange} />
       {label}
     </label>
   );
+}
+
+function Catalog() {
+  const account = useMarketplaceAccount();
+  const { data: bots = [], isPending, isError } = useBots();
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState<string | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [minRating, setMinRating] = useState(0);
+  const [sort, setSort] = useState("popular");
+  const [page, setPage] = useState(1);
+  const [langs, setLangs] = useState<string[]>([]);
+  const [buckets, setBuckets] = useState<number[]>([]);
+
+  const priceCeiling = useMemo(
+    () => bots.reduce((top, b) => Math.max(top, b.price ?? 0), 0),
+    [bots],
+  );
+  const max = maxPrice ?? priceCeiling;
+
+  const list = useMemo(() => {
+    const query = q.trim().toLowerCase();
+    const filtered = bots.filter(
+      (b) =>
+        (!cat || b.category === cat) &&
+        (b.price === null || b.price <= max) &&
+        b.rating >= minRating &&
+        (langs.length === 0 || langs.some((l) => b.lang.includes(l))) &&
+        (buckets.length === 0 ||
+          buckets.some((i) => {
+            const [, from, to] = DELIVERY_BUCKETS[i]!;
+            return b.delivery > from && b.delivery <= to;
+          })) &&
+        `${b.title} ${categories.find((c) => c.slug === b.category)?.name ?? ""}`
+          .toLowerCase()
+          .includes(query),
+    );
+    return filtered.sort((a, b) =>
+      sort === "cheap"
+        ? (a.price ?? 0) - (b.price ?? 0)
+        : sort === "expensive"
+          ? (b.price ?? 0) - (a.price ?? 0)
+          : sort === "rating"
+            ? b.rating - a.rating
+            : b.sales - a.sales,
+    );
+  }, [bots, q, cat, max, minRating, sort, langs, buckets]);
+
+  const pageCount = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const visible = list.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <SiteLayout>
@@ -82,7 +134,10 @@ function Catalog() {
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => {
+                setQ(e.target.value);
+                setPage(1);
+              }}
               placeholder="Bot nomi yoki kategoriya..."
               className="h-10 flex-1 bg-transparent text-sm outline-none"
             />
@@ -107,7 +162,10 @@ function Catalog() {
             <div>
               <p className="mb-2 text-sm font-semibold">Kategoriyalar</p>
               <button
-                onClick={() => setCat(null)}
+                onClick={() => {
+                  setCat(null);
+                  setPage(1);
+                }}
                 className={cn(
                   "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm",
                   !cat ? "bg-primary-soft text-primary" : "text-muted-foreground",
@@ -122,7 +180,10 @@ function Catalog() {
               {categories.map((c) => (
                 <button
                   key={c.slug}
-                  onClick={() => setCat(c.slug)}
+                  onClick={() => {
+                    setCat(c.slug);
+                    setPage(1);
+                  }}
                   className={cn(
                     "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm",
                     cat === c.slug ? "bg-primary-soft text-primary" : "text-muted-foreground",
@@ -136,16 +197,19 @@ function Catalog() {
                 </button>
               ))}
             </div>
-            {account && (
+            {account && priceCeiling > 0 && (
               <div>
                 <p className="mb-2 text-sm font-semibold">Narx oralig'i</p>
                 <p className="mb-3 text-xs text-muted-foreground">0 – {formatUZS(max)}</p>
                 <Slider
                   value={[max]}
-                  min={100000}
-                  max={1500000}
-                  step={10000}
-                  onValueChange={(v) => setMax(v[0] ?? max)}
+                  min={0}
+                  max={priceCeiling}
+                  step={Math.max(1, Math.round(priceCeiling / 100))}
+                  onValueChange={(v) => {
+                    setMaxPrice(v[0] ?? max);
+                    setPage(1);
+                  }}
                 />
               </div>
             )}
@@ -155,7 +219,10 @@ function Catalog() {
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button
                     key={n}
-                    onClick={() => setMinRating(minRating === n ? 0 : n)}
+                    onClick={() => {
+                      setMinRating(minRating === n ? 0 : n);
+                      setPage(1);
+                    }}
                     aria-label={`${n}`}
                   >
                     <Star
@@ -171,62 +238,77 @@ function Catalog() {
             </div>
             <div className="space-y-2">
               <p className="text-sm font-semibold">Til</p>
-              <Check label="O'zbek" />
-              <Check label="Русский" />
-              <Check label="English" />
+              {LANGUAGES.map(([code, label]) => (
+                <Check
+                  key={code}
+                  label={label}
+                  checked={langs.includes(code)}
+                  onChange={() => {
+                    setLangs((x) => toggle(x, code));
+                    setPage(1);
+                  }}
+                />
+              ))}
             </div>
             <div className="space-y-2">
               <p className="text-sm font-semibold">Yetkazib berish vaqti</p>
-              <Check label="1 soat" />
-              <Check label="1–3 soat" />
-              <Check label="3–6 soat" />
-              <Check label="6+ soat" />
+              {DELIVERY_BUCKETS.map(([label], i) => (
+                <Check
+                  key={label}
+                  label={label}
+                  checked={buckets.includes(i)}
+                  onChange={() => {
+                    setBuckets((x) => toggle(x, i));
+                    setPage(1);
+                  }}
+                />
+              ))}
             </div>
           </aside>
           <div className="flex-1">
-            {list.length ? (
+            {isPending ? (
+              <p className="py-20 text-center text-muted-foreground">Yuklanmoqda…</p>
+            ) : isError ? (
+              <p role="alert" className="py-20 text-center text-destructive">
+                Botlarni yuklab bo‘lmadi. Keyinroq qayta urinib ko‘ring.
+              </p>
+            ) : visible.length ? (
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-                {list.map((b) => (
-                  <BotCard key={b.id} bot={b} fav />
+                {visible.map((b) => (
+                  <BotCard key={b.id} bot={b} />
                 ))}
               </div>
             ) : (
               <p className="py-20 text-center text-muted-foreground">Hech narsa topilmadi</p>
             )}
-            {list.length > 0 && (
+            {pageCount > 1 && (
               <div className="mt-8 flex items-center justify-center gap-2 text-sm">
                 <button
-                  onClick={() => setPage(Math.max(1, page - 1))}
-                  className="grid h-8 w-8 place-items-center"
+                  onClick={() => setPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="grid h-8 w-8 place-items-center disabled:opacity-40"
                   aria-label="Prev"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                {[1, 2, 3].map((n) => (
+                {Array.from({ length: pageCount }, (_, i) => i + 1).map((n) => (
                   <button
                     key={n}
                     onClick={() => setPage(n)}
                     className={cn(
                       "h-8 w-8 rounded-md",
-                      page === n ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+                      currentPage === n
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground",
                     )}
                   >
                     {n}
                   </button>
                 ))}
-                <span>…</span>
                 <button
-                  onClick={() => setPage(10)}
-                  className={cn(
-                    "h-8 w-8 rounded-md",
-                    page === 10 ? "bg-primary text-primary-foreground" : "text-muted-foreground",
-                  )}
-                >
-                  10
-                </button>
-                <button
-                  onClick={() => setPage(Math.min(10, page + 1))}
-                  className="grid h-8 w-8 place-items-center"
+                  onClick={() => setPage(Math.min(pageCount, currentPage + 1))}
+                  disabled={currentPage === pageCount}
+                  className="grid h-8 w-8 place-items-center disabled:opacity-40"
                   aria-label="Next"
                 >
                   <ChevronRight className="h-4 w-4" />

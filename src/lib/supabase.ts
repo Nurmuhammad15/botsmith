@@ -1,6 +1,11 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-let client: ReturnType<typeof createClient> | undefined;
+// The database schema is not code-generated, so the client is deliberately untyped; api.ts maps
+// every row into typed models.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Client = SupabaseClient<any, "public", any>;
+
+let client: Client | undefined;
 
 export function isSupabaseConfigured() {
   const url = import.meta.env["VITE_SUPABASE_URL"];

@@ -1,22 +1,35 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SiteLayout } from "@/components/site";
-
-type ChatMessage = { id: number; text: string };
+import { describeError, useSendSupportMessage, useSupportThread } from "@/lib/api";
+import { useMarketplaceAuth } from "@/lib/marketplace-auth-context";
 
 export function SupportChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const { account, ready } = useMarketplaceAuth();
+  const { data: messages = [], isError } = useSupportThread(account?.id);
+  const send = useSendSupportMessage(account?.id, account?.id);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const bottom = useRef<HTMLDivElement>(null);
 
-  function sendMessage(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    bottom.current?.scrollIntoView?.({ block: "end" });
+  }, [messages.length]);
+
+  async function sendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = message.trim();
     if (!text) return;
-    setMessages((current) => [...current, { id: (current.at(-1)?.id ?? 0) + 1, text }]);
-    setMessage("");
+    setError("");
+    try {
+      await send.mutateAsync(text);
+      setMessage("");
+    } catch (e) {
+      setError(describeError(e));
+    }
   }
 
   return (
@@ -39,34 +52,62 @@ export function SupportChat() {
               <p className="text-xs text-muted-foreground">BotSmith qo‘llab-quvvatlashi</p>
             </div>
           </header>
-          <div className="min-h-72 space-y-3 p-5" aria-live="polite">
-            <p className="max-w-[85%] rounded-2xl bg-muted p-3 text-sm">
-              Salom! Botlar yoki platforma haqida savolingizni yozing.
+          {!ready ? (
+            <p className="p-5 text-sm text-muted-foreground">Yuklanmoqda…</p>
+          ) : !account ? (
+            <p className="p-5 text-sm text-muted-foreground">
+              Yordam xizmatiga yozish uchun{" "}
+              <Link to="/login" className="font-medium text-primary">
+                tizimga kiring
+              </Link>
+              .
             </p>
-            {messages.map((entry) => (
-              <p
-                key={entry.id}
-                className="ml-auto max-w-[85%] rounded-2xl bg-primary p-3 text-sm text-primary-foreground"
+          ) : (
+            <>
+              <div
+                className="max-h-[28rem] min-h-72 space-y-3 overflow-y-auto p-5"
+                aria-live="polite"
               >
-                {entry.text}
-              </p>
-            ))}
-          </div>
-          <form onSubmit={sendMessage} className="flex gap-2 border-t p-4">
-            <Input
-              aria-label="Xabar matni"
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              placeholder="Xabaringizni yozing..."
-              maxLength={2000}
-            />
-            <Button type="submit" aria-label="Xabarni yuborish" disabled={!message.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-          <p className="border-t px-5 py-3 text-xs text-muted-foreground">
-            Demo chat: xabarlar faqat shu sahifada ko‘rinadi va operatorga yuborilmaydi.
-          </p>
+                <p className="max-w-[85%] rounded-2xl bg-muted p-3 text-sm">
+                  Salom! Botlar yoki platforma haqida savolingizni yozing.
+                </p>
+                {messages.map((entry) => (
+                  <p
+                    key={entry.id}
+                    className={
+                      entry.fromStaff
+                        ? "max-w-[85%] rounded-2xl bg-muted p-3 text-sm"
+                        : "ml-auto max-w-[85%] rounded-2xl bg-primary p-3 text-sm text-primary-foreground"
+                    }
+                  >
+                    {entry.body}
+                  </p>
+                ))}
+                <div ref={bottom} />
+              </div>
+              {(error || isError) && (
+                <p role="alert" className="px-5 pb-2 text-sm text-destructive">
+                  {error || "Xabarlarni yuklab bo‘lmadi."}
+                </p>
+              )}
+              <form onSubmit={sendMessage} className="flex gap-2 border-t p-4">
+                <Input
+                  aria-label="Xabar matni"
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                  placeholder="Xabaringizni yozing..."
+                  maxLength={2000}
+                />
+                <Button
+                  type="submit"
+                  aria-label="Xabarni yuborish"
+                  disabled={!message.trim() || send.isPending}
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </>
+          )}
         </section>
       </main>
     </SiteLayout>

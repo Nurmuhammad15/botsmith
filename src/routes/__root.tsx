@@ -12,7 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
 import { I18nProvider } from "@/lib/i18n";
-import { SellerBotsProvider } from "@/lib/seller-bots-provider";
+import { MarketplaceAuthProvider } from "@/components/site";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 
@@ -130,10 +130,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <I18nProvider>
-        <SellerBotsProvider>
+        <MarketplaceAuthProvider>
           <Outlet />
           <Toaster />
-        </SellerBotsProvider>
+        </MarketplaceAuthProvider>
       </I18nProvider>
     </QueryClientProvider>
   );

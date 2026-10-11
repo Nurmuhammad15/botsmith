@@ -41,10 +41,7 @@ function Login() {
       }
 
       if (!supabaseConfigured) {
-        setMessage(
-          "Demo rejimi: forma tekshirildi, lekin haqiqiy kirish amalga oshmadi va ma'lumotlar saqlanmadi.",
-        );
-        return;
+        throw new Error("Server sozlanmagan. Administratorga murojaat qiling.");
       }
 
       const { data, error } = await getSupabaseClient().auth.signInWithPassword({
@@ -65,8 +62,13 @@ function Login() {
         throw new Error("Kirish amalga oshmadi. Email va parolni tekshirib, qayta urinib ko‘ring.");
       }
 
+      const { data: profile } = await getSupabaseClient()
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .maybeSingle();
       await navigate({
-        to: data.user.user_metadata["role"] === "seller" ? "/seller" : "/bots",
+        to: profile?.role === "admin" ? "/admin" : profile?.role === "seller" ? "/seller" : "/bots",
       });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Kirishda xatolik yuz berdi.");
@@ -83,9 +85,11 @@ function Login() {
         <p className="mt-1 text-center font-semibold">Xush kelibsiz!</p>
         <p className="text-center text-sm text-muted-foreground">Hisobingizga kiring</p>
         {!supabaseConfigured && (
-          <p className="mt-4 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-            Demo: server ulanmagan. Haqiqiy parol kiritmang — ma'lumotlar yuborilmaydi va
-            saqlanmaydi.
+          <p
+            role="alert"
+            className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
+          >
+            Server sozlanmagan, kirish hozircha mumkin emas.
           </p>
         )}
         <label className="mt-6 block text-sm">

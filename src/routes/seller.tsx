@@ -3,14 +3,10 @@ import { Eye, Plus, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SellerSales } from "@/components/seller-sales";
 import { DashboardLayout, StatCard, StatusBadge, DataTable } from "@/components/site";
-import { getPublishedSellerBots, formatUZS } from "@/lib/data";
+import { useMyBots, useWallet } from "@/lib/api";
+import { formatUZS } from "@/lib/data";
 import { sellerNav } from "@/lib/nav";
-import { useSellerBots } from "@/lib/seller-bots-context";
-import {
-  getMaximumWithdrawal,
-  MINIMUM_RETAINED_BALANCE,
-  useDemoSellerWallet,
-} from "@/lib/seller-wallet";
+import { getMaximumWithdrawal, MINIMUM_RETAINED_BALANCE } from "@/lib/wallet";
 
 export const Route = createFileRoute("/seller")({
   head: () => ({
@@ -30,23 +26,35 @@ export const Route = createFileRoute("/seller")({
 });
 
 function Seller() {
-  const publishedBots = getPublishedSellerBots();
-  const { addedBots } = useSellerBots();
-  const sellerBotRows = [...publishedBots, ...addedBots];
-  const { balance, storageError } = useDemoSellerWallet();
-  const maximumWithdrawal = getMaximumWithdrawal(balance);
-  const totalEarnings = publishedBots.reduce((total, { bot }) => total + bot.price * bot.sales, 0);
-  const totalOrders = publishedBots.reduce((total, { bot }) => total + bot.sales, 0);
-  const totalViews = publishedBots.reduce((total, { views }) => total + views, 0);
   return (
-    <DashboardLayout user="@dev_uz" role="Dasturchi" items={sellerNav}>
+    <DashboardLayout user="" role="Dasturchi" items={sellerNav}>
+      <SellerContent />
+    </DashboardLayout>
+  );
+}
+
+const botStatus = { published: "published", pending: "review", rejected: "draft" } as const;
+
+function SellerContent() {
+  const { data: bots = [], isPending, isError } = useMyBots();
+  const { data: wallet } = useWallet();
+  const balance = wallet?.balance ?? 0;
+  const totalEarnings = bots.reduce((total, bot) => total + bot.earned, 0);
+  const totalOrders = bots.reduce((total, bot) => total + bot.sales, 0);
+  const totalViews = bots.reduce((total, bot) => total + bot.views, 0);
+  return (
+    <>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="mb-1 text-xs text-muted-foreground">Sotuvchi paneli</p>
           <h1 className="text-2xl font-bold">Mening botlarim</h1>
         </div>
-        <span className="text-xs text-muted-foreground">Namunaviy ma’lumotlar</span>
       </div>
+      {isError && (
+        <p role="alert" className="mt-4 text-sm text-destructive">
+          Ma’lumotlarni yuklab bo‘lmadi. Sahifani yangilang.
+        </p>
+      )}
       <div className="mt-4 grid gap-4 lg:grid-cols-4">
         <div className="min-w-0 lg:col-span-3">
           <div className="grid grid-cols-3 gap-4">
@@ -63,18 +71,13 @@ function Seller() {
               <p className="mt-1 text-lg font-bold">{totalViews.toLocaleString("ru-RU")}</p>
             </div>
           </div>
-          <SellerSales />
+          <SellerSales bots={bots} />
         </div>
         <StatCard label="Balans" value={formatUZS(balance)}>
           <p className="mt-2 text-xs text-muted-foreground">
-            Yechish mumkin: {formatUZS(maximumWithdrawal)} · hisobda kamida{" "}
+            Yechish mumkin: {formatUZS(getMaximumWithdrawal(balance))} · hisobda kamida{" "}
             {formatUZS(MINIMUM_RETAINED_BALANCE)} qoladi
           </p>
-          {storageError && (
-            <p role="alert" className="mt-2 text-xs text-destructive">
-              {storageError}
-            </p>
-          )}
           <Button asChild className="mt-5 w-full">
             <Link to="/withdraw">
               <ArrowUpRight />
@@ -95,52 +98,46 @@ function Seller() {
       <div className="mt-4">
         <DataTable
           head={["Bot", "Holat", "Narx", "Ko'rishlar", ""]}
-          emptyMessage="Hozircha qo‘shilgan botlar yo‘q."
-          rows={sellerBotRows.map(({ bot, status, views }) => [
-            status === "published" ? (
-              <Link
-                to="/seller-bots/$id"
-                params={{ id: bot.id }}
-                aria-label={`${bot.title} statistikasini ko‘rish`}
-              >
-                <p className="font-medium">{bot.title}</p>
-                <p className="text-xs text-muted-foreground">{bot.sales} sotuv</p>
-              </Link>
-            ) : (
-              <div>
-                <p className="font-medium">{bot.title}</p>
-                <p className="text-xs text-muted-foreground">Ko‘rib chiqilmoqda</p>
-              </div>
-            ),
-            <StatusBadge status={status} />,
-            formatUZS(bot.price),
-            status === "published" ? (
-              <Link
-                to="/seller-bots/$id"
-                params={{ id: bot.id }}
-                className="rounded-sm hover:text-primary"
-                aria-label={`${bot.title}: ${views} ko‘rish, statistikani ochish`}
-              >
-                {views} ko'rish
-              </Link>
-            ) : (
-              `${views} ko‘rish`
-            ),
-            status === "published" ? (
-              <Button asChild variant="ghost" size="icon">
+          emptyMessage={isPending ? "Yuklanmoqda…" : "Hozircha qo‘shilgan botlar yo‘q."}
+          rows={bots.map((bot) => {
+            const published = bot.status === "published";
+            return [
+              published ? (
                 <Link
                   to="/seller-bots/$id"
                   params={{ id: bot.id }}
                   aria-label={`${bot.title} statistikasini ko‘rish`}
-                  title="Bot statistikasi"
                 >
-                  <Eye />
+                  <p className="font-medium">{bot.title}</p>
+                  <p className="text-xs text-muted-foreground">{bot.sales} sotuv</p>
                 </Link>
-              </Button>
-            ) : null,
-          ])}
+              ) : (
+                <div>
+                  <p className="font-medium">{bot.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {bot.status === "pending" ? "Ko‘rib chiqilmoqda" : "Rad etilgan"}
+                  </p>
+                </div>
+              ),
+              <StatusBadge status={botStatus[bot.status]} />,
+              formatUZS(bot.price),
+              `${bot.views} ko‘rish`,
+              published ? (
+                <Button asChild variant="ghost" size="icon">
+                  <Link
+                    to="/seller-bots/$id"
+                    params={{ id: bot.id }}
+                    aria-label={`${bot.title} statistikasini ko‘rish`}
+                    title="Bot statistikasi"
+                  >
+                    <Eye />
+                  </Link>
+                </Button>
+              ) : null,
+            ];
+          })}
         />
       </div>
-    </DashboardLayout>
+    </>
   );
 }

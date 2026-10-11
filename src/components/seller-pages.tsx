@@ -6,49 +6,94 @@ import { Input } from "@/components/ui/input";
 import { DashboardLayout, DataTable, StatusBadge } from "@/components/site";
 import { SellerSales } from "@/components/seller-sales";
 import { sellerNav } from "@/lib/nav";
-import { useSellerBots } from "@/lib/seller-bots-context";
-import { orders, getPublishedSellerBots, categories, formatUZS } from "@/lib/data";
-import { readDemoValue, writeDemoValue } from "@/lib/demo-storage";
-import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
+import {
+  describeError,
+  useAddBot,
+  useAdvanceOrder,
+  useMyBots,
+  useOrders,
+  useProfile,
+  useRequestWithdrawal,
+  useUpdateProfile,
+  useWallet,
+  useWithdrawals,
+} from "@/lib/api";
+import {
+  categories,
+  formatUZS,
+  orderCode,
+  type Order,
+  type Withdrawal,
+  type WithdrawalStatus,
+} from "@/lib/data";
+import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import {
   calculateWithdrawalFee,
   getMaximumWithdrawal,
   MINIMUM_WITHDRAWAL,
   MINIMUM_RETAINED_BALANCE,
-  useDemoSellerWallet,
   WITHDRAWAL_FEE_RATE,
-} from "@/lib/seller-wallet";
+} from "@/lib/wallet";
 
-export function SellerPage({
-  title,
-  children,
-  user = "@dev_uz",
-}: {
-  title: string;
-  children: ReactNode;
-  user?: string;
-}) {
+export function SellerPage({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <DashboardLayout user={user} role="Dasturchi" items={sellerNav}>
+    <DashboardLayout user="" role="Dasturchi" items={sellerNav}>
       <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="mb-1 text-xs text-muted-foreground">Sotuvchi paneli</p>
           <h1 className="text-2xl font-bold">{title}</h1>
         </div>
-        <span className="text-xs text-muted-foreground">Namunaviy ma’lumotlar</span>
       </div>
       {children}
     </DashboardLayout>
   );
 }
+
+const orderStatusLabel: Record<Order["status"], string> = {
+  pending_payment: "To‘lov kutilmoqda",
+  paid: "To‘langan",
+  delivering: "Yetkazilmoqda",
+  done: "Yakunlangan",
+  cancelled: "Bekor qilingan",
+};
+
+const withdrawalStatusLabel: Record<WithdrawalStatus, string> = {
+  pending: "Ko‘rib chiqilmoqda",
+  paid: "To‘langan",
+  rejected: "Rad etilgan",
+};
+
+function WithdrawalBadge({ status }: { status: WithdrawalStatus }) {
+  return (
+    <span className="rounded-full bg-muted px-2 py-1 text-xs">{withdrawalStatusLabel[status]}</span>
+  );
+}
+
 export function SellerOrders() {
+  const account = useMarketplaceAccount();
+  const { data: orders = [], isPending, isError } = useOrders("seller", account?.id);
+  const advance = useAdvanceOrder();
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
+  const [error, setError] = useState("");
   const rows = orders.filter(
     (o) =>
-      (filter === "all" || (filter === "done" ? o.status === 4 : o.status < 4)) &&
-      `${o.id} ${o.bot.title}`.toLowerCase().includes(query.toLowerCase()),
+      (filter === "all" ||
+        (filter === "done"
+          ? o.status === "done"
+          : o.status !== "done" && o.status !== "cancelled")) &&
+      `${orderCode(o.number)} ${o.botTitle}`.toLowerCase().includes(query.toLowerCase()),
   );
+
+  async function move(order: Order, status: "delivering" | "done") {
+    setError("");
+    try {
+      await advance.mutateAsync({ orderId: order.id, status });
+    } catch (e) {
+      setError(describeError(e));
+    }
+  }
+
   return (
     <SellerPage title="Buyurtmalar">
       <div className="mb-5 flex flex-wrap items-center gap-3">
@@ -78,37 +123,57 @@ export function SellerOrders() {
           />
         </div>
       </div>
+      {error && (
+        <p role="alert" className="mb-3 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      {isError && (
+        <p role="alert" className="mb-3 text-sm text-destructive">
+          Buyurtmalarni yuklab bo‘lmadi.
+        </p>
+      )}
       <DataTable
-        head={["Buyurtma", "Bot", "Sana", "Summa", "Holat"]}
+        head={["Buyurtma", "Bot", "Sana", "Summa", "Holat", ""]}
+        emptyMessage={isPending ? "Yuklanmoqda…" : "Buyurtma topilmadi"}
         rows={rows.map((o) => [
-          o.id,
-          <Link to="/bots/$id" params={{ id: o.bot.id }}>
-            {o.bot.title}
+          orderCode(o.number),
+          <Link to="/bots/$id" params={{ id: o.botId }}>
+            {o.botTitle}
           </Link>,
-          o.date,
-          formatUZS(o.bot.price),
-          <StatusBadge status={o.status === 4 ? "done" : "delivering"} />,
+          new Date(o.createdAt).toLocaleDateString("uz-UZ"),
+          formatUZS(o.amount),
+          orderStatusLabel[o.status],
+          o.status === "paid" || o.status === "delivering" ? (
+            <div className="flex gap-2">
+              {o.status === "paid" && (
+                <Button size="sm" variant="outline" onClick={() => move(o, "delivering")}>
+                  Yetkazishni boshlash
+                </Button>
+              )}
+              <Button size="sm" onClick={() => move(o, "done")}>
+                Yakunlash
+              </Button>
+            </div>
+          ) : null,
         ])}
       />
-      {rows.length === 0 && (
-        <p className="py-12 text-center text-sm text-muted-foreground">Buyurtma topilmadi</p>
-      )}
     </SellerPage>
   );
 }
+
 export function SellerEarnings() {
-  const publishedBots = getPublishedSellerBots();
-  const totalEarnings = publishedBots.reduce((total, { bot }) => total + bot.price * bot.sales, 0);
-  const { balance, history, storageError } = useDemoSellerWallet();
-  const requestedTotal = history.reduce((total, request) => total + request.amount, 0);
+  const { data: bots = [] } = useMyBots();
+  const { data: wallet } = useWallet();
+  const published = bots.filter((bot) => bot.status === "published");
 
   return (
     <SellerPage title="Daromadlar">
       <div className="grid gap-6 border-b pb-7 sm:grid-cols-3">
         {[
-          ["Jami daromad · hisoblangan", totalEarnings],
-          ["Yechish uchun balans", balance],
-          ["Demo so‘rovlar summasi", requestedTotal],
+          ["Jami daromad", wallet?.earned ?? 0],
+          ["Yechish uchun balans", wallet?.balance ?? 0],
+          ["So‘ralgan summa", wallet?.withdrawn ?? 0],
         ].map(([label, value]) => (
           <div key={String(label)}>
             <p className="text-sm text-muted-foreground">{label}</p>
@@ -123,204 +188,138 @@ export function SellerEarnings() {
         </Link>
       </Button>
       <p className="mt-4 max-w-3xl text-sm text-muted-foreground">
-        Jami daromad bot narxi × buyurtmalar soni bo‘yicha namunaviy hisoblanadi. Demo balans shu
-        summadan boshlanadi; hisobda kamida {formatUZS(MINIMUM_RETAINED_BALANCE)} qolishi kerak.
-        Balansdan zaxirani ayirgandan keyingi summani yechish mumkin. So‘rov summasidan 3% komissiya
-        ayrilib, qolgan qismi hisobiy to‘lov bo‘ladi. Haqiqiy pul o‘tkazilmaydi.
+        Daromad faqat to‘langan buyurtmalardan hisoblanadi. Hisobda kamida{" "}
+        {formatUZS(MINIMUM_RETAINED_BALANCE)} qolishi kerak; undan ortiq summani yechish mumkin. Har
+        bir so‘rovdan {WITHDRAWAL_FEE_RATE * 100}% komissiya ushlanadi.
       </p>
-      {storageError && (
-        <p role="alert" className="mt-2 text-sm text-destructive">
-          {storageError}
-        </p>
-      )}
-      <SellerSales />
+      <SellerSales bots={bots} />
       <h2 className="mb-4 mt-9 font-semibold">Sotuvlar tarixi</h2>
       <DataTable
-        head={["Bot", "Sotilgan", "Narx"]}
+        head={["Bot", "Sotilgan", "Narx", "Daromad"]}
         emptyMessage="Hozircha sotuvlar yo‘q."
-        rows={publishedBots.map(({ bot }) => [bot.title, `${bot.sales} ta`, formatUZS(bot.price)])}
+        rows={published.map((bot) => [
+          bot.title,
+          `${bot.sales} ta`,
+          formatUZS(bot.price),
+          formatUZS(bot.earned),
+        ])}
       />
     </SellerPage>
   );
 }
+
 export function SellerProfile() {
-  const [saved, setSaved] = useState(false);
-  const [savedToAccount, setSavedToAccount] = useState(false);
+  const account = useMarketplaceAccount();
+  const { data: saved, isPending, isError: loadFailed } = useProfile(account?.id);
+  const update = useUpdateProfile(account?.id);
+  const [profile, setProfile] = useState({ name: "", username: "", bio: "" });
+  const [loaded, setLoaded] = useState(false);
+  const [done, setDone] = useState(false);
   const [error, setError] = useState("");
-  const [profile, setProfile] = useState({
-    name: "Dev Uz",
-    username: "@dev_uz",
-    bio: "Telegram botlar dasturchisi",
-  });
 
   useEffect(() => {
-    let active = true;
-
-    async function loadProfile() {
-      try {
-        if (isSupabaseConfigured()) {
-          const { data, error } = await getSupabaseClient().auth.getSession();
-          if (error) throw error;
-          const metadata = data.session?.user.user_metadata;
-          if (metadata) {
-            if (active) setSavedToAccount(true);
-            if (active) {
-              setProfile((current) => ({
-                name:
-                  typeof metadata["full_name"] === "string" ? metadata["full_name"] : current.name,
-                username:
-                  typeof metadata["username"] === "string"
-                    ? metadata["username"]
-                    : current.username,
-                bio: typeof metadata["bio"] === "string" ? metadata["bio"] : current.bio,
-              }));
-            }
-            return;
-          }
-        }
-
-        if (active) setSavedToAccount(false);
-        const value = readDemoValue("botsmith-demo-profile");
-        if (
-          value &&
-          typeof value === "object" &&
-          "name" in value &&
-          "username" in value &&
-          "bio" in value &&
-          typeof value.name === "string" &&
-          typeof value.username === "string" &&
-          typeof value.bio === "string"
-        ) {
-          if (active) setProfile({ name: value.name, username: value.username, bio: value.bio });
-        }
-      } catch {
-        if (active) setError("Saqlangan profilni yuklab bo‘lmadi. Qayta urinib ko‘ring.");
-      }
+    if (saved && !loaded) {
+      setProfile({ name: saved.name, username: saved.username, bio: saved.bio });
+      setLoaded(true);
     }
-
-    void loadProfile();
-    return () => {
-      active = false;
-    };
-  }, []);
+  }, [saved, loaded]);
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setError("");
     try {
-      let savedToAccount = false;
-      if (isSupabaseConfigured()) {
-        const supabase = getSupabaseClient();
-        const { data, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        if (data.session) {
-          const { error: updateError } = await supabase.auth.updateUser({
-            data: {
-              full_name: profile.name,
-              username: profile.username,
-              bio: profile.bio,
-            },
-          });
-          if (updateError) throw updateError;
-          savedToAccount = true;
-        } else {
-          writeDemoValue("botsmith-demo-profile", profile);
-        }
-      } else {
-        writeDemoValue("botsmith-demo-profile", profile);
-      }
-      setSavedToAccount(savedToAccount);
-      setSaved(true);
-      setError("");
-    } catch {
-      setSaved(false);
-      setError("Profil saqlanmadi. Hisobga qayta kiring yoki qayta urinib ko‘ring.");
+      await update.mutateAsync(profile);
+      setDone(true);
+    } catch (e) {
+      setDone(false);
+      setError(describeError(e));
     }
   }
 
+  const edit = (patch: Partial<typeof profile>) => {
+    setProfile({ ...profile, ...patch });
+    setDone(false);
+  };
+
   return (
-    <SellerPage title="Profil" user={profile.username}>
-      <form className="max-w-xl space-y-5" onSubmit={saveProfile}>
-        <div className="flex items-center gap-4 border-b pb-6">
-          <span className="grid h-16 w-16 place-items-center rounded-full bg-primary-soft text-xl font-semibold text-primary">
-            {profile.name
-              .split(/\s+/)
-              .map((part) => part[0])
-              .join("")
-              .slice(0, 2)
-              .toUpperCase()}
-          </span>
-          <div>
-            <p className="font-semibold">{profile.username}</p>
-            <p className="text-sm text-muted-foreground">Dasturchi</p>
+    <SellerPage title="Profil">
+      {isPending ? (
+        <p className="text-sm text-muted-foreground">Yuklanmoqda…</p>
+      ) : loadFailed ? (
+        <p role="alert" className="text-sm text-destructive">
+          Profilni yuklab bo‘lmadi. Sahifani yangilang.
+        </p>
+      ) : (
+        <form className="max-w-xl space-y-5" onSubmit={saveProfile}>
+          <div className="flex items-center gap-4 border-b pb-6">
+            <span className="grid h-16 w-16 place-items-center rounded-full bg-primary-soft text-xl font-semibold text-primary">
+              {profile.name
+                .split(/\s+/)
+                .map((part) => part[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase()}
+            </span>
+            <div>
+              <p className="font-semibold">{profile.username || profile.name}</p>
+              <p className="text-sm text-muted-foreground">Dasturchi · {account?.email}</p>
+            </div>
           </div>
-        </div>
-        <label className="block space-y-2 text-sm">
-          <span>Ism</span>
-          <Input
-            value={profile.name}
-            onChange={(e) => {
-              setProfile({ ...profile, name: e.target.value });
-              setSaved(false);
-            }}
-            required
-          />
-        </label>
-        <label className="block space-y-2 text-sm">
-          <span>Telegram username</span>
-          <Input
-            value={profile.username}
-            onChange={(e) => {
-              setProfile({ ...profile, username: e.target.value });
-              setSaved(false);
-            }}
-            required
-            pattern="@[A-Za-z0-9_]{5,32}"
-          />
-        </label>
-        <label className="block space-y-2 text-sm">
-          <span>O‘zingiz haqingizda</span>
-          <textarea
-            className="min-h-28 w-full rounded-md border bg-background p-3"
-            value={profile.bio}
-            onChange={(e) => {
-              setProfile({ ...profile, bio: e.target.value });
-              setSaved(false);
-            }}
-          />
-        </label>
-        <Button type="submit">
-          <Save />
-          Saqlash
-        </Button>
-        {saved && (
-          <p role="status" className="text-sm text-success">
-            {savedToAccount
-              ? "Profil hisobingizda saqlandi."
-              : "Profil ushbu brauzerda saqlandi (demo)."}
-          </p>
-        )}
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        )}
-      </form>
+          <label className="block space-y-2 text-sm">
+            <span>Ism</span>
+            <Input value={profile.name} onChange={(e) => edit({ name: e.target.value })} required />
+          </label>
+          <label className="block space-y-2 text-sm">
+            <span>Telegram username</span>
+            <Input
+              value={profile.username}
+              onChange={(e) => edit({ username: e.target.value })}
+              placeholder="@username"
+              pattern="@[A-Za-z0-9_]{5,32}"
+            />
+          </label>
+          <label className="block space-y-2 text-sm">
+            <span>O‘zingiz haqingizda</span>
+            <textarea
+              className="min-h-28 w-full rounded-md border bg-background p-3"
+              value={profile.bio}
+              onChange={(e) => edit({ bio: e.target.value })}
+            />
+          </label>
+          <Button type="submit" disabled={update.isPending}>
+            <Save />
+            Saqlash
+          </Button>
+          {done && (
+            <p role="status" className="text-sm text-success">
+              Profil saqlandi.
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+        </form>
+      )}
     </SellerPage>
   );
 }
+
 export function SellerNewBot() {
+  const account = useMarketplaceAccount();
+  const addBot = useAddBot(account?.id);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState("");
-  const { addBot } = useSellerBots();
   return (
     <SellerPage title="Yangi bot qo‘shish">
       {added ? (
         <div className="max-w-xl space-y-4 border-t py-8">
           <CheckCircle2 className="h-10 w-10 text-success" />
-          <h2 className="text-lg font-semibold">Bot ro‘yxatga qo‘shildi</h2>
+          <h2 className="text-lg font-semibold">Bot moderatsiyaga yuborildi</h2>
           <p className="text-sm text-muted-foreground">
-            Bot “Mening botlarim”da ko‘rib chiqilmoqda deb ko‘rinadi. Bu demo ma’lumot faqat joriy
-            sahifa sessiyasida mavjud; e’lon qilinmaydi va saqlanmaydi.
+            Administrator tekshirgach bot katalogda e’lon qilinadi. Holatini “Mening botlarim”da
+            kuzatishingiz mumkin.
           </p>
           <div className="flex flex-wrap gap-3">
             <Button asChild>
@@ -335,7 +334,7 @@ export function SellerNewBot() {
       ) : (
         <form
           className="max-w-xl space-y-5"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             const formData = new FormData(e.currentTarget);
             const price = Number(formData.get("price"));
@@ -343,19 +342,29 @@ export function SellerNewBot() {
               setError("Narxni musbat butun so‘m qiymatida kiriting.");
               return;
             }
-            addBot({
-              title: String(formData.get("title") ?? ""),
-              category: String(formData.get("category") ?? ""),
-              price,
-              desc: String(formData.get("description") ?? ""),
-            });
-            setError("");
-            setAdded(true);
+            try {
+              await addBot.mutateAsync({
+                title: String(formData.get("title") ?? ""),
+                category: String(formData.get("category") ?? ""),
+                price,
+                desc: String(formData.get("description") ?? ""),
+              });
+              setError("");
+              setAdded(true);
+            } catch (err) {
+              setError(describeError(err));
+            }
           }}
         >
           <label className="block space-y-2 text-sm">
             <span>Bot nomi</span>
-            <Input name="title" required placeholder="Masalan, Shop Bot" />
+            <Input
+              name="title"
+              required
+              minLength={2}
+              maxLength={120}
+              placeholder="Masalan, Shop Bot"
+            />
           </label>
           <label className="block space-y-2 text-sm">
             <span>Kategoriya</span>
@@ -381,6 +390,7 @@ export function SellerNewBot() {
             <textarea
               name="description"
               required
+              maxLength={5000}
               className="min-h-32 w-full rounded-md border bg-background p-3"
             />
           </label>
@@ -389,26 +399,32 @@ export function SellerNewBot() {
               {error}
             </p>
           )}
-          <Button type="submit">
+          <Button type="submit" disabled={addBot.isPending}>
             <Plus />
-            Botni demo ro‘yxatga qo‘shish
+            Moderatsiyaga yuborish
           </Button>
         </form>
       )}
     </SellerPage>
   );
 }
+
 export function Withdrawal() {
-  const { balance, history, storageError, ready, createWithdrawal } = useDemoSellerWallet();
+  const account = useMarketplaceAccount();
+  const { data: wallet, isPending } = useWallet();
+  const { data: history = [] } = useWithdrawals(account?.id);
+  const request = useRequestWithdrawal();
   const [amount, setAmount] = useState("");
   const [card, setCard] = useState("");
-  const [confirmed, setConfirmed] = useState(false);
+  const [holder, setHolder] = useState("");
+  const [created, setCreated] = useState<Withdrawal | null>(null);
   const [error, setError] = useState("");
+  const balance = wallet?.balance ?? 0;
   const numericAmount = Number(amount);
   const fee = Number.isSafeInteger(numericAmount) ? calculateWithdrawalFee(numericAmount) : 0;
   const maximumWithdrawal = getMaximumWithdrawal(balance);
 
-  function createDemoRequest(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const digits = card.replace(/\s/g, "");
     if (
@@ -425,13 +441,14 @@ export function Withdrawal() {
       setError("Karta raqami 16 ta raqamdan iborat bo‘lishi kerak.");
       return;
     }
-
     try {
-      createWithdrawal(numericAmount, digits.slice(-4));
+      setCreated(await request.mutateAsync({ amount: numericAmount, card: digits, holder }));
       setError("");
-      setConfirmed(true);
-    } catch {
-      setError("Demo so‘rov saqlanmadi. Brauzer ma’lumotlarni saqlashga ruxsat bermadi.");
+      setAmount("");
+      setCard("");
+      setHolder("");
+    } catch (e) {
+      setError(describeError(e));
     }
   }
 
@@ -442,7 +459,7 @@ export function Withdrawal() {
           <div className="mb-7 flex items-center gap-4 border-b pb-6">
             <Wallet className="h-7 w-7 text-primary" />
             <div>
-              <p className="text-sm text-muted-foreground">Hisobdagi demo balans</p>
+              <p className="text-sm text-muted-foreground">Hisobdagi balans</p>
               <p className="mt-1 text-2xl font-bold">{formatUZS(balance)}</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Hozir yechish mumkin: {formatUZS(maximumWithdrawal)} · kamida{" "}
@@ -450,29 +467,28 @@ export function Withdrawal() {
               </p>
             </div>
           </div>
-          {confirmed ? (
+          {created ? (
             <div className="space-y-4" role="status">
               <CheckCircle2 className="h-10 w-10 text-success" />
-              <h2 className="text-lg font-semibold">Demo so‘rov tayyorlandi</h2>
+              <h2 className="text-lg font-semibold">So‘rov qabul qilindi</h2>
               <p className="text-sm text-muted-foreground">
-                {formatUZS(Number(amount))} — karta •••• {card.replace(/\s/g, "").slice(-4)}
+                {formatUZS(created.amount)} — karta •••• {created.last4}
               </p>
               <p className="text-sm text-muted-foreground">
-                Komissiya: {formatUZS(fee)} · oluvchiga hisobiy:{" "}
-                {formatUZS(Math.max(0, Number(amount) - fee))}
+                Komissiya: {formatUZS(created.fee)} · kartaga o‘tkaziladi:{" "}
+                {formatUZS(created.payout)}
               </p>
               <p className="text-sm text-muted-foreground">
-                Faqat demo yozuvi ushbu brauzerda saqlandi. Haqiqiy pul o‘tkazilmadi va so‘rov
-                yuborilmadi. Demo balans {formatUZS(balance)} ga kamaytirildi; bu haqiqiy hamyon
-                yoki to‘lov emas.
+                So‘rov administratorga yuborildi. O‘tkazma qo‘lda amalga oshiriladi; holatini
+                “Yechish tarixi”da kuzating.
               </p>
-              <Button variant="outline" onClick={() => setConfirmed(false)}>
+              <Button variant="outline" onClick={() => setCreated(null)}>
                 <ArrowLeft />
                 Ortga qaytish
               </Button>
             </div>
           ) : (
-            <form className="space-y-5" onSubmit={createDemoRequest}>
+            <form className="space-y-5" onSubmit={submit}>
               <label className="block space-y-2 text-sm">
                 <span>Summa (so‘m) · eng kami {formatUZS(MINIMUM_WITHDRAWAL)}</span>
                 <div className="flex gap-2">
@@ -490,7 +506,7 @@ export function Withdrawal() {
                   <Button
                     type="button"
                     variant="secondary"
-                    disabled={!ready || maximumWithdrawal < MINIMUM_WITHDRAWAL}
+                    disabled={isPending || maximumWithdrawal < MINIMUM_WITHDRAWAL}
                     onClick={() => setAmount(String(maximumWithdrawal))}
                   >
                     Barchasi
@@ -520,7 +536,14 @@ export function Withdrawal() {
               </label>
               <label className="block space-y-2 text-sm">
                 <span>Karta egasi</span>
-                <Input required placeholder="Ism va familiya" />
+                <Input
+                  required
+                  minLength={2}
+                  maxLength={80}
+                  value={holder}
+                  onChange={(e) => setHolder(e.target.value)}
+                  placeholder="Ism va familiya"
+                />
               </label>
               <div className="space-y-2 border-y py-4 text-sm">
                 <div className="flex justify-between">
@@ -534,32 +557,26 @@ export function Withdrawal() {
                   <strong>{formatUZS(fee)}</strong>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Oluvchiga hisobiy summa</span>
+                  <span className="text-muted-foreground">Kartaga o‘tkaziladi</span>
                   <strong>{formatUZS(Math.max(0, numericAmount - fee))}</strong>
                 </div>
               </div>
-              {storageError && (
-                <p role="alert" className="text-sm text-destructive">
-                  {storageError}
-                </p>
-              )}
               {error && (
                 <p role="alert" className="text-sm text-destructive">
                   {error}
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                Demo rejim. So‘rovdan keyin hisobda kamida {formatUZS(MINIMUM_RETAINED_BALANCE)}{" "}
-                qoladi. So‘ralgan summadan 3% komissiya hisoblanadi, lekin haqiqiy pul
-                o‘tkazilmaydi. Haqiqiy karta ma’lumotlarini kiritmang.
+                Faqat karta raqami so‘raladi — CVV va amal qilish muddatini hech qachon kiritmang.
+                So‘rovdan keyin hisobda kamida {formatUZS(MINIMUM_RETAINED_BALANCE)} qoladi.
               </p>
               <Button
                 className="w-full"
                 type="submit"
-                disabled={!ready || Boolean(storageError) || maximumWithdrawal < MINIMUM_WITHDRAWAL}
+                disabled={isPending || request.isPending || maximumWithdrawal < MINIMUM_WITHDRAWAL}
               >
                 <ArrowUpRight />
-                Demo so‘rovni tekshirish
+                Pul yechishni so‘rash
               </Button>
             </form>
           )}
@@ -573,23 +590,21 @@ export function Withdrawal() {
             </div>
           ) : (
             <ul className="mt-4 space-y-3">
-              {history.map((request) => (
-                <li key={request.id} className="rounded-lg border p-4">
+              {history.map((item) => (
+                <li key={item.id} className="rounded-lg border p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <strong>{formatUZS(request.amount)}</strong>
-                    <span className="rounded-full bg-muted px-2 py-1 text-xs">Demo</span>
+                    <strong>{formatUZS(item.amount)}</strong>
+                    <WithdrawalBadge status={item.status} />
                   </div>
-                  <p className="mt-2 text-sm text-muted-foreground">Karta •••• {request.last4}</p>
-                  {request.fee !== undefined && request.payout !== undefined && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      Komissiya: {formatUZS(request.fee)} · oluvchiga: {formatUZS(request.payout)}
-                    </p>
-                  )}
+                  <p className="mt-2 text-sm text-muted-foreground">Karta •••• {item.last4}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Komissiya: {formatUZS(item.fee)} · kartaga: {formatUZS(item.payout)}
+                  </p>
                   <time
                     className="mt-1 block text-xs text-muted-foreground"
-                    dateTime={request.createdAt}
+                    dateTime={item.createdAt}
                   >
-                    {new Date(request.createdAt).toLocaleString("uz-UZ")}
+                    {new Date(item.createdAt).toLocaleString("uz-UZ")}
                   </time>
                 </li>
               ))}
@@ -602,17 +617,20 @@ export function Withdrawal() {
 }
 
 export function SellerWithdrawalHistory() {
-  const { history, storageError, ready } = useDemoSellerWallet();
-  const totalRequested = history.reduce((total, request) => total + request.amount, 0);
+  const account = useMarketplaceAccount();
+  const { data: history = [], isPending, isError } = useWithdrawals(account?.id);
+  const totalRequested = history
+    .filter((item) => item.status !== "rejected")
+    .reduce((total, item) => total + item.amount, 0);
 
   return (
     <SellerPage title="Pul yechish tarixi">
-      {storageError && (
+      {isError && (
         <p role="alert" className="mb-4 text-sm text-destructive">
-          {storageError}
+          Tarixni yuklab bo‘lmadi. Sahifani yangilang.
         </p>
       )}
-      {!ready ? (
+      {isPending ? (
         <p className="py-12 text-center text-sm text-muted-foreground">Yuklanmoqda…</p>
       ) : history.length === 0 ? (
         <div className="flex min-h-48 flex-col items-center justify-center gap-3 text-center">
@@ -623,49 +641,40 @@ export function SellerWithdrawalHistory() {
         <>
           <div className="mb-5 grid gap-4 rounded-lg border p-4 sm:grid-cols-2">
             <div>
-              <p className="text-sm text-muted-foreground">Demo so‘rovlar soni</p>
+              <p className="text-sm text-muted-foreground">So‘rovlar soni</p>
               <p className="mt-1 text-xl font-bold">{history.length}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">So‘ralgan jami summa</p>
+              <p className="text-sm text-muted-foreground">So‘ralgan jami summa (rad etilmagan)</p>
               <p className="mt-1 text-xl font-bold">{formatUZS(totalRequested)}</p>
             </div>
           </div>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Bu brauzerda saqlangan demo yozuvlari. Ular haqiqiy pul o‘tkazilganini bildirmaydi.
-          </p>
           <ul className="space-y-3">
-            {history.map((request) => (
-              <li key={request.id} className="rounded-lg border p-4">
+            {history.map((item) => (
+              <li key={item.id} className="rounded-lg border p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-lg font-bold">{formatUZS(request.amount)}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">Karta •••• {request.last4}</p>
+                    <p className="text-lg font-bold">{formatUZS(item.amount)}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Karta •••• {item.last4}</p>
                   </div>
-                  <span className="rounded-full bg-muted px-2 py-1 text-xs">
-                    Demo · to‘lanmagan
-                  </span>
+                  <WithdrawalBadge status={item.status} />
                 </div>
                 <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                   <div>
-                    <dt className="text-muted-foreground">Komissiya · 3%</dt>
-                    <dd className="mt-1 font-medium">
-                      {formatUZS(request.fee ?? calculateWithdrawalFee(request.amount))}
-                    </dd>
+                    <dt className="text-muted-foreground">
+                      Komissiya · {WITHDRAWAL_FEE_RATE * 100}%
+                    </dt>
+                    <dd className="mt-1 font-medium">{formatUZS(item.fee)}</dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Oluvchiga hisobiy summa</dt>
-                    <dd className="mt-1 font-medium">
-                      {formatUZS(
-                        request.payout ?? request.amount - calculateWithdrawalFee(request.amount),
-                      )}
-                    </dd>
+                    <dt className="text-muted-foreground">Kartaga o‘tkaziladi</dt>
+                    <dd className="mt-1 font-medium">{formatUZS(item.payout)}</dd>
                   </div>
                   <div className="sm:col-span-2">
                     <dt className="text-muted-foreground">So‘rov sanasi va vaqti</dt>
                     <dd className="mt-1">
-                      <time dateTime={request.createdAt}>
-                        {new Date(request.createdAt).toLocaleString("uz-UZ", {
+                      <time dateTime={item.createdAt}>
+                        {new Date(item.createdAt).toLocaleString("uz-UZ", {
                           dateStyle: "long",
                           timeStyle: "medium",
                         })}
@@ -681,24 +690,22 @@ export function SellerWithdrawalHistory() {
     </SellerPage>
   );
 }
+
 export function SellerHelp() {
   const faqs = [
     [
       "Botni qanday joylayman?",
-      "Mening botlarim sahifasidagi “Yangi bot qo‘shish” orqali bot nomi, kategoriya, narx va tavsifni kiriting.",
+      "Mening botlarim sahifasidagi “Yangi bot qo‘shish” orqali bot nomi, kategoriya, narx va tavsifni kiriting. Administrator tekshirgach bot katalogda e’lon qilinadi.",
     ],
     [
       "Buyurtmalarni qayerda ko‘raman?",
-      "Buyurtmalar sahifasida bot nomi, summa va buyurtma holati ko‘rinadi.",
+      "Buyurtmalar sahifasida bot nomi, summa va holat ko‘rinadi. To‘langan buyurtmani yetkazishni boshlab, tayyor bo‘lgach yakunlang.",
     ],
     [
       "Pulni qanday yechaman?",
-      "Eng kamida 100 000 so‘m so‘rash mumkin. So‘rov demo balansdan ayriladi; 3% platforma komissiyasi hisoblanib, 97% oluvchiga qoladi. Hozir pul o‘tkazilmaydi.",
+      "Eng kamida 100 000 so‘m so‘rash mumkin, hisobda kamida 500 000 so‘m qoladi. 3% komissiya ushlanadi, qolgani kartangizga qo‘lda o‘tkaziladi; holatini yechish tarixida ko‘rasiz.",
     ],
-    [
-      "Nega ma’lumotlar saqlanmayapti?",
-      "Bu namunaviy ko‘rinish. Haqiqiy hisoblar, botlarni e’lon qilish va to‘lovlar hali ulanmagan.",
-    ],
+    ["Daromad qachon hisoblanadi?", "Faqat to‘lovi tasdiqlangan buyurtmalar daromadga qo‘shiladi."],
   ];
   return (
     <SellerPage title="Yordam">
@@ -710,6 +717,13 @@ export function SellerHelp() {
             <p className="mt-3 text-sm leading-6 text-muted-foreground">{a}</p>
           </details>
         ))}
+        <p className="mt-6 text-sm text-muted-foreground">
+          Javob topmadingizmi?{" "}
+          <Link to="/support-chat" className="font-medium text-primary">
+            Yordam chatiga yozing
+          </Link>
+          .
+        </p>
       </div>
     </SellerPage>
   );

@@ -1,5 +1,5 @@
 # BotSmith roadmap
-- [x] Seller update: bar chart, replacement navigation, orders/earnings/profile/help/new-bot pages and withdrawal page (frontend demo only)
-- [x] Phase 1: all 8 pages with mock data, i18n switcher (UZ/RU/EN), mobile layout
-- [ ] Phase 2: Lovable Cloud — auth (email+password), profiles, user_roles, tables + RLS, storage, real queries, realtime orders
-- [ ] Phase 3: Payme + Click payments (needs merchant IDs/keys from user)
+- [x] Phase 1: UI for all pages, i18n switcher (UZ/RU/EN), mobile layout
+- [x] Phase 2: Supabase backend — profiles/roles, bots, orders, reviews, withdrawals, support chat, RLS (apply `supabase/migrations/0001_marketplace.sql`)
+- [ ] Phase 3: Payme + Click payments (needs merchant IDs/keys); until then admins mark orders paid and pay withdrawals by hand
+- [ ] Later: bot cover/file uploads (Supabase Storage), seller-buyer chat, favorites

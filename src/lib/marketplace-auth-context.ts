@@ -1,9 +1,14 @@
 import { createContext, useContext } from "react";
 
+export type AccountRole = "buyer" | "seller" | "admin";
+
 export type MarketplaceAccount = {
+  id: string;
   email: string;
   name: string;
+  role: AccountRole;
   isSeller: boolean;
+  isAdmin: boolean;
 };
 
 type MarketplaceAuthState = {

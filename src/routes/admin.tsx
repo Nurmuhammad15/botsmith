@@ -1,10 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DashboardLayout, StatusBadge, DataTable, Tabs } from "@/components/site";
-import { bots, categories, formatUZS } from "@/lib/data";
+import {
+  describeError,
+  useAdminBots,
+  useAdminOrders,
+  useAdminSetBotStatus,
+  useAdminSetOrderStatus,
+  useAdminSetWithdrawalStatus,
+  useAdminThreads,
+  useAdminWithdrawals,
+  useSendSupportMessage,
+  useSupportThread,
+} from "@/lib/api";
+import { categories, formatUZS, orderCode } from "@/lib/data";
+import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { adminNav } from "@/lib/nav";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -16,65 +32,301 @@ export const Route = createFileRoute("/admin")({
         name: "description",
         content: "Yangi botlar, sotuvchilar, buyurtmalar va to'lovlarni moderatsiya qilish.",
       },
-      { property: "og:title", content: "Moderatsiya — BotSmith" },
-      { property: "og:description", content: "Admin moderatsiya paneli." },
+      { name: "robots", content: "noindex" },
     ],
   }),
   component: Admin,
 });
 
 function Admin() {
-  const [tab, setTab] = useState(0);
-  const [queue, setQueue] = useState(bots.slice(4, 9).map((b) => b.id));
-  const act = (id: string, ok: boolean) => {
-    setQueue((q) => q.filter((x) => x !== id));
-    toast.success(ok ? "Tasdiqlandi" : "Rad etildi");
-  };
   return (
     <DashboardLayout user="Admin" role="Administrator" items={adminNav}>
-      <h1 className="text-xl font-bold">Moderatsiya navbati</h1>
+      <AdminContent />
+    </DashboardLayout>
+  );
+}
+
+const fail = (error: unknown) => toast.error(describeError(error));
+
+function AdminContent() {
+  const account = useMarketplaceAccount();
+  const isAdmin = Boolean(account?.isAdmin);
+  const [tab, setTab] = useState(0);
+  const bots = useAdminBots(isAdmin);
+  const orders = useAdminOrders(isAdmin);
+  const withdrawals = useAdminWithdrawals(isAdmin);
+  const threads = useAdminThreads(isAdmin);
+
+  if (!isAdmin) {
+    return (
+      <p className="py-12 text-center text-sm text-muted-foreground">
+        Bu sahifa faqat administratorlar uchun.
+      </p>
+    );
+  }
+
+  const pendingBots = (bots.data ?? []).filter((b) => b.status === "pending");
+  const pendingWithdrawals = (withdrawals.data ?? []).filter((w) => w.status === "pending");
+
+  return (
+    <>
+      <h1 className="text-xl font-bold">Boshqaruv paneli</h1>
       <div className="mt-4">
         <Tabs
-          tabs={[`Yangi botlar (${queue.length})`, "Sotuvchilar", "Buyurtmalar", "To'lovlar"]}
+          tabs={[
+            `Botlar (${pendingBots.length})`,
+            "Buyurtmalar",
+            `Yechishlar (${pendingWithdrawals.length})`,
+            "Murojaatlar",
+          ]}
           value={tab}
           onChange={setTab}
         />
       </div>
       <div className="mt-4">
-        <DataTable
-          head={["Bot nomi", "Kategoriya", "Sotuvchi", "Narx", "Holat", "Amallar"]}
-          emptyMessage="Hozircha moderatsiya uchun bot yo‘q."
-          rows={queue.map((id) => {
-            const b = bots.find((x) => x.id === id)!;
-            return [
-              <div>
-                <p className="font-medium">{b.title}</p>
-                <p className="text-xs text-muted-foreground">1 soat oldin</p>
-              </div>,
-              categories.find((c) => c.slug === b.category)?.name,
-              <span className="text-primary">{b.seller}</span>,
-              formatUZS(b.price),
-              <StatusBadge status="pending" />,
-              <div className="flex gap-2">
-                <button
-                  onClick={() => act(id, true)}
-                  aria-label="Approve"
-                  className="grid h-8 w-8 place-items-center rounded-md bg-success-soft text-success"
-                >
-                  <Check className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => act(id, false)}
-                  aria-label="Reject"
-                  className="grid h-8 w-8 place-items-center rounded-md bg-destructive/10 text-destructive"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>,
-            ];
-          })}
-        />
+        {tab === 0 && <BotsTab bots={bots.data ?? []} loading={bots.isPending} />}
+        {tab === 1 && <OrdersTab orders={orders.data ?? []} loading={orders.isPending} />}
+        {tab === 2 && (
+          <WithdrawalsTab items={withdrawals.data ?? []} loading={withdrawals.isPending} />
+        )}
+        {tab === 3 && <SupportTab threads={threads.data ?? []} loading={threads.isPending} />}
       </div>
-    </DashboardLayout>
+    </>
+  );
+}
+
+function BotsTab({
+  bots,
+  loading,
+}: {
+  bots: NonNullable<ReturnType<typeof useAdminBots>["data"]>;
+  loading: boolean;
+}) {
+  const setStatus = useAdminSetBotStatus();
+  const act = (id: string, status: "published" | "rejected") =>
+    setStatus.mutate(
+      { id, status },
+      {
+        onSuccess: () => toast.success(status === "published" ? "Tasdiqlandi" : "Rad etildi"),
+        onError: fail,
+      },
+    );
+  const label = { pending: "pending", published: "published", rejected: "draft" } as const;
+  return (
+    <DataTable
+      head={["Bot nomi", "Kategoriya", "Sotuvchi", "Narx", "Holat", "Amallar"]}
+      emptyMessage={loading ? "Yuklanmoqda…" : "Botlar yo‘q."}
+      rows={bots.map((b) => [
+        <div>
+          <p className="font-medium">{b.title}</p>
+          <p className="text-xs text-muted-foreground">
+            {new Date(b.createdAt).toLocaleDateString("uz-UZ")}
+          </p>
+        </div>,
+        categories.find((c) => c.slug === b.category)?.name,
+        <span className="text-primary">{b.seller}</span>,
+        formatUZS(b.price),
+        <StatusBadge status={label[b.status]} />,
+        <div className="flex gap-2">
+          {b.status !== "published" && (
+            <button
+              onClick={() => act(b.id, "published")}
+              aria-label="Tasdiqlash"
+              className="grid h-8 w-8 place-items-center rounded-md bg-success-soft text-success"
+            >
+              <Check className="h-4 w-4" />
+            </button>
+          )}
+          {b.status !== "rejected" && (
+            <button
+              onClick={() => act(b.id, "rejected")}
+              aria-label="Rad etish"
+              className="grid h-8 w-8 place-items-center rounded-md bg-destructive/10 text-destructive"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>,
+      ])}
+    />
+  );
+}
+
+function OrdersTab({
+  orders,
+  loading,
+}: {
+  orders: NonNullable<ReturnType<typeof useAdminOrders>["data"]>;
+  loading: boolean;
+}) {
+  const setStatus = useAdminSetOrderStatus();
+  const act = (id: string, status: "paid" | "cancelled") =>
+    setStatus.mutate(
+      { id, status },
+      {
+        onSuccess: () =>
+          toast.success(status === "paid" ? "To‘langan deb belgilandi" : "Bekor qilindi"),
+        onError: fail,
+      },
+    );
+  const label = {
+    pending_payment: "To‘lov kutilmoqda",
+    paid: "To‘langan",
+    delivering: "Yetkazilmoqda",
+    done: "Yakunlangan",
+    cancelled: "Bekor qilingan",
+  } as const;
+  return (
+    <DataTable
+      head={["Buyurtma", "Bot", "Xaridor", "Sotuvchi", "Summa", "Holat", "Amallar"]}
+      emptyMessage={loading ? "Yuklanmoqda…" : "Buyurtmalar yo‘q."}
+      rows={orders.map((o) => [
+        orderCode(o.number),
+        o.botTitle,
+        o.buyer,
+        o.seller,
+        formatUZS(o.amount),
+        label[o.status],
+        o.status === "pending_payment" ? (
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => act(o.id, "paid")}>
+              To‘langan
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => act(o.id, "cancelled")}>
+              Bekor qilish
+            </Button>
+          </div>
+        ) : null,
+      ])}
+    />
+  );
+}
+
+function WithdrawalsTab({
+  items,
+  loading,
+}: {
+  items: NonNullable<ReturnType<typeof useAdminWithdrawals>["data"]>;
+  loading: boolean;
+}) {
+  const setStatus = useAdminSetWithdrawalStatus();
+  const act = (id: string, status: "paid" | "rejected") =>
+    setStatus.mutate(
+      { id, status },
+      {
+        onSuccess: () =>
+          toast.success(status === "paid" ? "To‘langan deb belgilandi" : "Rad etildi"),
+        onError: fail,
+      },
+    );
+  const label = { pending: "Kutilmoqda", paid: "To‘langan", rejected: "Rad etilgan" } as const;
+  return (
+    <DataTable
+      head={["Sotuvchi", "Summa", "Kartaga", "Karta", "Sana", "Holat", "Amallar"]}
+      emptyMessage={loading ? "Yuklanmoqda…" : "Yechish so‘rovlari yo‘q."}
+      rows={items.map((w) => [
+        w.seller,
+        formatUZS(w.amount),
+        formatUZS(w.payout),
+        <div>
+          <p className="font-mono text-xs">{w.card.replace(/(.{4})/g, "$1 ").trim()}</p>
+          <p className="text-xs text-muted-foreground">{w.holder}</p>
+        </div>,
+        new Date(w.createdAt).toLocaleString("uz-UZ"),
+        label[w.status],
+        w.status === "pending" ? (
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => act(w.id, "paid")}>
+              O‘tkazildi
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => act(w.id, "rejected")}>
+              Rad etish
+            </Button>
+          </div>
+        ) : null,
+      ])}
+    />
+  );
+}
+
+function SupportTab({
+  threads,
+  loading,
+}: {
+  threads: NonNullable<ReturnType<typeof useAdminThreads>["data"]>;
+  loading: boolean;
+}) {
+  const account = useMarketplaceAccount();
+  const [selected, setSelected] = useState<string | null>(null);
+  const [reply, setReply] = useState("");
+  const current = threads.find((t) => t.userId === selected) ?? threads[0];
+  const { data: messages = [] } = useSupportThread(current?.userId);
+  const send = useSendSupportMessage(current?.userId, account?.id, true);
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    const text = reply.trim();
+    if (!text) return;
+    try {
+      await send.mutateAsync(text);
+      setReply("");
+    } catch (e) {
+      fail(e);
+    }
+  }
+
+  if (threads.length === 0) {
+    return (
+      <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+        {loading ? "Yuklanmoqda…" : "Murojaatlar yo‘q."}
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
+      <div className="space-y-2">
+        {threads.map((t) => (
+          <button
+            key={t.userId}
+            onClick={() => setSelected(t.userId)}
+            className={cn(
+              "card-soft block w-full p-3 text-left",
+              current?.userId === t.userId && "border-primary",
+            )}
+          >
+            <p className="text-sm font-medium">{t.user}</p>
+            <p className="line-clamp-1 text-xs text-muted-foreground">{t.lastMessage}</p>
+          </button>
+        ))}
+      </div>
+      <div className="card-soft flex flex-col">
+        <div className="max-h-96 min-h-64 space-y-3 overflow-y-auto p-4">
+          {messages.map((m) => (
+            <p
+              key={m.id}
+              className={cn(
+                "max-w-[85%] rounded-2xl p-3 text-sm",
+                m.fromStaff ? "ml-auto bg-primary text-primary-foreground" : "bg-muted",
+              )}
+            >
+              {m.body}
+            </p>
+          ))}
+        </div>
+        <form onSubmit={submit} className="flex gap-2 border-t p-3">
+          <Input
+            aria-label="Javob"
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            maxLength={2000}
+            placeholder="Javob yozing..."
+          />
+          <Button type="submit" disabled={!reply.trim() || send.isPending}>
+            Yuborish
+          </Button>
+        </form>
+      </div>
+    </div>
   );
 }

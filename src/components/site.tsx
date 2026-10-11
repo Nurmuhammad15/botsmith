@@ -12,6 +12,8 @@ import {
   MessageCircle,
   type LucideIcon,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import type { User as AuthUser } from "@supabase/supabase-js";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useT, type Lang } from "@/lib/i18n";
@@ -22,10 +24,32 @@ import {
   MarketplaceAccountContext,
   useMarketplaceAccount,
   useMarketplaceAuth,
+  type AccountRole,
   type MarketplaceAccount,
 } from "@/lib/marketplace-auth-context";
 
-function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
+async function loadAccount(user: AuthUser | undefined): Promise<MarketplaceAccount | null> {
+  if (!user) return null;
+  // The role lives in the profiles table (set by the server); user_metadata is client-editable.
+  const { data, error } = await getSupabaseClient()
+    .from("profiles")
+    .select("role, full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (error) throw error;
+  const role: AccountRole = data?.role === "seller" || data?.role === "admin" ? data.role : "buyer";
+  return {
+    id: user.id,
+    email: user.email ?? "",
+    name: typeof data?.full_name === "string" ? data.full_name : "",
+    role,
+    isSeller: role === "seller",
+    isAdmin: role === "admin",
+  };
+}
+
+export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [account, setAccount] = useState<MarketplaceAccount | null>(null);
   const [authError, setAuthError] = useState("");
   const [ready, setReady] = useState(!isSupabaseConfigured());
@@ -34,53 +58,37 @@ function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
     if (!isSupabaseConfigured()) return;
     const supabase = getSupabaseClient();
     let mounted = true;
+    let currentUserId: string | undefined;
 
-    void supabase.auth.getSession().then(({ data, error }) => {
-      if (!mounted) return;
-      setReady(true);
-      if (error) {
-        setAuthError("Hisob holatini tekshirib bo‘lmadi. Sahifani yangilang.");
-        return;
+    async function apply(user: AuthUser | undefined) {
+      try {
+        const next = await loadAccount(user);
+        if (!mounted) return;
+        if (currentUserId !== next?.id) queryClient.clear();
+        currentUserId = next?.id;
+        setAccount(next);
+        setAuthError("");
+      } catch {
+        if (mounted) setAuthError("Hisob holatini tekshirib bo‘lmadi. Sahifani yangilang.");
+      } finally {
+        if (mounted) setReady(true);
       }
-      const user = data.session?.user;
-      setAccount(
-        user
-          ? {
-              email: user.email ?? "",
-              name:
-                typeof user.user_metadata["full_name"] === "string"
-                  ? user.user_metadata["full_name"]
-                  : "",
-              isSeller: user.user_metadata["role"] === "seller",
-            }
-          : null,
-      );
-    });
+    }
+
+    void supabase.auth.getSession().then(({ data }) => apply(data.session?.user));
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      const user = session?.user;
-      setAccount(
-        user
-          ? {
-              email: user.email ?? "",
-              name:
-                typeof user.user_metadata["full_name"] === "string"
-                  ? user.user_metadata["full_name"]
-                  : "",
-              isSeller: user.user_metadata["role"] === "seller",
-            }
-          : null,
-      );
-      setAuthError("");
+      // Defer: supabase-js forbids awaiting other client calls inside this callback.
+      setTimeout(() => void apply(session?.user), 0);
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [queryClient]);
 
   return (
     <MarketplaceAccountContext.Provider value={{ account, ready }}>
@@ -238,11 +246,11 @@ export function MobileTabBar() {
 
 export function SiteLayout({ children }: { children: ReactNode }) {
   return (
-    <MarketplaceAuthProvider>
+    <>
       <Navbar />
       <main>{children}</main>
       <Footer />
-    </MarketplaceAuthProvider>
+    </>
   );
 }
 
@@ -270,7 +278,7 @@ export function BotCard({ bot, fav }: { bot: BotItem; fav?: boolean }) {
         <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{bot.desc}</p>
       </div>
       <Rating value={bot.rating} count={bot.reviews} />
-      {account ? (
+      {account && bot.price !== null ? (
         <p className="mt-auto font-bold text-primary">{formatUZS(bot.price)}</p>
       ) : (
         <p className="mt-auto text-sm font-medium text-primary">Narxni ko‘rish uchun kiring</p>
@@ -377,18 +385,14 @@ export function DashboardLayout({
   const isSeller = items.some((item) => item.to === "/seller");
   if (isSeller)
     return (
-      <MarketplaceAuthProvider>
-        <SellerDashboardLayout user={user} role={role} items={items} path={path}>
-          {children}
-        </SellerDashboardLayout>
-      </MarketplaceAuthProvider>
+      <SellerDashboardLayout user={user} role={role} items={items} path={path}>
+        {children}
+      </SellerDashboardLayout>
     );
   return (
-    <MarketplaceAuthProvider>
-      <BuyerDashboardLayout user={user} role={role} items={items} path={path}>
-        {children}
-      </BuyerDashboardLayout>
-    </MarketplaceAuthProvider>
+    <BuyerDashboardLayout user={user} role={role} items={items} path={path}>
+      {children}
+    </BuyerDashboardLayout>
   );
 }
 
@@ -429,10 +433,10 @@ function BuyerDashboardLayout({
         <aside className="hidden w-56 shrink-0 md:block">
           <div className="mb-6 flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft font-semibold text-primary">
-              {user.charAt(0).toUpperCase()}
+              {(account.name || account.email || user).charAt(0).toUpperCase()}
             </span>
             <div>
-              <p className="text-sm font-semibold">{user}</p>
+              <p className="text-sm font-semibold">{account.name || account.email || user}</p>
               <p className="text-xs text-muted-foreground">{role}</p>
             </div>
           </div>

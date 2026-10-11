@@ -9,19 +9,17 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { getPublishedSellerBots } from "@/lib/data";
+import type { SellerBot } from "@/lib/data";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 type TickProps = { x?: number; y?: number; payload?: { value: string } };
 
-export function SellerSales() {
+export function SellerSales({ bots }: { bots: SellerBot[] }) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const data = getPublishedSellerBots().map(({ bot }) => ({
-    id: bot.id,
-    name: bot.title,
-    sales: bot.sales,
-  }));
+  const data = bots
+    .filter((bot) => bot.status === "published")
+    .map((bot) => ({ id: bot.id, name: bot.title, sales: bot.sales }));
   const salesByName = Object.fromEntries(data.map((d) => [d.name, d.sales]));
   // Bot nomi ustun ostida, sotilgan soni uning yonida (tor ekranda — ostma-ost).
   const Tick = ({ x = 0, y = 0, payload }: TickProps) => {

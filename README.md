@@ -22,6 +22,17 @@ npm i
 npm run dev
 ```
 
+## Database setup
+
+Run `supabase/migrations/0001_marketplace.sql` once in the Supabase SQL editor. It creates the
+tables, row level security, and the functions the app calls. To create the first administrator,
+register normally, then run in the SQL editor:
+
+```sql
+update public.profiles set role = 'admin'
+where id = (select id from auth.users where email = 'you@example.com');
+```
+
 ## Supabase authentication
 
 Login and registration use Supabase Auth. Copy `.env.example` to `.env.local` and

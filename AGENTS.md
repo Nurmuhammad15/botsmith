@@ -10,4 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Seller sections use standalone leaf routes and a shared horizontal navigation in DashboardLayout; this keeps seller navigation distinct from the marketplace and every section directly accessible.
-- Seller forms are explicitly labeled frontend demos with transient React state until real account and payment services are requested; never imply that money moved or records were persisted.
+- Data is real: Supabase Postgres with RLS (`supabase/migrations/`). Pages read/write through `src/lib/api.ts`; balances, prices and statuses change only via SECURITY DEFINER functions, never from client-side state. Payme/Click are not connected, so orders stay `pending_payment` until an admin marks them paid; never imply an automatic payment or payout happened.

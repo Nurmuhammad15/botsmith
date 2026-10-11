@@ -59,10 +59,7 @@ function Register() {
           setMessage("");
           try {
             if (!supabaseConfigured) {
-              setMessage(
-                "Demo rejimi: forma tekshirildi, ammo hisob yaratilmadi. Ma'lumotlar serverga yuborilmadi yoki saqlanmadi.",
-              );
-              return;
+              throw new Error("Server sozlanmagan. Administratorga murojaat qiling.");
             }
 
             const { data, error } = await getSupabaseClient().auth.signUp({
@@ -110,9 +107,11 @@ function Register() {
         <h1 className="mt-6 text-center text-xl font-bold">Ro'yxatdan o'tish</h1>
         <p className="text-center text-sm text-muted-foreground">O'zingizning rolingizni tanlang</p>
         {!supabaseConfigured && (
-          <p className="mt-4 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-            Demo: server ulanmagan. Haqiqiy parol kiritmang — ma'lumotlar yuborilmaydi va
-            saqlanmaydi.
+          <p
+            role="alert"
+            className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
+          >
+            Server sozlanmagan, ro'yxatdan o'tish hozircha mumkin emas.
           </p>
         )}
         <div className="mt-6 space-y-3">
