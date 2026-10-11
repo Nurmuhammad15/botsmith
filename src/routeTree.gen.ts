@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as FavoritesRouteImport } from './routes/favorites'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MessagesRouteImport } from './routes/messages'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SellerRouteImport } from './routes/seller'
 import { Route as SellerEarningsRouteImport } from './routes/seller-earnings'
@@ -23,6 +25,8 @@ import { Route as SellerProfileRouteImport } from './routes/seller-profile'
 import { Route as SellerWithdrawalHistoryRouteImport } from './routes/seller-withdrawal-history'
 import { Route as SupportChatRouteImport } from './routes/support-chat'
 import { Route as WithdrawRouteImport } from './routes/withdraw'
+import { Route as ApiClickRouteImport } from './routes/api.click'
+import { Route as ApiPaymeRouteImport } from './routes/api.payme'
 import { Route as BotsIndexRouteImport } from './routes/bots.index'
 import { Route as BotsIdRouteImport } from './routes/bots.$id'
 import { Route as DashboardPurchasesRouteImport } from './routes/dashboard.purchases'
@@ -38,6 +42,11 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FavoritesRoute = FavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HelpRoute = HelpRouteImport.update({
   id: '/help',
   path: '/help',
@@ -51,6 +60,11 @@ const HowItWorksRoute = HowItWorksRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MessagesRoute = MessagesRouteImport.update({
+  id: '/messages',
+  path: '/messages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RegisterRoute = RegisterRouteImport.update({
@@ -98,6 +112,16 @@ const WithdrawRoute = WithdrawRouteImport.update({
   path: '/withdraw',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiClickRoute = ApiClickRouteImport.update({
+  id: '/api/click',
+  path: '/api/click',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPaymeRoute = ApiPaymeRouteImport.update({
+  id: '/api/payme',
+  path: '/api/payme',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BotsIndexRoute = BotsIndexRouteImport.update({
   id: '/bots/',
   path: '/bots/',
@@ -122,9 +146,11 @@ const SellerBotsIdRoute = SellerBotsIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/favorites': typeof FavoritesRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/register': typeof RegisterRoute
   '/seller': typeof SellerRoute
   '/seller-earnings': typeof SellerEarningsRoute
@@ -134,6 +160,8 @@ export interface FileRoutesByFullPath {
   '/seller-withdrawal-history': typeof SellerWithdrawalHistoryRoute
   '/support-chat': typeof SupportChatRoute
   '/withdraw': typeof WithdrawRoute
+  '/api/click': typeof ApiClickRoute
+  '/api/payme': typeof ApiPaymeRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -142,9 +170,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/favorites': typeof FavoritesRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/register': typeof RegisterRoute
   '/seller': typeof SellerRoute
   '/seller-earnings': typeof SellerEarningsRoute
@@ -154,6 +184,8 @@ export interface FileRoutesByTo {
   '/seller-withdrawal-history': typeof SellerWithdrawalHistoryRoute
   '/support-chat': typeof SupportChatRoute
   '/withdraw': typeof WithdrawRoute
+  '/api/click': typeof ApiClickRoute
+  '/api/payme': typeof ApiPaymeRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -163,9 +195,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/favorites': typeof FavoritesRoute
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
   '/login': typeof LoginRoute
+  '/messages': typeof MessagesRoute
   '/register': typeof RegisterRoute
   '/seller': typeof SellerRoute
   '/seller-earnings': typeof SellerEarningsRoute
@@ -175,6 +209,8 @@ export interface FileRoutesById {
   '/seller-withdrawal-history': typeof SellerWithdrawalHistoryRoute
   '/support-chat': typeof SupportChatRoute
   '/withdraw': typeof WithdrawRoute
+  '/api/click': typeof ApiClickRoute
+  '/api/payme': typeof ApiPaymeRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -185,9 +221,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/favorites'
     | '/help'
     | '/how-it-works'
     | '/login'
+    | '/messages'
     | '/register'
     | '/seller'
     | '/seller-earnings'
@@ -197,6 +235,8 @@ export interface FileRouteTypes {
     | '/seller-withdrawal-history'
     | '/support-chat'
     | '/withdraw'
+    | '/api/click'
+    | '/api/payme'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -205,9 +245,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/favorites'
     | '/help'
     | '/how-it-works'
     | '/login'
+    | '/messages'
     | '/register'
     | '/seller'
     | '/seller-earnings'
@@ -217,6 +259,8 @@ export interface FileRouteTypes {
     | '/seller-withdrawal-history'
     | '/support-chat'
     | '/withdraw'
+    | '/api/click'
+    | '/api/payme'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -225,9 +269,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/favorites'
     | '/help'
     | '/how-it-works'
     | '/login'
+    | '/messages'
     | '/register'
     | '/seller'
     | '/seller-earnings'
@@ -237,6 +283,8 @@ export interface FileRouteTypes {
     | '/seller-withdrawal-history'
     | '/support-chat'
     | '/withdraw'
+    | '/api/click'
+    | '/api/payme'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -246,9 +294,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  FavoritesRoute: typeof FavoritesRoute
   HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
   LoginRoute: typeof LoginRoute
+  MessagesRoute: typeof MessagesRoute
   RegisterRoute: typeof RegisterRoute
   SellerRoute: typeof SellerRoute
   SellerEarningsRoute: typeof SellerEarningsRoute
@@ -258,6 +308,8 @@ export interface RootRouteChildren {
   SellerWithdrawalHistoryRoute: typeof SellerWithdrawalHistoryRoute
   SupportChatRoute: typeof SupportChatRoute
   WithdrawRoute: typeof WithdrawRoute
+  ApiClickRoute: typeof ApiClickRoute
+  ApiPaymeRoute: typeof ApiPaymeRoute
   BotsIdRoute: typeof BotsIdRoute
   DashboardPurchasesRoute: typeof DashboardPurchasesRoute
   SellerBotsIdRoute: typeof SellerBotsIdRoute
@@ -280,6 +332,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/favorites': {
+      id: '/favorites'
+      path: '/favorites'
+      fullPath: '/favorites'
+      preLoaderRoute: typeof FavoritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/help': {
       id: '/help'
       path: '/help'
@@ -299,6 +358,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/messages': {
+      id: '/messages'
+      path: '/messages'
+      fullPath: '/messages'
+      preLoaderRoute: typeof MessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/register': {
@@ -364,6 +430,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WithdrawRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/click': {
+      id: '/api/click'
+      path: '/api/click'
+      fullPath: '/api/click'
+      preLoaderRoute: typeof ApiClickRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payme': {
+      id: '/api/payme'
+      path: '/api/payme'
+      fullPath: '/api/payme'
+      preLoaderRoute: typeof ApiPaymeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bots/': {
       id: '/bots/'
       path: '/bots'
@@ -398,9 +478,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  FavoritesRoute: FavoritesRoute,
   HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
   LoginRoute: LoginRoute,
+  MessagesRoute: MessagesRoute,
   RegisterRoute: RegisterRoute,
   SellerRoute: SellerRoute,
   SellerEarningsRoute: SellerEarningsRoute,
@@ -410,6 +492,8 @@ const rootRouteChildren: RootRouteChildren = {
   SellerWithdrawalHistoryRoute: SellerWithdrawalHistoryRoute,
   SupportChatRoute: SupportChatRoute,
   WithdrawRoute: WithdrawRoute,
+  ApiClickRoute: ApiClickRoute,
+  ApiPaymeRoute: ApiPaymeRoute,
   BotsIdRoute: BotsIdRoute,
   DashboardPurchasesRoute: DashboardPurchasesRoute,
   SellerBotsIdRoute: SellerBotsIdRoute,

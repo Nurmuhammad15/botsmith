@@ -35,6 +35,11 @@ export type BotItem = {
   lang: string[];
   delivery: number;
   sales: number;
+  /** Public URLs of the cover gallery; the first one is the cover. */
+  images: string[];
+  /** Number of deliverable files attached (visible only to the seller and paying buyers). */
+  fileCount: number;
+  sellerId: string;
 };
 
 export type BotStatus = "pending" | "published" | "rejected";
@@ -50,6 +55,18 @@ export type SellerBot = {
   views: number;
   sales: number;
   earned: number;
+  /** Storage paths in the public `bot-covers` bucket; the first one is the cover. */
+  imagePaths: string[];
+  fileCount: number;
+};
+
+/** A deliverable file attached to a bot (stored in the private `bot-files` bucket). */
+export type BotFile = {
+  id: string;
+  botId: string;
+  path: string;
+  name: string;
+  size: number;
 };
 
 export type OrderStatus = "pending_payment" | "paid" | "delivering" | "done" | "cancelled";
@@ -59,6 +76,7 @@ export type Order = {
   number: number;
   botId: string;
   botTitle: string;
+  buyerId: string;
   amount: number;
   status: OrderStatus;
   createdAt: string;

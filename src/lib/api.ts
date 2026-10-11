@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getSupabaseClient } from "@/lib/supabase";
+import { check, db, describeError, num, str, type Row } from "@/lib/api-core";
+import { coverUrl } from "@/lib/api-media";
 import type {
   BotItem,
   BotStatus,
@@ -10,42 +11,7 @@ import type {
   WithdrawalStatus,
 } from "@/lib/data";
 
-type Row = Record<string, unknown>;
-
-const str = (v: unknown) => (typeof v === "string" ? v : "");
-const num = (v: unknown) => (typeof v === "number" ? v : Number(v ?? 0));
-
-const ERROR_MESSAGES: Record<string, string> = {
-  not_authenticated: "Avval tizimga kiring.",
-  not_a_seller: "Bu amal faqat sotuvchilar uchun.",
-  invalid_card: "Karta raqami 16 ta raqamdan iborat bo‘lishi kerak.",
-  amount_too_small: "Summa minimal yechish miqdoridan kam.",
-  amount_exceeds_available: "Summa yechish mumkin bo‘lgan balansdan oshib ketdi.",
-  bot_not_found: "Bot topilmadi yoki e’lon qilinmagan.",
-  own_bot: "O‘z botingizni xarid qila olmaysiz.",
-  order_not_found: "Buyurtma topilmadi.",
-  invalid_transition: "Buyurtma holatini bunday o‘zgartirib bo‘lmaydi.",
-  forbidden: "Bu amal uchun ruxsat yo‘q.",
-};
-
-/** Converts a Supabase/Postgres error into a message that is safe to show to the user. */
-export function describeError(error: unknown): string {
-  const message =
-    error && typeof error === "object" && "message" in error ? str(error.message) : "";
-  return (
-    ERROR_MESSAGES[message] ??
-    (message.includes("duplicate key") && message.includes("username")
-      ? "Bu username band."
-      : "Amal bajarilmadi. Qayta urinib ko‘ring.")
-  );
-}
-
-function check<T>(result: { data: T; error: unknown }): T {
-  if (result.error) throw result.error;
-  return result.data;
-}
-
-const db = () => getSupabaseClient();
+export { describeError };
 
 // --------------------------------------------------------------------------- catalogue
 
@@ -62,6 +28,9 @@ function toBot(row: Row): BotItem {
     lang: Array.isArray(row["languages"]) ? (row["languages"] as string[]) : [],
     delivery: num(row["delivery_hours"]),
     sales: num(row["sales"]),
+    images: Array.isArray(row["image_paths"]) ? (row["image_paths"] as string[]).map(coverUrl) : [],
+    fileCount: num(row["file_count"]),
+    sellerId: str(row["seller_id"]),
   };
 }
 
@@ -83,6 +52,26 @@ export function useBot(id: string) {
     queryFn: async () => {
       const row = check(await db().from("bots_public").select("*").eq("id", id).maybeSingle());
       return row ? toBot(row as Row) : null;
+    },
+  });
+}
+
+/** The favorited bots that are still published, newest favorite first. */
+export function useFavoriteBots(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["favorite-bots", userId],
+    enabled: Boolean(userId),
+    queryFn: async () => {
+      const ids = (
+        check(
+          await db().from("favorites").select("bot_id").order("created_at", { ascending: false }),
+        ) as Row[]
+      ).map((r) => str(r["bot_id"]));
+      if (ids.length === 0) return [];
+      const bots = (check(await db().from("bots_public").select("*").in("id", ids)) as Row[]).map(
+        toBot,
+      );
+      return ids.flatMap((id) => bots.filter((bot) => bot.id === id));
     },
   });
 }
@@ -113,7 +102,7 @@ export function useBotReviews(botId: string) {
 export function useRecordBotView(botId: string) {
   return useMutation({
     mutationFn: async () => {
-      check(await db().rpc("increment_bot_views", { p_bot: botId }));
+      check(await db().rpc("record_bot_view", { p_bot: botId }));
     },
   });
 }
@@ -123,14 +112,12 @@ export function useSubmitReview(botId: string, userId: string) {
   return useMutation({
     mutationFn: async (input: { rating: number; comment: string }) => {
       check(
-        await db()
-          .from("reviews")
-          .insert({
-            bot_id: botId,
-            buyer_id: userId,
-            rating: input.rating,
-            comment: input.comment,
-          }),
+        await db().from("reviews").insert({
+          bot_id: botId,
+          buyer_id: userId,
+          rating: input.rating,
+          comment: input.comment,
+        }),
       );
     },
     onSuccess: () => {
@@ -148,17 +135,32 @@ function toOrder(row: Row): Order {
     number: num(row["order_number"]),
     botId: str(row["bot_id"]),
     botTitle: str(row["bot_title"]),
+    buyerId: str(row["buyer_id"]),
     amount: num(row["amount"]),
     status: str(row["status"]) as OrderStatus,
     createdAt: str(row["created_at"]),
   };
 }
 
-/** Orders where the signed-in user is the buyer (`role: "buyer"`) or the seller. */
-export function useOrders(role: "buyer" | "seller", userId: string | undefined) {
+/**
+ * Orders where the signed-in user is the buyer (`role: "buyer"`) or the seller. A buyer with an
+ * unpaid order is polled so the page notices the payment provider's confirmation; `fastPoll`
+ * is for the moment right after returning from the provider's page.
+ */
+export function useOrders(
+  role: "buyer" | "seller",
+  userId: string | undefined,
+  options: { fastPoll?: boolean } = {},
+) {
   return useQuery({
     queryKey: ["orders", role, userId],
     enabled: Boolean(userId),
+    refetchInterval: (query) =>
+      role === "buyer" && query.state.data?.some((o) => o.status === "pending_payment")
+        ? options.fastPoll
+          ? 3_000
+          : 30_000
+        : false,
     queryFn: async () =>
       (
         check(
@@ -210,6 +212,8 @@ export function useMyBots(enabled = true) {
         views: num(r["views"]),
         sales: num(r["sales"]),
         earned: num(r["earned"]),
+        imagePaths: Array.isArray(r["image_paths"]) ? (r["image_paths"] as string[]) : [],
+        fileCount: num(r["file_count"]),
       })),
   });
 }
@@ -219,17 +223,22 @@ export type NewBotInput = { title: string; category: string; price: number; desc
 export function useAddBot(sellerId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: NewBotInput) => {
+    mutationFn: async (input: NewBotInput): Promise<string> => {
       if (!sellerId) throw new Error("not_authenticated");
-      check(
-        await db().from("bots").insert({
-          seller_id: sellerId,
-          title: input.title.trim(),
-          description: input.desc.trim(),
-          price: input.price,
-          category: input.category,
-        }),
-      );
+      const row = check(
+        await db()
+          .from("bots")
+          .insert({
+            seller_id: sellerId,
+            title: input.title.trim(),
+            description: input.desc.trim(),
+            price: input.price,
+            category: input.category,
+          })
+          .select("id")
+          .single(),
+      ) as Row;
+      return str(row["id"]);
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["my-bots"] }),
   });
@@ -252,13 +261,18 @@ export function useWallet(enabled = true) {
   });
 }
 
+// `card_number` is deliberately not readable by clients (0004_withdrawal_card_privacy.sql), so
+// withdrawals must be selected with an explicit column list — `select *` is denied.
+const WITHDRAWAL_COLUMNS =
+  "id, seller_id, amount, fee, payout, card_last4, card_holder, status, created_at, processed_at";
+
 function toWithdrawal(row: Row): Withdrawal {
   return {
     id: str(row["id"]),
     amount: num(row["amount"]),
     fee: num(row["fee"]),
     payout: num(row["payout"]),
-    last4: str(row["card_number"]).slice(-4),
+    last4: str(row["card_last4"]),
     status: str(row["status"]) as WithdrawalStatus,
     createdAt: str(row["created_at"]),
   };
@@ -273,7 +287,7 @@ export function useWithdrawals(userId: string | undefined) {
         check(
           await db()
             .from("withdrawals")
-            .select("*")
+            .select(WITHDRAWAL_COLUMNS)
             .eq("seller_id", userId!)
             .order("created_at", { ascending: false }),
         ) as Row[]
@@ -408,6 +422,7 @@ export type AdminBot = {
   status: BotStatus;
   seller: string;
   createdAt: string;
+  images: string[];
 };
 
 const sellerLabel = (profile: unknown) => {
@@ -435,6 +450,7 @@ export function useAdminBots(enabled: boolean) {
         status: str(r["status"]) as BotStatus,
         seller: sellerLabel(r["seller"]),
         createdAt: str(r["created_at"]),
+        images: Array.isArray(r["image_paths"]) ? (r["image_paths"] as string[]).map(coverUrl) : [],
       })),
   });
 }
@@ -452,7 +468,12 @@ export function useAdminSetBotStatus() {
   });
 }
 
-export type AdminOrder = Order & { buyer: string; seller: string };
+export type AdminOrder = Order & {
+  buyer: string;
+  seller: string;
+  /** Online payment attempts (provider and state: 1 created, 2 paid, -1/-2 cancelled). */
+  payments: { provider: string; state: number }[];
+};
 
 export function useAdminOrders(enabled: boolean) {
   return useQuery({
@@ -464,7 +485,7 @@ export function useAdminOrders(enabled: boolean) {
           await db()
             .from("orders")
             .select(
-              "*, buyer:profiles!orders_buyer_id_fkey(full_name, username), seller:profiles!orders_seller_id_fkey(full_name, username)",
+              "*, buyer:profiles!orders_buyer_id_fkey(full_name, username), seller:profiles!orders_seller_id_fkey(full_name, username), payments:payment_transactions(provider, state)",
             )
             .order("created_at", { ascending: false }),
         ) as Row[]
@@ -472,6 +493,9 @@ export function useAdminOrders(enabled: boolean) {
         ...toOrder(r),
         buyer: sellerLabel(r["buyer"]),
         seller: sellerLabel(r["seller"]),
+        payments: Array.isArray(r["payments"])
+          ? (r["payments"] as { provider: string; state: number }[])
+          : [],
       })),
   });
 }
@@ -488,7 +512,12 @@ export function useAdminSetOrderStatus() {
   });
 }
 
-export type AdminWithdrawal = Withdrawal & { seller: string; card: string; holder: string };
+export type AdminWithdrawal = Withdrawal & { seller: string; holder: string };
+
+/** Full card number of a withdrawal, for making the transfer. Every call is audited server-side. */
+export async function revealWithdrawalCard(withdrawalId: string) {
+  return check(await db().rpc("admin_reveal_withdrawal_card", { p_id: withdrawalId })) as string;
+}
 
 export function useAdminWithdrawals(enabled: boolean) {
   return useQuery({
@@ -499,13 +528,12 @@ export function useAdminWithdrawals(enabled: boolean) {
         check(
           await db()
             .from("withdrawals")
-            .select("*, seller:profiles(full_name, username)")
+            .select(`${WITHDRAWAL_COLUMNS}, seller:profiles(full_name, username)`)
             .order("created_at", { ascending: false }),
         ) as Row[]
       ).map((r): AdminWithdrawal => ({
         ...toWithdrawal(r),
         seller: sellerLabel(r["seller"]),
-        card: str(r["card_number"]),
         holder: str(r["card_holder"]),
       })),
   });

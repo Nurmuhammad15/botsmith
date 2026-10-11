@@ -19,12 +19,14 @@ import type { SideItem } from "@/components/site";
 export const buyerNav: SideItem[] = [
   { to: "/", label: "Bosh sahifa", icon: Home },
   { to: "/dashboard/purchases", label: "Buyurtmalar", icon: ShoppingBag },
-  { to: "/bots", label: "Sevimlilar", icon: Heart },
+  { to: "/favorites", label: "Sevimlilar", icon: Heart },
+  { to: "/messages", label: "Xabarlar", icon: MessageSquare },
   { to: "/help", label: "Yordam", icon: HelpCircle },
 ];
 export const sellerNav: SideItem[] = [
   { to: "/seller", label: "Mening botlarim", icon: Bot },
   { to: "/seller-orders", label: "Buyurtmalar", icon: Package },
+  { to: "/messages", label: "Xabarlar", icon: MessageSquare },
   { to: "/seller-earnings", label: "Daromadlar", icon: Wallet },
   { to: "/seller-withdrawal-history", label: "Yechish tarixi", icon: History },
   { to: "/seller-profile", label: "Profil", icon: User },

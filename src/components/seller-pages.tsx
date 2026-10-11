@@ -1,11 +1,33 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowLeft, ArrowUpRight, CheckCircle2, Save, Plus, Search, Wallet } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  CheckCircle2,
+  MessageSquare,
+  Save,
+  Plus,
+  Search,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DashboardLayout, DataTable, StatusBadge } from "@/components/site";
+import { FaqList } from "@/components/faq-list";
+import { MediaPicker } from "@/components/media-picker";
 import { SellerSales } from "@/components/seller-sales";
 import { sellerNav } from "@/lib/nav";
+import { sellerFaqs } from "@/lib/faq";
+import { uploadCovers, uploadDeliverables } from "@/lib/api-media";
+import { useOpenConversation } from "@/lib/api-chat";
+import {
+  IMAGE_TYPES,
+  MAX_FILES,
+  MAX_IMAGES,
+  validateDeliverable,
+  validateImage,
+} from "@/lib/media";
 import {
   describeError,
   useAddBot,
@@ -73,6 +95,8 @@ export function SellerOrders() {
   const account = useMarketplaceAccount();
   const { data: orders = [], isPending, isError } = useOrders("seller", account?.id);
   const advance = useAdvanceOrder();
+  const openConversation = useOpenConversation();
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
@@ -84,6 +108,19 @@ export function SellerOrders() {
           : o.status !== "done" && o.status !== "cancelled")) &&
       `${orderCode(o.number)} ${o.botTitle}`.toLowerCase().includes(query.toLowerCase()),
   );
+
+  async function writeToBuyer(order: Order) {
+    setError("");
+    try {
+      const id = await openConversation.mutateAsync({
+        botId: order.botId,
+        buyerId: order.buyerId,
+      });
+      await navigate({ to: "/messages", search: { c: id } });
+    } catch (e) {
+      setError(describeError(e));
+    }
+  }
 
   async function move(order: Order, status: "delivering" | "done") {
     setError("");
@@ -144,18 +181,22 @@ export function SellerOrders() {
           new Date(o.createdAt).toLocaleDateString("uz-UZ"),
           formatUZS(o.amount),
           orderStatusLabel[o.status],
-          o.status === "paid" || o.status === "delivering" ? (
-            <div className="flex gap-2">
-              {o.status === "paid" && (
-                <Button size="sm" variant="outline" onClick={() => move(o, "delivering")}>
-                  Yetkazishni boshlash
-                </Button>
-              )}
+          <div className="flex flex-wrap gap-2">
+            {o.status === "paid" && (
+              <Button size="sm" variant="outline" onClick={() => move(o, "delivering")}>
+                Yetkazishni boshlash
+              </Button>
+            )}
+            {(o.status === "paid" || o.status === "delivering") && (
               <Button size="sm" onClick={() => move(o, "done")}>
                 Yakunlash
               </Button>
-            </div>
-          ) : null,
+            )}
+            <Button size="sm" variant="ghost" onClick={() => writeToBuyer(o)}>
+              <MessageSquare />
+              Xaridorga yozish
+            </Button>
+          </div>,
         ])}
       />
     </SellerPage>
@@ -308,12 +349,67 @@ export function SellerProfile() {
 
 export function SellerNewBot() {
   const account = useMarketplaceAccount();
+  const queryClient = useQueryClient();
   const addBot = useAddBot(account?.id);
-  const [added, setAdded] = useState(false);
+  const [created, setCreated] = useState<{ id: string; problems: string[] } | null>(null);
+  const [stage, setStage] = useState("");
   const [error, setError] = useState("");
+  const [images, setImages] = useState<File[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
+  const busy = stage !== "";
+
+  async function submit(form: HTMLFormElement) {
+    if (!account) return;
+    const formData = new FormData(form);
+    const price = Number(formData.get("price"));
+    if (!Number.isSafeInteger(price) || price < 1) {
+      setError("Narxni musbat butun so‘m qiymatida kiriting.");
+      return;
+    }
+    setError("");
+    let botId: string;
+    try {
+      setStage("Bot yaratilmoqda…");
+      botId = await addBot.mutateAsync({
+        title: String(formData.get("title") ?? ""),
+        category: String(formData.get("category") ?? ""),
+        price,
+        desc: String(formData.get("description") ?? ""),
+      });
+    } catch (err) {
+      setError(describeError(err));
+      setStage("");
+      return;
+    }
+
+    // The bot exists from here on; media problems are reported, not retried by re-creating it.
+    const problems: string[] = [];
+    try {
+      if (images.length > 0) {
+        setStage("Rasmlar yuklanmoqda…");
+        const result = await uploadCovers(account.id, botId, images, []);
+        problems.push(...result.failed.map((name) => `Rasm yuklanmadi: ${name}`));
+      }
+    } catch {
+      problems.push("Rasmlar saqlanmadi.");
+    }
+    try {
+      if (files.length > 0) {
+        setStage("Fayllar yuklanmoqda…");
+        const result = await uploadDeliverables(account.id, botId, files);
+        problems.push(...result.failed.map((name) => `Fayl yuklanmadi: ${name}`));
+      }
+    } catch {
+      problems.push("Fayllar saqlanmadi.");
+    }
+    void queryClient.invalidateQueries({ queryKey: ["my-bots"] });
+    setStage("");
+    setCreated({ id: botId, problems });
+  }
+
   return (
     <SellerPage title="Yangi bot qo‘shish">
-      {added ? (
+      {created ? (
         <div className="max-w-xl space-y-4 border-t py-8">
           <CheckCircle2 className="h-10 w-10 text-success" />
           <h2 className="text-lg font-semibold">Bot moderatsiyaga yuborildi</h2>
@@ -321,11 +417,35 @@ export function SellerNewBot() {
             Administrator tekshirgach bot katalogda e’lon qilinadi. Holatini “Mening botlarim”da
             kuzatishingiz mumkin.
           </p>
+          {created.problems.length > 0 && (
+            <div role="alert" className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+              <p className="font-medium">Ba’zi fayllar yuklanmadi:</p>
+              <ul className="mt-1 list-disc pl-5">
+                {created.problems.map((problem) => (
+                  <li key={problem}>{problem}</li>
+                ))}
+              </ul>
+              <Link
+                to="/seller-bots/$id"
+                params={{ id: created.id }}
+                className="mt-2 inline-block font-medium underline"
+              >
+                Bot sahifasida qayta yuklash
+              </Link>
+            </div>
+          )}
           <div className="flex flex-wrap gap-3">
             <Button asChild>
               <Link to="/seller">Mening botlarimga o‘tish</Link>
             </Button>
-            <Button onClick={() => setAdded(false)} variant="outline">
+            <Button
+              onClick={() => {
+                setCreated(null);
+                setImages([]);
+                setFiles([]);
+              }}
+              variant="outline"
+            >
               <Plus />
               Yana bot qo‘shish
             </Button>
@@ -334,26 +454,9 @@ export function SellerNewBot() {
       ) : (
         <form
           className="max-w-xl space-y-5"
-          onSubmit={async (e) => {
+          onSubmit={(e) => {
             e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const price = Number(formData.get("price"));
-            if (!Number.isSafeInteger(price) || price < 1) {
-              setError("Narxni musbat butun so‘m qiymatida kiriting.");
-              return;
-            }
-            try {
-              await addBot.mutateAsync({
-                title: String(formData.get("title") ?? ""),
-                category: String(formData.get("category") ?? ""),
-                price,
-                desc: String(formData.get("description") ?? ""),
-              });
-              setError("");
-              setAdded(true);
-            } catch (err) {
-              setError(describeError(err));
-            }
+            void submit(e.currentTarget);
           }}
         >
           <label className="block space-y-2 text-sm">
@@ -394,14 +497,34 @@ export function SellerNewBot() {
               className="min-h-32 w-full rounded-md border bg-background p-3"
             />
           </label>
+          <MediaPicker
+            label="Rasmlar (birinchisi muqova bo‘ladi)"
+            hint={`JPG, PNG yoki WebP · 5 MB gacha · ko‘pi bilan ${MAX_IMAGES} ta`}
+            accept={IMAGE_TYPES.join(",")}
+            files={images}
+            onChange={setImages}
+            validate={validateImage}
+            max={MAX_IMAGES}
+            preview
+            disabled={busy}
+          />
+          <MediaPicker
+            label="Bot fayllari (ixtiyoriy)"
+            hint={`Faqat to‘lov qilgan xaridor yuklab oladi · 50 MB gacha · ko‘pi bilan ${MAX_FILES} ta`}
+            files={files}
+            onChange={setFiles}
+            validate={validateDeliverable}
+            max={MAX_FILES}
+            disabled={busy}
+          />
           {error && (
             <p role="alert" className="text-sm text-destructive">
               {error}
             </p>
           )}
-          <Button type="submit" disabled={addBot.isPending}>
+          <Button type="submit" disabled={busy}>
             <Plus />
-            Moderatsiyaga yuborish
+            {busy ? stage : "Moderatsiyaga yuborish"}
           </Button>
         </form>
       )}
@@ -692,39 +815,16 @@ export function SellerWithdrawalHistory() {
 }
 
 export function SellerHelp() {
-  const faqs = [
-    [
-      "Botni qanday joylayman?",
-      "Mening botlarim sahifasidagi “Yangi bot qo‘shish” orqali bot nomi, kategoriya, narx va tavsifni kiriting. Administrator tekshirgach bot katalogda e’lon qilinadi.",
-    ],
-    [
-      "Buyurtmalarni qayerda ko‘raman?",
-      "Buyurtmalar sahifasida bot nomi, summa va holat ko‘rinadi. To‘langan buyurtmani yetkazishni boshlab, tayyor bo‘lgach yakunlang.",
-    ],
-    [
-      "Pulni qanday yechaman?",
-      "Eng kamida 100 000 so‘m so‘rash mumkin, hisobda kamida 500 000 so‘m qoladi. 3% komissiya ushlanadi, qolgani kartangizga qo‘lda o‘tkaziladi; holatini yechish tarixida ko‘rasiz.",
-    ],
-    ["Daromad qachon hisoblanadi?", "Faqat to‘lovi tasdiqlangan buyurtmalar daromadga qo‘shiladi."],
-  ];
   return (
     <SellerPage title="Yordam">
-      <div className="max-w-3xl">
-        <h2 className="mb-5 font-semibold">Ko‘p so‘raladigan savollar</h2>
-        {faqs.map(([q, a]) => (
-          <details key={q} className="border-b py-5">
-            <summary className="cursor-pointer text-sm font-medium">{q}</summary>
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">{a}</p>
-          </details>
-        ))}
-        <p className="mt-6 text-sm text-muted-foreground">
-          Javob topmadingizmi?{" "}
-          <Link to="/support-chat" className="font-medium text-primary">
-            Yordam chatiga yozing
-          </Link>
-          .
-        </p>
-      </div>
+      <FaqList title="Ko‘p so‘raladigan savollar" items={sellerFaqs} />
+      <p className="mt-6 max-w-3xl text-sm text-muted-foreground">
+        Javob topmadingizmi?{" "}
+        <Link to="/support-chat" className="font-medium text-primary">
+          Yordam chatiga yozing
+        </Link>
+        .
+      </p>
     </SellerPage>
   );
 }

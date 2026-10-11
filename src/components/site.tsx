@@ -10,12 +10,15 @@ import {
   Package,
   User,
   MessageCircle,
+  MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { BotCover, FavoriteButton } from "@/components/bot-media";
+import { useInboxRealtime, useUnreadCount } from "@/lib/api-chat";
 import { useT, type Lang } from "@/lib/i18n";
 import { formatUZS, type BotItem } from "@/lib/data";
 import { cn } from "@/lib/utils";
@@ -53,6 +56,7 @@ export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<MarketplaceAccount | null>(null);
   const [authError, setAuthError] = useState("");
   const [ready, setReady] = useState(!isSupabaseConfigured());
+  useInboxRealtime(account?.id);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
@@ -113,6 +117,24 @@ export function Logo({ className }: { className?: string }) {
   );
 }
 
+/** Count of unread chat messages; renders nothing when there are none. */
+export function UnreadBadge({ className }: { className?: string }) {
+  const account = useMarketplaceAccount();
+  const { data: unread = 0 } = useUnreadCount(Boolean(account));
+  if (unread <= 0) return null;
+  return (
+    <span
+      aria-label={`${unread} ta o‘qilmagan xabar`}
+      className={cn(
+        "grid h-4 min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground",
+        className,
+      )}
+    >
+      {unread > 99 ? "99+" : unread}
+    </span>
+  );
+}
+
 export function Navbar() {
   const { t, lang, setLang } = useT();
   const { account } = useMarketplaceAuth();
@@ -132,6 +154,23 @@ export function Navbar() {
           {account.isSeller && <Link to="/seller">{t("sell")}</Link>}
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <Link
+            to="/favorites"
+            aria-label="Sevimlilar"
+            title="Sevimlilar"
+            className="hidden h-9 w-9 place-items-center rounded-md text-muted-foreground hover:bg-muted sm:grid"
+          >
+            <Heart className="h-5 w-5" />
+          </Link>
+          <Link
+            to="/messages"
+            aria-label="Xabarlar"
+            title="Xabarlar"
+            className="relative grid h-9 w-9 place-items-center rounded-md text-muted-foreground hover:bg-muted"
+          >
+            <MessageSquare className="h-5 w-5" />
+            <UnreadBadge className="absolute -right-0.5 -top-0.5" />
+          </Link>
           <select
             aria-label="Language"
             value={lang}
@@ -212,6 +251,14 @@ export function Footer() {
         <p className="text-xs text-muted-foreground">
           © 2025 BotSmith. Barcha huquqlar himoyalangan.
         </p>
+        <nav className="ml-auto flex gap-4 text-xs text-muted-foreground">
+          <Link to="/help" className="hover:text-foreground">
+            Yordam
+          </Link>
+          <Link to="/how-it-works" className="hover:text-foreground">
+            Qanday ishlaydi
+          </Link>
+        </nav>
       </div>
     </footer>
   );
@@ -222,22 +269,24 @@ export function MobileTabBar() {
   const items: [string, string, LucideIcon][] = [
     ["/", "Asosiy", Home],
     ["/bots", "Botlar", Search],
+    ["/favorites", "Sevimli", Heart],
+    ["/messages", "Xabarlar", MessageSquare],
     ["/dashboard/purchases", "Xaridlar", Package],
-    ["/login", "Profil", User],
   ];
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-background md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background md:hidden">
       {items.map(([to, label, Icon]) => (
         <Link
           key={to}
           to={to}
           className={cn(
-            "flex flex-col items-center gap-1 py-2 text-[11px]",
+            "relative flex flex-col items-center gap-1 py-2 text-[11px]",
             path === to ? "text-primary" : "text-muted-foreground",
           )}
         >
           <Icon className="h-5 w-5" />
           {label}
+          {to === "/messages" && <UnreadBadge className="absolute right-4 top-1" />}
         </Link>
       ))}
     </nav>
@@ -264,26 +313,31 @@ export function Rating({ value, count }: { value: number; count?: number }) {
   );
 }
 
-export function BotCard({ bot, fav }: { bot: BotItem; fav?: boolean }) {
+export function BotCard({ bot }: { bot: BotItem }) {
   const account = useMarketplaceAccount();
   return (
-    <Link
-      to="/bots/$id"
-      params={{ id: bot.id }}
-      className="card-soft relative flex flex-col gap-3 p-4 transition hover:-translate-y-0.5 hover:border-primary/40"
-    >
-      {fav && <Heart className="absolute right-4 top-4 h-4 w-4 text-muted-foreground" />}
-      <div>
-        <h3 className="font-semibold">{bot.title}</h3>
-        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{bot.desc}</p>
-      </div>
-      <Rating value={bot.rating} count={bot.reviews} />
-      {account && bot.price !== null ? (
-        <p className="mt-auto font-bold text-primary">{formatUZS(bot.price)}</p>
-      ) : (
-        <p className="mt-auto text-sm font-medium text-primary">Narxni ko‘rish uchun kiring</p>
-      )}
-    </Link>
+    <div className="relative">
+      <Link
+        to="/bots/$id"
+        params={{ id: bot.id }}
+        className="card-soft flex h-full flex-col overflow-hidden transition hover:-translate-y-0.5 hover:border-primary/40"
+      >
+        <BotCover bot={bot} className="aspect-[16/10] w-full" />
+        <div className="flex flex-1 flex-col gap-3 p-4">
+          <div>
+            <h3 className="font-semibold">{bot.title}</h3>
+            <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{bot.desc}</p>
+          </div>
+          <Rating value={bot.rating} count={bot.reviews} />
+          {account && bot.price !== null ? (
+            <p className="mt-auto font-bold text-primary">{formatUZS(bot.price)}</p>
+          ) : (
+            <p className="mt-auto text-sm font-medium text-primary">Narxni ko‘rish uchun kiring</p>
+          )}
+        </div>
+      </Link>
+      <FavoriteButton botId={bot.id} className="absolute right-3 top-3" />
+    </div>
   );
 }
 
@@ -454,6 +508,7 @@ function BuyerDashboardLayout({
               >
                 <Icon className="h-4 w-4" />
                 {label}
+                {to === "/messages" && <UnreadBadge className="ml-auto" />}
               </Link>
             ))}
           </nav>
@@ -531,6 +586,7 @@ function SellerDashboardLayout({
               <Link to={to}>
                 <Icon className="h-4 w-4" />
                 {label}
+                {to === "/messages" && <UnreadBadge />}
               </Link>
             </Button>
           ))}

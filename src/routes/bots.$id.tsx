@@ -1,6 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { ArrowLeft, ChevronRight, Clock, Languages, RefreshCw } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  Clock,
+  FileArchive,
+  Languages,
+  MessageSquare,
+  RefreshCw,
+} from "lucide-react";
+import { BotGallery, FavoriteButton } from "@/components/bot-media";
 import { SiteLayout, Rating, Tabs } from "@/components/site";
 import {
   describeError,
@@ -12,11 +21,11 @@ import {
   useRecordBotView,
   useSubmitReview,
 } from "@/lib/api";
+import { useOpenConversation } from "@/lib/api-chat";
 import { categories, formatUZS } from "@/lib/data";
 import { useT } from "@/lib/i18n";
-import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
+import { useMarketplaceAuth } from "@/lib/marketplace-auth-context";
 import { Button } from "@/components/ui/button";
-import cover from "@/assets/bot-cover.jpg";
 
 export const Route = createFileRoute("/bots/$id")({
   head: () => ({
@@ -34,19 +43,20 @@ function Detail() {
   const { id } = Route.useParams();
   const { data: bot, isPending, isError } = useBot(id);
   const { data: allBots = [] } = useBots();
-  const account = useMarketplaceAccount();
+  const { account, ready } = useMarketplaceAuth();
   const { t } = useT();
   const navigate = useNavigate();
   const [tab, setTab] = useState(0);
   const createOrder = useCreateOrder();
-  const [orderError, setOrderError] = useState("");
-  const recordView = useRecordBotView(id);
+  const openConversation = useOpenConversation();
+  const [actionError, setActionError] = useState("");
+  const { mutate: recordView } = useRecordBotView(id);
 
   useEffect(() => {
-    // Count one view per page visit; failures are not worth surfacing to the visitor.
-    recordView.mutate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+    // Wait for the session so a signed-in visitor is not also counted as an anonymous one.
+    // The database counts one view per visitor per bot per day, so repeats are harmless.
+    if (ready) recordView();
+  }, [id, ready, account?.id, recordView]);
 
   useEffect(() => {
     if (bot) document.title = `${bot.title} — BotSmith`;
@@ -75,14 +85,27 @@ function Detail() {
     );
   }
 
+  const isOwnBot = account?.id === bot.sellerId;
+
   async function buy() {
     if (!bot) return;
-    setOrderError("");
+    setActionError("");
     try {
       await createOrder.mutateAsync(bot.id);
       await navigate({ to: "/dashboard/purchases" });
     } catch (error) {
-      setOrderError(describeError(error));
+      setActionError(describeError(error));
+    }
+  }
+
+  async function writeToSeller() {
+    if (!bot) return;
+    setActionError("");
+    try {
+      const conversationId = await openConversation.mutateAsync({ botId: bot.id });
+      await navigate({ to: "/messages", search: { c: conversationId } });
+    } catch (error) {
+      setActionError(describeError(error));
     }
   }
 
@@ -106,29 +129,48 @@ function Detail() {
           </p>
         </div>
         <div className="mt-4 grid gap-8 md:grid-cols-2">
-          <img
-            src={cover}
-            alt={bot.title}
-            width={1280}
-            height={800}
-            className="aspect-[16/10] w-full rounded-2xl object-cover"
-          />
+          <BotGallery bot={bot} />
           <div>
-            <h1 className="text-2xl font-bold">{bot.title}</h1>
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="text-2xl font-bold">{bot.title}</h1>
+              <FavoriteButton botId={bot.id} withLabel />
+            </div>
             {categoryName && <p className="mt-1 text-xs text-muted-foreground">{categoryName}</p>}
             <div className="mt-2">
               <Rating value={bot.rating} count={bot.reviews} />
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">{bot.desc}</p>
+            <p className="mt-4 line-clamp-4 text-sm text-muted-foreground">{bot.desc}</p>
             <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
               {account && bot.price !== null && (
                 <p className="text-2xl font-bold text-primary">{formatUZS(bot.price)}</p>
               )}
               <div className="flex flex-wrap gap-3">
-                {account ? (
-                  <Button size="lg" onClick={buy} disabled={createOrder.isPending} className="px-8">
-                    {createOrder.isPending ? "Yuborilmoqda…" : t("buy")}
+                {isOwnBot ? (
+                  <Button asChild variant="outline" size="lg">
+                    <Link to="/seller-bots/$id" params={{ id: bot.id }}>
+                      Botni boshqarish
+                    </Link>
                   </Button>
+                ) : account ? (
+                  <>
+                    <Button
+                      size="lg"
+                      onClick={buy}
+                      disabled={createOrder.isPending}
+                      className="px-8"
+                    >
+                      {createOrder.isPending ? "Yuborilmoqda…" : t("buy")}
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      onClick={writeToSeller}
+                      disabled={openConversation.isPending}
+                    >
+                      <MessageSquare />
+                      {t("message")}
+                    </Button>
+                  </>
                 ) : (
                   <Link
                     to="/login"
@@ -137,17 +179,11 @@ function Detail() {
                     Kirish va xarid qilish
                   </Link>
                 )}
-                <Link
-                  to="/support-chat"
-                  className="rounded-lg border border-primary px-6 py-3 text-sm font-semibold text-primary"
-                >
-                  Yordamga yozish
-                </Link>
               </div>
             </div>
-            {orderError && (
+            {actionError && (
               <p role="alert" className="mt-3 text-sm text-destructive">
-                {orderError}
+                {actionError}
               </p>
             )}
             <div className="mt-5 grid grid-cols-3 gap-3">
@@ -175,7 +211,16 @@ function Detail() {
             <Tabs tabs={["Tavsif", `Sharhlar (${bot.reviews})`]} value={tab} onChange={setTab} />
             <div className="py-5 text-sm">
               {tab === 0 ? (
-                <p className="whitespace-pre-line text-muted-foreground">{bot.desc}</p>
+                <>
+                  <p className="whitespace-pre-line text-muted-foreground">{bot.desc}</p>
+                  {bot.fileCount > 0 && (
+                    <p className="mt-5 flex items-center gap-2 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+                      <FileArchive className="h-4 w-4 shrink-0" />
+                      Bot bilan birga {bot.fileCount} ta fayl taqdim etiladi — to‘lovdan keyin
+                      “Buyurtmalar” sahifasidan yuklab olasiz.
+                    </p>
+                  )}
+                </>
               ) : (
                 <Reviews botId={bot.id} userId={account?.id} />
               )}

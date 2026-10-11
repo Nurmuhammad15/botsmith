@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Eye, Plus, ArrowUpRight } from "lucide-react";
+import { Eye, ImagePlus, Plus, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SellerSales } from "@/components/seller-sales";
 import { DashboardLayout, StatCard, StatusBadge, DataTable } from "@/components/site";
@@ -102,38 +102,37 @@ function SellerContent() {
           rows={bots.map((bot) => {
             const published = bot.status === "published";
             return [
-              published ? (
-                <Link
-                  to="/seller-bots/$id"
-                  params={{ id: bot.id }}
-                  aria-label={`${bot.title} statistikasini ko‘rish`}
-                >
-                  <p className="font-medium">{bot.title}</p>
-                  <p className="text-xs text-muted-foreground">{bot.sales} sotuv</p>
-                </Link>
-              ) : (
-                <div>
-                  <p className="font-medium">{bot.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {bot.status === "pending" ? "Ko‘rib chiqilmoqda" : "Rad etilgan"}
-                  </p>
-                </div>
-              ),
+              <Link
+                to="/seller-bots/$id"
+                params={{ id: bot.id }}
+                aria-label={`${bot.title} ni boshqarish`}
+              >
+                <p className="font-medium">{bot.title}</p>
+                <p className="text-xs text-muted-foreground">
+                  {published
+                    ? `${bot.sales} sotuv`
+                    : bot.status === "pending"
+                      ? "Ko‘rib chiqilmoqda"
+                      : "Rad etilgan"}
+                </p>
+              </Link>,
               <StatusBadge status={botStatus[bot.status]} />,
               formatUZS(bot.price),
               `${bot.views} ko‘rish`,
-              published ? (
-                <Button asChild variant="ghost" size="icon">
-                  <Link
-                    to="/seller-bots/$id"
-                    params={{ id: bot.id }}
-                    aria-label={`${bot.title} statistikasini ko‘rish`}
-                    title="Bot statistikasi"
-                  >
-                    <Eye />
-                  </Link>
-                </Button>
-              ) : null,
+              <Button asChild variant="ghost" size="icon">
+                <Link
+                  to="/seller-bots/$id"
+                  params={{ id: bot.id }}
+                  aria-label={
+                    published
+                      ? `${bot.title} statistikasi va fayllari`
+                      : `${bot.title} rasm va fayllari`
+                  }
+                  title={published ? "Statistika va fayllar" : "Rasm va fayllar"}
+                >
+                  {published ? <Eye /> : <ImagePlus />}
+                </Link>
+              </Button>,
             ];
           })}
         />

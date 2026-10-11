@@ -4,6 +4,7 @@ import { Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AdminCardCell } from "@/components/admin-card-cell";
 import { DashboardLayout, StatusBadge, DataTable, Tabs } from "@/components/site";
 import {
   describeError,
@@ -122,6 +123,15 @@ function BotsTab({
           <p className="text-xs text-muted-foreground">
             {new Date(b.createdAt).toLocaleDateString("uz-UZ")}
           </p>
+          {b.images.length > 0 && (
+            <div className="mt-2 flex gap-1">
+              {b.images.map((src) => (
+                <a key={src} href={src} target="_blank" rel="noreferrer">
+                  <img src={src} alt="" loading="lazy" className="h-10 w-14 rounded object-cover" />
+                </a>
+              ))}
+            </div>
+          )}
         </div>,
         categories.find((c) => c.slug === b.category)?.name,
         <span className="text-primary">{b.seller}</span>,
@@ -152,6 +162,9 @@ function BotsTab({
   );
 }
 
+const paymentState = (state: number) =>
+  state === 2 ? "to‘langan" : state === 1 ? "kutilmoqda" : state === -2 ? "qaytarilgan" : "bekor";
+
 function OrdersTab({
   orders,
   loading,
@@ -178,7 +191,16 @@ function OrdersTab({
   } as const;
   return (
     <DataTable
-      head={["Buyurtma", "Bot", "Xaridor", "Sotuvchi", "Summa", "Holat", "Amallar"]}
+      head={[
+        "Buyurtma",
+        "Bot",
+        "Xaridor",
+        "Sotuvchi",
+        "Summa",
+        "Holat",
+        "Onlayn to‘lov",
+        "Amallar",
+      ]}
       emptyMessage={loading ? "Yuklanmoqda…" : "Buyurtmalar yo‘q."}
       rows={orders.map((o) => [
         orderCode(o.number),
@@ -187,6 +209,11 @@ function OrdersTab({
         o.seller,
         formatUZS(o.amount),
         label[o.status],
+        o.payments.length === 0
+          ? "—"
+          : o.payments
+              .map((p) => `${p.provider === "payme" ? "Payme" : "Click"}: ${paymentState(p.state)}`)
+              .join(", "),
         o.status === "pending_payment" ? (
           <div className="flex gap-2">
             <Button size="sm" onClick={() => act(o.id, "paid")}>
@@ -228,10 +255,7 @@ function WithdrawalsTab({
         w.seller,
         formatUZS(w.amount),
         formatUZS(w.payout),
-        <div>
-          <p className="font-mono text-xs">{w.card.replace(/(.{4})/g, "$1 ").trim()}</p>
-          <p className="text-xs text-muted-foreground">{w.holder}</p>
-        </div>,
+        <AdminCardCell withdrawal={w} />,
         new Date(w.createdAt).toLocaleString("uz-UZ"),
         label[w.status],
         w.status === "pending" ? (
