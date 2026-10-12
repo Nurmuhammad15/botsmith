@@ -184,7 +184,9 @@ export function Navbar() {
           {account ? (
             <>
               <Link
-                to={account.isSeller ? "/seller" : "/dashboard/purchases"}
+                to={
+                  account.isAdmin ? "/admin" : account.isSeller ? "/seller" : "/dashboard/purchases"
+                }
                 className="rounded-md border px-3 py-2 text-sm font-medium"
               >
                 {account.name || account.email}
