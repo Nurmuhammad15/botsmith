@@ -590,6 +590,70 @@ export function useAdminSetBotStatus() {
   });
 }
 
+export type AdminStats = {
+  users: number;
+  sellers: number;
+  botsTotal: number;
+  botsPublished: number;
+  ordersPaid: number;
+  salesTotal: number;
+  feePaid: number;
+  feePending: number;
+};
+
+export function useAdminStats(enabled: boolean) {
+  return useQuery({
+    queryKey: ["admin", "stats"],
+    enabled,
+    queryFn: async (): Promise<AdminStats> => {
+      const r = ((check(await db().rpc("admin_stats")) as Row[])[0] ?? {}) as Row;
+      return {
+        users: num(r["users"]),
+        sellers: num(r["sellers"]),
+        botsTotal: num(r["bots_total"]),
+        botsPublished: num(r["bots_published"]),
+        ordersPaid: num(r["orders_paid"]),
+        salesTotal: num(r["sales_total"]),
+        feePaid: num(r["fee_paid"]),
+        feePending: num(r["fee_pending"]),
+      };
+    },
+  });
+}
+
+export type AdminUser = {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  createdAt: string;
+  lastSignInAt: string | null;
+  emailConfirmed: boolean;
+  bots: number;
+  purchases: number;
+  sales: number;
+};
+
+export function useAdminUsers(enabled: boolean) {
+  return useQuery({
+    queryKey: ["admin", "users"],
+    enabled,
+    queryFn: async () =>
+      (check(await db().rpc("admin_users")) as Row[]).map((r): AdminUser => ({
+        id: str(r["id"]),
+        email: str(r["email"]),
+        fullName: str(r["full_name"]),
+        role: str(r["role"]),
+        createdAt: str(r["created_at"]),
+        lastSignInAt: r["last_sign_in_at"] ? str(r["last_sign_in_at"]) : null,
+        emailConfirmed: Boolean(r["email_confirmed"]),
+        bots: num(r["bots"]),
+        purchases: num(r["purchases"]),
+        sales: num(r["sales"]),
+      })),
+  });
+}
+
 export type AdminOrder = Order & {
   buyer: string;
   seller: string;

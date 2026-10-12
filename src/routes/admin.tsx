@@ -11,6 +11,8 @@ import {
   useAdminBots,
   useAdminOrders,
   useAdminResolveSubscriptionRefund,
+  useAdminStats,
+  useAdminUsers,
   useAdminSetBotStatus,
   useAdminSetOrderStatus,
   useAdminSetWithdrawalStatus,
@@ -58,6 +60,8 @@ function AdminContent() {
   const orders = useAdminOrders(isAdmin);
   const withdrawals = useAdminWithdrawals(isAdmin);
   const threads = useAdminThreads(isAdmin);
+  const stats = useAdminStats(isAdmin);
+  const users = useAdminUsers(isAdmin);
 
   if (!isAdmin) {
     return (
@@ -80,6 +84,8 @@ function AdminContent() {
             "Buyurtmalar",
             `Yechishlar (${pendingWithdrawals.length})`,
             "Murojaatlar",
+            "Statistika",
+            "Foydalanuvchilar",
           ]}
           value={tab}
           onChange={setTab}
@@ -92,6 +98,8 @@ function AdminContent() {
           <WithdrawalsTab items={withdrawals.data ?? []} loading={withdrawals.isPending} />
         )}
         {tab === 3 && <SupportTab threads={threads.data ?? []} loading={threads.isPending} />}
+        {tab === 4 && <StatsTab stats={stats.data} loading={stats.isPending} />}
+        {tab === 5 && <UsersTab users={users.data ?? []} loading={users.isPending} />}
       </div>
     </>
   );
@@ -408,5 +416,85 @@ function SupportTab({
         </form>
       </div>
     </div>
+  );
+}
+
+function StatsTab({
+  stats,
+  loading,
+}: {
+  stats: ReturnType<typeof useAdminStats>["data"];
+  loading: boolean;
+}) {
+  if (!stats) {
+    return (
+      <p className="py-8 text-center text-sm text-muted-foreground">
+        {loading ? "Yuklanmoqda…" : "Statistikani yuklab bo‘lmadi."}
+      </p>
+    );
+  }
+  const cards: [string, string][] = [
+    ["Sayt daromadi (komissiya, to‘langan)", formatUZS(stats.feePaid)],
+    ["Kutilayotgan komissiya", formatUZS(stats.feePending)],
+    ["Botlar sotuvi (jami)", formatUZS(stats.salesTotal)],
+    ["Sotilgan buyurtmalar", String(stats.ordersPaid)],
+    ["Saytdagi botlar (jami)", String(stats.botsTotal)],
+    ["Nashr etilgan botlar", String(stats.botsPublished)],
+    ["Foydalanuvchilar", String(stats.users)],
+    ["Sotuvchilar", String(stats.sellers)],
+  ];
+  return (
+    <>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {cards.map(([label, value]) => (
+          <div key={label} className="card-soft p-4">
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="mt-1 text-xl font-bold">{value}</p>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground">
+        Sayt daromadi — sotuvchilar pul yechganda olinadigan 3% komissiya.
+      </p>
+    </>
+  );
+}
+
+function UsersTab({
+  users,
+  loading,
+}: {
+  users: NonNullable<ReturnType<typeof useAdminUsers>["data"]>;
+  loading: boolean;
+}) {
+  const date = (v: string | null) => (v ? new Date(v).toLocaleString("uz-UZ") : "—");
+  return (
+    <DataTable
+      head={[
+        "Foydalanuvchi",
+        "Rol",
+        "Ro‘yxatdan o‘tgan",
+        "Oxirgi kirish",
+        "Botlar",
+        "Xaridlar",
+        "Sotuvlar",
+      ]}
+      emptyMessage={loading ? "Yuklanmoqda…" : "Foydalanuvchilar yo‘q."}
+      rows={users.map((u) => [
+        <div>
+          <p className="font-medium">{u.fullName || "—"}</p>
+          <p className="text-xs text-muted-foreground">
+            {u.email}
+            {!u.emailConfirmed && " · tasdiqlanmagan"}
+          </p>
+        </div>,
+        u.role,
+        date(u.createdAt),
+        date(u.lastSignInAt),
+        String(u.bots),
+        String(u.purchases),
+        String(u.sales),
+      ])}
+    />
   );
 }
