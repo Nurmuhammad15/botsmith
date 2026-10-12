@@ -848,6 +848,7 @@ export function useCryptoSettings(enabled = true) {
   return useQuery({
     queryKey: ["crypto", "settings"],
     enabled,
+    retry: false,
     queryFn: async (): Promise<CryptoSettings> => {
       const r = check(await db().from("crypto_settings").select("*").maybeSingle()) as Row | null;
       return {
