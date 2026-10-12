@@ -773,3 +773,69 @@ export function useAdminThreads(enabled: boolean) {
     },
   });
 }
+
+export type AdminBotDetail = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  status: BotStatus;
+  price1Day: number;
+  price7Days: number | null;
+  price30Days: number | null;
+  languages: string[];
+  deliveryHours: number;
+  views: number;
+  createdAt: string;
+  images: string[];
+  seller: { id: string; name: string; username: string; phone: string };
+  orders: { total: number; paid: number; revenue: number };
+};
+
+export function useAdminBot(id: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["admin", "bot", id],
+    enabled,
+    queryFn: async (): Promise<AdminBotDetail | null> => {
+      const r = check(
+        await db()
+          .from("bots")
+          .select("*, seller:profiles!seller_id(id, full_name, username, phone)")
+          .eq("id", id)
+          .maybeSingle(),
+      ) as Row | null;
+      if (!r) return null;
+      const orders = check(
+        await db().from("orders").select("amount, status").eq("bot_id", id),
+      ) as Row[];
+      const paid = orders.filter((o) => ["paid", "delivering", "done"].includes(str(o["status"])));
+      const s = (r["seller"] ?? {}) as Row;
+      return {
+        id: str(r["id"]),
+        title: str(r["title"]),
+        description: str(r["description"]),
+        category: str(r["category"]),
+        status: str(r["status"]) as BotStatus,
+        price1Day: num(r["price"]),
+        price7Days: r["price_7_days"] == null ? null : num(r["price_7_days"]),
+        price30Days: r["price_30_days"] == null ? null : num(r["price_30_days"]),
+        languages: Array.isArray(r["languages"]) ? (r["languages"] as string[]) : [],
+        deliveryHours: num(r["delivery_hours"]),
+        views: num(r["views"]),
+        createdAt: str(r["created_at"]),
+        images: Array.isArray(r["image_paths"]) ? (r["image_paths"] as string[]).map(coverUrl) : [],
+        seller: {
+          id: str(s["id"]),
+          name: str(s["full_name"]),
+          username: str(s["username"]),
+          phone: str(s["phone"]),
+        },
+        orders: {
+          total: orders.length,
+          paid: paid.length,
+          revenue: paid.reduce((sum, o) => sum + num(o["amount"]), 0),
+        },
+      };
+    },
+  });
+}

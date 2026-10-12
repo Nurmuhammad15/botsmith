@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
@@ -153,7 +153,13 @@ function BotsTab({
       emptyMessage={loading ? "Yuklanmoqda…" : "Botlar yo‘q."}
       rows={bots.map((b) => [
         <div>
-          <p className="font-medium">{b.title}</p>
+          <Link
+            to="/admin-bots/$id"
+            params={{ id: b.id }}
+            className="font-medium text-primary hover:underline"
+          >
+            {b.title}
+          </Link>
           <p className="text-xs text-muted-foreground">
             {new Date(b.createdAt).toLocaleDateString("uz-UZ")}
           </p>

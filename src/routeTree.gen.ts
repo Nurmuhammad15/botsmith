@@ -32,6 +32,7 @@ import { Route as BotsIndexRouteImport } from './routes/bots.index'
 import { Route as BotsIdRouteImport } from './routes/bots.$id'
 import { Route as DashboardPurchasesRouteImport } from './routes/dashboard.purchases'
 import { Route as SellerBotsIdRouteImport } from './routes/seller-bots.$id'
+import { Route as AdminBotsIdRouteImport } from './routes/admin-bots.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -148,6 +149,11 @@ const SellerBotsIdRoute = SellerBotsIdRouteImport.update({
   path: '/seller-bots/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminBotsIdRoute = AdminBotsIdRouteImport.update({
+  id: '/admin-bots/$id',
+  path: '/admin-bots/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
+  '/admin-bots/$id': typeof AdminBotsIdRoute
   '/bots/': typeof BotsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
+  '/admin-bots/$id': typeof AdminBotsIdRoute
   '/bots': typeof BotsIndexRoute
 }
 export interface FileRoutesById {
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
+  '/admin-bots/$id': typeof AdminBotsIdRoute
   '/bots/': typeof BotsIndexRoute
 }
 export interface FileRouteTypes {
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
+    | '/admin-bots/$id'
     | '/bots/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
+    | '/admin-bots/$id'
     | '/bots'
   id:
     | '__root__'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
+    | '/admin-bots/$id'
     | '/bots/'
   fileRoutesById: FileRoutesById
 }
@@ -326,6 +338,7 @@ export interface RootRouteChildren {
   BotsIdRoute: typeof BotsIdRoute
   DashboardPurchasesRoute: typeof DashboardPurchasesRoute
   SellerBotsIdRoute: typeof SellerBotsIdRoute
+  AdminBotsIdRoute: typeof AdminBotsIdRoute
   BotsIndexRoute: typeof BotsIndexRoute
 }
 
@@ -492,6 +505,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SellerBotsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-bots/$id': {
+      id: '/admin-bots/$id'
+      path: '/admin-bots/$id'
+      fullPath: '/admin-bots/$id'
+      preLoaderRoute: typeof AdminBotsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -518,6 +538,7 @@ const rootRouteChildren: RootRouteChildren = {
   BotsIdRoute: BotsIdRoute,
   DashboardPurchasesRoute: DashboardPurchasesRoute,
   SellerBotsIdRoute: SellerBotsIdRoute,
+  AdminBotsIdRoute: AdminBotsIdRoute,
   BotsIndexRoute: BotsIndexRoute,
 }
 export const routeTree = rootRouteImport
