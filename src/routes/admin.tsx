@@ -5,6 +5,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminCardCell } from "@/components/admin-card-cell";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { DashboardLayout, StatusBadge, DataTable, Tabs } from "@/components/site";
 import {
   describeError,
@@ -14,6 +22,7 @@ import {
   useAdminResolveCryptoPayment,
   useAdminResolveSubscriptionRefund,
   useAdminSetCryptoSettings,
+  useAdminSetUserPassword,
   useCryptoSettings,
   useAdminStats,
   useAdminUsers,
@@ -516,34 +525,115 @@ function UsersTab({
   loading: boolean;
 }) {
   const date = (v: string | null) => (v ? new Date(v).toLocaleString("uz-UZ") : "—");
+  const [target, setTarget] = useState<(typeof users)[number] | null>(null);
   return (
-    <DataTable
-      head={[
-        "Foydalanuvchi",
-        "Rol",
-        "Ro‘yxatdan o‘tgan",
-        "Oxirgi kirish",
-        "Botlar",
-        "Xaridlar",
-        "Sotuvlar",
-      ]}
-      emptyMessage={loading ? "Yuklanmoqda…" : "Foydalanuvchilar yo‘q."}
-      rows={users.map((u) => [
-        <div>
-          <p className="font-medium">{u.fullName || "—"}</p>
-          <p className="text-xs text-muted-foreground">
-            {u.email}
-            {!u.emailConfirmed && " · tasdiqlanmagan"}
-          </p>
-        </div>,
-        u.role,
-        date(u.createdAt),
-        date(u.lastSignInAt),
-        String(u.bots),
-        String(u.purchases),
-        String(u.sales),
-      ])}
-    />
+    <>
+      <DataTable
+        head={[
+          "Foydalanuvchi",
+          "Rol",
+          "Ro‘yxatdan o‘tgan",
+          "Oxirgi kirish",
+          "Botlar",
+          "Xaridlar",
+          "Sotuvlar",
+          "Amallar",
+        ]}
+        emptyMessage={loading ? "Yuklanmoqda…" : "Foydalanuvchilar yo‘q."}
+        rows={users.map((u) => [
+          <div>
+            <p className="font-medium">{u.fullName || "—"}</p>
+            <p className="text-xs text-muted-foreground">
+              {u.email}
+              {!u.emailConfirmed && " · tasdiqlanmagan"}
+            </p>
+          </div>,
+          u.role,
+          date(u.createdAt),
+          date(u.lastSignInAt),
+          String(u.bots),
+          String(u.purchases),
+          String(u.sales),
+          <Button size="sm" variant="outline" onClick={() => setTarget(u)}>
+            Parol
+          </Button>,
+        ])}
+      />
+      <PasswordDialog user={target} onClose={() => setTarget(null)} />
+    </>
+  );
+}
+
+function PasswordDialog({
+  user,
+  onClose,
+}: {
+  user: { id: string; email: string; fullName: string } | null;
+  onClose: () => void;
+}) {
+  const setPassword = useAdminSetUserPassword();
+  const [value, setValue] = useState("");
+  const [shown, setShown] = useState(false);
+
+  const close = () => {
+    setValue("");
+    setShown(false);
+    onClose();
+  };
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (!user) return;
+    setPassword.mutate(
+      { userId: user.id, password: value },
+      {
+        onSuccess: () => {
+          toast.success("Parol o‘zgartirildi");
+          close();
+        },
+        onError: fail,
+      },
+    );
+  };
+
+  return (
+    <Dialog open={Boolean(user)} onOpenChange={(open) => !open && close()}>
+      <DialogContent>
+        <form onSubmit={submit} className="space-y-4">
+          <DialogHeader>
+            <DialogTitle>Parolni o‘zgartirish</DialogTitle>
+            <DialogDescription>
+              {user?.fullName || "—"} · {user?.email}. Foydalanuvchi barcha qurilmalardan chiqib
+              ketadi va yangi parol bilan kiradi.
+            </DialogDescription>
+          </DialogHeader>
+          <label className="block space-y-1 text-sm">
+            <span>Yangi parol (kamida 8 ta belgi)</span>
+            <Input
+              required
+              minLength={8}
+              maxLength={72}
+              type={shown ? "text" : "password"}
+              autoComplete="new-password"
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+            />
+          </label>
+          <label className="flex items-center gap-2 text-xs text-muted-foreground">
+            <input type="checkbox" checked={shown} onChange={(e) => setShown(e.target.checked)} />
+            Parolni ko‘rsatish
+          </label>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={close}>
+              Bekor qilish
+            </Button>
+            <Button type="submit" disabled={setPassword.isPending}>
+              {setPassword.isPending ? "Saqlanmoqda…" : "Saqlash"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

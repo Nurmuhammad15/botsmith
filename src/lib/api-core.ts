@@ -39,6 +39,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   payment_not_found: "To‘lov topilmadi.",
   try_again_later: "Hozir band, birozdan keyin qayta urinib ko‘ring.",
   invalid_rate: "Kurs noto‘g‘ri.",
+  weak_password: "Parol kamida 8 ta belgidan iborat bo‘lishi kerak.",
+  cannot_change_admin: "Boshqa administratorning parolini o‘zgartirib bo‘lmaydi.",
+  user_not_found: "Foydalanuvchi topilmadi.",
   payments_unavailable: "Onlayn to‘lov hozircha ulanmagan.",
 };
 

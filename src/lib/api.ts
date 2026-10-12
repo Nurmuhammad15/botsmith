@@ -982,3 +982,16 @@ export function useAdminSetCryptoSettings() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["crypto", "settings"] }),
   });
 }
+
+export function useAdminSetUserPassword() {
+  return useMutation({
+    mutationFn: async (input: { userId: string; password: string }) => {
+      check(
+        await db().rpc("admin_set_user_password", {
+          p_user: input.userId,
+          p_password: input.password,
+        }),
+      );
+    },
+  });
+}
