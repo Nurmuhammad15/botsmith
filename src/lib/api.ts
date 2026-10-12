@@ -561,7 +561,7 @@ export function useAdminBots(enabled: boolean) {
         check(
           await db()
             .from("bots")
-            .select("*, seller:profiles(full_name, username)")
+            .select("*, seller:profiles!seller_id(full_name, username)")
             .order("created_at", { ascending: false }),
         ) as Row[]
       ).map((r): AdminBot => ({
@@ -716,7 +716,7 @@ export function useAdminWithdrawals(enabled: boolean) {
         check(
           await db()
             .from("withdrawals")
-            .select(`${WITHDRAWAL_COLUMNS}, seller:profiles(full_name, username)`)
+            .select(`${WITHDRAWAL_COLUMNS}, seller:profiles!seller_id(full_name, username)`)
             .order("created_at", { ascending: false }),
         ) as Row[]
       ).map((r): AdminWithdrawal => ({
