@@ -102,6 +102,19 @@ function AdminContent() {
           onChange={setTab}
         />
       </div>
+      {[bots, orders, withdrawals, threads, stats, users].map(
+        (q, i) =>
+          q.isError && (
+            <p
+              key={i}
+              role="alert"
+              className="mt-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive"
+            >
+              Ma‘lumotni yuklab bo‘lmadi:{" "}
+              {(q.error as { message?: string } | null)?.message ?? describeError(q.error)}
+            </p>
+          ),
+      )}
       <div className="mt-4">
         {tab === 0 && <BotsTab bots={bots.data ?? []} loading={bots.isPending} />}
         {tab === 1 && <OrdersTab orders={orders.data ?? []} loading={orders.isPending} />}
