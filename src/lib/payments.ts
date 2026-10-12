@@ -1,5 +1,8 @@
 // Client-side helpers for sending a buyer to the Payme / Click payment page. Only public
 // identifiers are used here; the secrets live on the server (src/server/payments).
+/** Payme / Click buttons are hidden until card payments are switched on again. */
+export const CARD_PAYMENTS_ENABLED = false;
+
 export type PaymentMethod = "payme" | "click";
 
 export const PAYMENT_LABELS: Record<PaymentMethod, string> = {

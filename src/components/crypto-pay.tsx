@@ -20,7 +20,15 @@ export function CryptoPay({ orderId, enabled }: { orderId: string; enabled: bool
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
 
-  if (!settings.data?.walletAddress) return null;
+  if (settings.isPending) return null;
+  if (!settings.data?.walletAddress) {
+    return (
+      <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+        To‘lov usuli hozircha ulanmagan — to‘lov uchun yordam chatiga murojaat qiling, to‘lov
+        tasdiqlangach obuna faollashadi.
+      </p>
+    );
+  }
   const current = payment.data;
   const open =
     current &&

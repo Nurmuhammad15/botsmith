@@ -15,6 +15,7 @@ import { formatUZS, orderCode, type Order } from "@/lib/data";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import {
   availablePaymentMethods,
+  CARD_PAYMENTS_ENABLED,
   PAYMENT_LABELS,
   paymentUrl,
   type PaymentMethod,
@@ -285,7 +286,7 @@ function RefundRequest({ order }: { order: Order }) {
 
 /** Payment buttons for an unpaid order; falls back to manual confirmation when none is set up. */
 function PayOrder({ order, returning }: { order: Order; returning: boolean }) {
-  const methods = availablePaymentMethods();
+  const methods = CARD_PAYMENTS_ENABLED ? availablePaymentMethods() : [];
   const acceptTerms = useAcceptSubscriptionTerms(order.id);
   const [accepted, setAccepted] = useState(Boolean(order.termsAcceptedAt));
   const [error, setError] = useState("");
@@ -343,12 +344,7 @@ function PayOrder({ order, returning }: { order: Order; returning: boolean }) {
           Rozilikni saqlab bo‘lmadi: {error}
         </p>
       )}
-      {methods.length === 0 ? (
-        <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-          Onlayn to‘lov hozircha ulanmagan — to‘lov uchun yordam chatiga murojaat qiling, to‘lov
-          tasdiqlangach obuna faollashadi.
-        </p>
-      ) : (
+      {methods.length > 0 && (
         <>
           <p className="text-sm font-medium">To‘lov usulini tanlang</p>
           <div className="flex flex-wrap gap-2">
