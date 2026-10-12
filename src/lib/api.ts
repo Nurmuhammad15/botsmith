@@ -597,6 +597,7 @@ export type AdminStats = {
   botsPublished: number;
   ordersPaid: number;
   salesTotal: number;
+  saleCommission: number;
   feePaid: number;
   feePending: number;
 };
@@ -614,6 +615,7 @@ export function useAdminStats(enabled: boolean) {
         botsPublished: num(r["bots_published"]),
         ordersPaid: num(r["orders_paid"]),
         salesTotal: num(r["sales_total"]),
+        saleCommission: num(r["sale_commission"]),
         feePaid: num(r["fee_paid"]),
         feePending: num(r["fee_pending"]),
       };

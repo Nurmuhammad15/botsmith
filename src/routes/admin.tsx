@@ -446,8 +446,10 @@ function StatsTab({
     );
   }
   const cards: [string, string][] = [
-    ["Sayt daromadi (komissiya, to‘langan)", formatUZS(stats.feePaid)],
-    ["Kutilayotgan komissiya", formatUZS(stats.feePending)],
+    ["Sayt daromadi (jami)", formatUZS(stats.saleCommission + stats.feePaid)],
+    ["Sotuvdan komissiya (15%)", formatUZS(stats.saleCommission)],
+    ["Yechishdan komissiya (to‘langan)", formatUZS(stats.feePaid)],
+    ["Kutilayotgan yechish komissiyasi", formatUZS(stats.feePending)],
     ["Botlar sotuvi (jami)", formatUZS(stats.salesTotal)],
     ["Sotilgan buyurtmalar", String(stats.ordersPaid)],
     ["Saytdagi botlar (jami)", String(stats.botsTotal)],
@@ -466,8 +468,8 @@ function StatsTab({
         ))}
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        Sayt daromadi — sotuvchilar pul yechganda olinadigan {Math.round(WITHDRAWAL_FEE_RATE * 100)}
-        % komissiya.
+        Sayt daromadi — har bir sotuvdan 15% platforma komissiyasi va sotuvchi pul yechganda
+        olinadigan {Math.round(WITHDRAWAL_FEE_RATE * 100)}% komissiya yig‘indisi.
       </p>
     </>
   );
