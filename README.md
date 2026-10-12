@@ -102,7 +102,7 @@ Subscription refund requests are reviewed by an administrator, and approved refu
 manually processed through the original payment provider before being marked complete in Admin.
 
 Seller revenue is 85% of the listed plan price. It becomes withdrawable 24 hours after payment if
-no refund request is under review. Each manual withdrawal also charges a separate 3% fee.
+no refund request is under review. Each manual withdrawal also charges a separate 15% fee.
 
 ## Supabase authentication
 

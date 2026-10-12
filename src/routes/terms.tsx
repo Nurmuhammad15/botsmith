@@ -50,7 +50,7 @@ function Terms() {
         <p className="mt-3 text-sm leading-7">
           Xaridor to‘lov vaqtida bot sahifasidagi obuna narxini to‘laydi; xaridorga qo‘shimcha 15%
           qo‘shilmaydi. BotSmith sotuvchining belgilagan narxidan 15% platforma komissiyasini ushlab
-          qoladi, qolgan 85% sotuvchining hisobiga yoziladi. Pul yechishning alohida komissiyasi 3%
+          qoladi, qolgan 85% sotuvchining hisobiga yoziladi. Pul yechishning alohida komissiyasi 15%
           ni tashkil etadi. Sotuv daromadi yechishdan oldin 24 soat ushlab turiladi; qaytarish
           so‘rovi ko‘rib chiqilayotgan paytda u yechish uchun ochilmaydi.
         </p>

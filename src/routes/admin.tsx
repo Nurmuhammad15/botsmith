@@ -466,7 +466,8 @@ function StatsTab({
         ))}
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        Sayt daromadi — sotuvchilar pul yechganda olinadigan 3% komissiya.
+        Sayt daromadi — sotuvchilar pul yechganda olinadigan {Math.round(WITHDRAWAL_FEE_RATE * 100)}
+        % komissiya.
       </p>
     </>
   );

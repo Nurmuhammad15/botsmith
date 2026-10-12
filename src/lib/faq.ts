@@ -55,7 +55,7 @@ export const sellerFaqs: Faq[] = [
   ],
   [
     "Pulni qanday yechaman?",
-    "To‘langan obuna daromadi 24 soat ushlab turilgach yechish uchun ochiladi. BotSmith sotuv narxidan 15% komissiya ushlab qoladi; yechish so‘rovidan yana 3% olinadi. To‘lovni administrator qo‘lda amalga oshiradi.",
+    "To‘langan obuna daromadi 24 soat ushlab turilgach yechish uchun ochiladi. BotSmith sotuv narxidan 15% komissiya ushlab qoladi; yechish so‘rovidan yana 15% olinadi. To‘lovni administrator qo‘lda amalga oshiradi.",
   ],
   [
     "Daromad qachon hisoblanadi?",
