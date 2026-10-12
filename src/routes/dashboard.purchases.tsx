@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { MessageSquare } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { CryptoPay } from "@/components/crypto-pay";
 import { DashboardLayout, StatusBadge, Tabs } from "@/components/site";
 import {
   describeError,
@@ -371,6 +372,7 @@ function PayOrder({ order, returning }: { order: Order; returning: boolean }) {
           </p>
         </>
       )}
+      <CryptoPay orderId={order.id} enabled={accepted || Boolean(order.termsAcceptedAt)} />
     </div>
   );
 }

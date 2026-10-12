@@ -32,6 +32,13 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid_path: "Fayl manzili noto‘g‘ri.",
   file_not_found: "Fayl topilmadi.",
   rate_limited: "Juda tez yozyapsiz. Bir ozdan keyin qayta urinib ko‘ring.",
+  crypto_not_configured: "USDT to‘lovi hozircha sozlanmagan.",
+  terms_not_accepted: "Avval obuna qoidalariga rozilik bering.",
+  invalid_txid: "Tranzaksiya hash noto‘g‘ri: 64 ta harf/raqam bo‘lishi kerak.",
+  txid_already_used: "Bu hash allaqachon ishlatilgan.",
+  payment_not_found: "To‘lov topilmadi.",
+  try_again_later: "Hozir band, birozdan keyin qayta urinib ko‘ring.",
+  invalid_rate: "Kurs noto‘g‘ri.",
   payments_unavailable: "Onlayn to‘lov hozircha ulanmagan.",
 };
 

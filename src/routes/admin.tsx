@@ -10,7 +10,11 @@ import {
   describeError,
   useAdminBots,
   useAdminOrders,
+  useAdminCryptoPayments,
+  useAdminResolveCryptoPayment,
   useAdminResolveSubscriptionRefund,
+  useAdminSetCryptoSettings,
+  useCryptoSettings,
   useAdminStats,
   useAdminUsers,
   useAdminSetBotStatus,
@@ -117,7 +121,12 @@ function AdminContent() {
       )}
       <div className="mt-4">
         {tab === 0 && <BotsTab bots={bots.data ?? []} loading={bots.isPending} />}
-        {tab === 1 && <OrdersTab orders={orders.data ?? []} loading={orders.isPending} />}
+        {tab === 1 && (
+          <>
+            <CryptoPaymentsPanel enabled={isAdmin} />
+            <OrdersTab orders={orders.data ?? []} loading={orders.isPending} />
+          </>
+        )}
         {tab === 2 && (
           <WithdrawalsTab items={withdrawals.data ?? []} loading={withdrawals.isPending} />
         )}
@@ -541,13 +550,139 @@ function SettingsTab({ email }: { email: string }) {
     ["Sotuvchilarga to‘lov", "Qo‘lda (Yechishlar tabida tasdiqlanadi)"],
   ];
   return (
-    <div className="card-soft divide-y">
-      {rows.map(([k, v]) => (
-        <div key={k} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-          <span className="text-muted-foreground">{k}</span>
-          <span className="font-medium">{v}</span>
-        </div>
-      ))}
+    <div className="space-y-6">
+      <div className="card-soft divide-y">
+        {rows.map(([k, v]) => (
+          <div key={k} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+            <span className="text-muted-foreground">{k}</span>
+            <span className="font-medium">{v}</span>
+          </div>
+        ))}
+      </div>
+      <CryptoSettingsForm />
+    </div>
+  );
+}
+
+function CryptoSettingsForm() {
+  const settings = useCryptoSettings();
+  const save = useAdminSetCryptoSettings();
+  const [wallet, setWallet] = useState<string | null>(null);
+  const [rate, setRate] = useState<string | null>(null);
+  const walletValue = wallet ?? settings.data?.walletAddress ?? "";
+  const rateValue = rate ?? String(settings.data?.rate ?? 12800);
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const numeric = Number(rateValue);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      toast.error("Kurs noto‘g‘ri.");
+      return;
+    }
+    save.mutate(
+      { wallet: walletValue.trim(), rate: numeric },
+      { onSuccess: () => toast.success("Saqlandi"), onError: fail },
+    );
+  };
+
+  return (
+    <form onSubmit={submit} className="card-soft space-y-4 p-4">
+      <div>
+        <h2 className="font-semibold">USDT (TRC-20) to‘lovi</h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Hamyon manzili bo‘sh bo‘lsa, USDT to‘lovi xaridorlarga ko‘rinmaydi. Faqat ochiq manzilni
+          kiriting (T… bilan boshlanadi), hech qachon maxfiy kalit yoki seed-frazani emas.
+        </p>
+      </div>
+      <label className="block space-y-1 text-sm">
+        <span>Hamyon manzili (TRON)</span>
+        <Input
+          value={walletValue}
+          onChange={(e) => setWallet(e.target.value)}
+          placeholder="T..."
+          className="font-mono text-xs"
+        />
+      </label>
+      <label className="block space-y-1 text-sm">
+        <span>Kurs: 1 USDT = ... so‘m</span>
+        <Input
+          type="number"
+          min="1"
+          step="0.01"
+          value={rateValue}
+          onChange={(e) => setRate(e.target.value)}
+        />
+      </label>
+      <Button type="submit" disabled={save.isPending}>
+        {save.isPending ? "Saqlanmoqda…" : "Saqlash"}
+      </Button>
+    </form>
+  );
+}
+
+function CryptoPaymentsPanel({ enabled }: { enabled: boolean }) {
+  const payments = useAdminCryptoPayments(enabled);
+  const resolve = useAdminResolveCryptoPayment();
+  const items = payments.data ?? [];
+  if (items.length === 0) return null;
+  const act = (id: string, confirm: boolean) =>
+    resolve.mutate(
+      { id, confirm },
+      {
+        onSuccess: () => toast.success(confirm ? "To‘lov tasdiqlandi" : "Rad etildi"),
+        onError: fail,
+      },
+    );
+  const label = { submitted: "tekshirilmoqda", confirmed: "tasdiqlangan", rejected: "rad etilgan" };
+  return (
+    <div className="mb-6">
+      <h2 className="mb-2 font-semibold">USDT to‘lovlari</h2>
+      <DataTable
+        head={["Buyurtma", "Xaridor", "Summa", "TxID", "Holat", "Amallar"]}
+        rows={items.map((p) => [
+          orderCode(p.orderNumber),
+          p.buyer,
+          <div>
+            <p className="font-medium">{p.amountUsdt.toFixed(2)} USDT</p>
+            <p className="text-xs text-muted-foreground">{formatUZS(p.orderAmount)}</p>
+          </div>,
+          p.txid ? (
+            <a
+              href={`https://tronscan.org/#/transaction/${p.txid}`}
+              target="_blank"
+              rel="noreferrer"
+              className="break-all font-mono text-xs text-primary underline"
+            >
+              {p.txid.slice(0, 10)}…{p.txid.slice(-6)}
+            </a>
+          ) : (
+            "—"
+          ),
+          label[p.status as keyof typeof label] ?? p.status,
+          p.status === "submitted" ? (
+            <div className="flex gap-2">
+              <button
+                onClick={() => act(p.id, true)}
+                aria-label="Tasdiqlash"
+                disabled={resolve.isPending}
+                className="grid h-8 w-8 place-items-center rounded-md bg-success-soft text-success"
+              >
+                <Check className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => act(p.id, false)}
+                aria-label="Rad etish"
+                disabled={resolve.isPending}
+                className="grid h-8 w-8 place-items-center rounded-md bg-destructive/10 text-destructive"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            "—"
+          ),
+        ])}
+      />
     </div>
   );
 }

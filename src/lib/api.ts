@@ -839,3 +839,145 @@ export function useAdminBot(id: string, enabled: boolean) {
     },
   });
 }
+
+// --------------------------------------------------------------------------- crypto (USDT)
+
+export type CryptoSettings = { walletAddress: string; network: string; rate: number };
+
+export function useCryptoSettings(enabled = true) {
+  return useQuery({
+    queryKey: ["crypto", "settings"],
+    enabled,
+    queryFn: async (): Promise<CryptoSettings> => {
+      const r = check(await db().from("crypto_settings").select("*").maybeSingle()) as Row | null;
+      return {
+        walletAddress: str(r?.["wallet_address"]),
+        network: str(r?.["network"]) || "USDT (TRC-20)",
+        rate: num(r?.["rate_uzs_per_usdt"]) || 12800,
+      };
+    },
+  });
+}
+
+export type CryptoPayment = {
+  id: string;
+  orderId: string;
+  amountUsdt: number;
+  address: string;
+  network: string;
+  txid: string | null;
+  status: "pending" | "submitted" | "confirmed" | "rejected" | "expired";
+  createdAt: string;
+  expiresAt: string;
+};
+
+const mapCryptoPayment = (r: Row): CryptoPayment => ({
+  id: str(r["id"]),
+  orderId: str(r["order_id"]),
+  amountUsdt: num(r["amount_usdt"]),
+  address: str(r["address"]),
+  network: str(r["network"]),
+  txid: r["txid"] ? str(r["txid"]) : null,
+  status: str(r["status"]) as CryptoPayment["status"],
+  createdAt: str(r["created_at"]),
+  expiresAt: str(r["expires_at"]),
+});
+
+/** The buyer's latest payment attempt for an order (null when none was started). */
+export function useOrderCryptoPayment(orderId: string) {
+  return useQuery({
+    queryKey: ["crypto", "payment", orderId],
+    queryFn: async () => {
+      const rows = check(
+        await db()
+          .from("crypto_payments")
+          .select("*")
+          .eq("order_id", orderId)
+          .order("created_at", { ascending: false })
+          .limit(1),
+      ) as Row[];
+      return rows[0] ? mapCryptoPayment(rows[0]) : null;
+    },
+  });
+}
+
+export function useCreateCryptoPayment(orderId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () =>
+      mapCryptoPayment(check(await db().rpc("create_crypto_payment", { p_order: orderId })) as Row),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ["crypto", "payment", orderId] }),
+  });
+}
+
+export function useSubmitCryptoTxid(orderId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { paymentId: string; txid: string }) =>
+      check(
+        await db().rpc("submit_crypto_txid", { p_payment: input.paymentId, p_txid: input.txid }),
+      ),
+    onSuccess: () =>
+      void queryClient.invalidateQueries({ queryKey: ["crypto", "payment", orderId] }),
+  });
+}
+
+export type AdminCryptoPayment = CryptoPayment & {
+  buyer: string;
+  orderNumber: number;
+  orderAmount: number;
+};
+
+export function useAdminCryptoPayments(enabled: boolean) {
+  return useQuery({
+    queryKey: ["admin", "crypto"],
+    enabled,
+    queryFn: async () =>
+      (
+        check(
+          await db()
+            .from("crypto_payments")
+            .select("*, buyer:profiles!buyer_id(full_name, username), order:orders(number, amount)")
+            .in("status", ["submitted", "confirmed", "rejected"])
+            .order("created_at", { ascending: false })
+            .limit(50),
+        ) as Row[]
+      ).map((r): AdminCryptoPayment => {
+        const o = (r["order"] ?? {}) as Row;
+        return {
+          ...mapCryptoPayment(r),
+          buyer: sellerLabel(r["buyer"]),
+          orderNumber: num(o["number"]),
+          orderAmount: num(o["amount"]),
+        };
+      }),
+  });
+}
+
+export function useAdminResolveCryptoPayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; confirm: boolean }) => {
+      check(
+        await db().rpc("admin_resolve_crypto_payment", {
+          p_payment: input.id,
+          p_confirm: input.confirm,
+        }),
+      );
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["admin"] }),
+  });
+}
+
+export function useAdminSetCryptoSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { wallet: string; rate: number }) => {
+      check(
+        await db().rpc("admin_set_crypto_settings", { p_wallet: input.wallet, p_rate: input.rate }),
+      );
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["crypto", "settings"] }),
+  });
+}
