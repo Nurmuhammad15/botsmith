@@ -7,9 +7,9 @@ describe("wallet rules", () => {
     expect(MINIMUM_WITHDRAWAL).toBe(1);
   });
 
-  it("calculates the 15% fee", () => {
-    expect(calculateWithdrawalFee(100_000)).toBe(15_000);
-    expect(calculateWithdrawalFee(2_350_000)).toBe(352_500);
+  it("calculates the 5% fee", () => {
+    expect(calculateWithdrawalFee(100_000)).toBe(5_000);
+    expect(calculateWithdrawalFee(2_350_000)).toBe(117_500);
   });
 
   it("does not allow withdrawing more than the available balance", () => {

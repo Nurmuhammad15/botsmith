@@ -41,6 +41,7 @@ import {
   type Withdrawal,
   type WithdrawalStatus,
 } from "@/lib/data";
+import { PLATFORM_SALES_COMMISSION_RATE, sellerSubscriptionNet } from "@/lib/subscription";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import {
   calculateWithdrawalFee,
@@ -477,9 +478,7 @@ export function SellerNewBot() {
           ).map(([name, label, key]) => {
             const amount = Number(prices[key]);
             const net =
-              Number.isSafeInteger(amount) && amount > 0
-                ? amount - Math.round(amount * 0.15)
-                : null;
+              Number.isSafeInteger(amount) && amount > 0 ? sellerSubscriptionNet(amount) : null;
             return (
               <label key={name} className="block space-y-2 text-sm">
                 <span>{label}</span>
@@ -496,7 +495,7 @@ export function SellerNewBot() {
                   }
                 />
                 <span className="block text-xs text-muted-foreground">
-                  Platforma komissiyasi: −15%
+                  Platforma komissiyasi: −{Math.round(PLATFORM_SALES_COMMISSION_RATE * 100)}%
                   {net !== null ? ` · Sizga qoladi: ${formatUZS(net)}` : ""}
                 </span>
               </label>

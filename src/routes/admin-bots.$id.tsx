@@ -8,6 +8,7 @@ import { describeError, useAdminBot, useAdminSetBotStatus } from "@/lib/api";
 import { categories, formatUZS } from "@/lib/data";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { adminNav } from "@/lib/nav";
+import { PLATFORM_SALES_COMMISSION_RATE, sellerSubscriptionNet } from "@/lib/subscription";
 import { WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
 
 export const Route = createFileRoute("/admin-bots/$id")({
@@ -25,7 +26,6 @@ function AdminBotPage() {
   );
 }
 
-const SALE_COMMISSION = 0.15;
 const statusBadge = { published: "published", pending: "pending", rejected: "draft" } as const;
 
 function InfoRow({ label, children }: { label: string; children: ReactNode }) {
@@ -95,7 +95,7 @@ function AdminBotContent() {
     ["7 kunlik", bot.price7Days],
     ["30 kunlik", bot.price30Days],
   ];
-  const net = (price: number) => price - Math.round(price * SALE_COMMISSION);
+  const net = (price: number) => sellerSubscriptionNet(price);
 
   return (
     <>
@@ -155,8 +155,8 @@ function AdminBotContent() {
         ))}
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Sotuvdan {Math.round(SALE_COMMISSION * 100)}% platforma komissiyasi, pul yechishda yana{" "}
-        {Math.round(WITHDRAWAL_FEE_RATE * 100)}%.
+        Sotuvdan {Math.round(PLATFORM_SALES_COMMISSION_RATE * 100)}% platforma komissiyasi, pul
+        yechishda yana {Math.round(WITHDRAWAL_FEE_RATE * 100)}%.
       </p>
 
       <h2 className="mt-8 font-semibold">Umumiy ma’lumot</h2>

@@ -14,6 +14,7 @@ import {
 } from "@/lib/api";
 import { coverUrl, useUploadMedia, type UploadResult } from "@/lib/api-media";
 import { formatUZS, type SellerBot } from "@/lib/data";
+import { PLATFORM_SALES_COMMISSION_RATE, sellerSubscriptionNet } from "@/lib/subscription";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { IMAGE_TYPES, MAX_IMAGES, validateImage } from "@/lib/media";
 
@@ -299,9 +300,11 @@ function SubscriptionSettings({ botId }: { botId: string }) {
       <div>
         <h3 className="font-semibold">Obuna sozlamalari</h3>
         <p className="mt-1 text-xs text-muted-foreground">
-          Xaridor kiritilgan narxni to‘laydi; platforma 15% komissiya oladi, sizga 85% qoladi.
-          To‘langan obunalar “Buyurtmalar” bo‘limida ko‘rinadi. Botga kirishni o‘sha yerdan xaridor
-          bilan bog‘lanib qo‘lda boshqaring.
+          Xaridor kiritilgan narxni to‘laydi; platforma{" "}
+          {Math.round(PLATFORM_SALES_COMMISSION_RATE * 100)}% komissiya oladi, sizga{" "}
+          {100 - Math.round(PLATFORM_SALES_COMMISSION_RATE * 100)}% qoladi. To‘langan obunalar
+          “Buyurtmalar” bo‘limida ko‘rinadi. Botga kirishni o‘sha yerdan xaridor bilan bog‘lanib
+          qo‘lda boshqaring.
         </p>
       </div>
       {isPending ? (
@@ -321,9 +324,7 @@ function SubscriptionSettings({ botId }: { botId: string }) {
           ).map(([key, label]) => {
             const amount = Number(prices[key]);
             const net =
-              Number.isSafeInteger(amount) && amount > 0
-                ? amount - Math.round(amount * 0.15)
-                : null;
+              Number.isSafeInteger(amount) && amount > 0 ? sellerSubscriptionNet(amount) : null;
             return (
               <label key={key} className="block space-y-2 text-sm">
                 <span>{label} (so‘m)</span>
@@ -338,7 +339,7 @@ function SubscriptionSettings({ botId }: { botId: string }) {
                   }
                 />
                 <span className="block text-xs text-muted-foreground">
-                  Platforma komissiyasi: −15%
+                  Platforma komissiyasi: −{Math.round(PLATFORM_SALES_COMMISSION_RATE * 100)}%
                   {net !== null ? ` · Sizga qoladi: ${formatUZS(net)}` : ""}
                 </span>
               </label>

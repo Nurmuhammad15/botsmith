@@ -26,6 +26,7 @@ import {
   useSupportThread,
 } from "@/lib/api";
 import { categories, formatUZS, orderCode } from "@/lib/data";
+import { PLATFORM_SALES_COMMISSION_RATE } from "@/lib/subscription";
 import { WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { adminNav } from "@/lib/nav";
@@ -475,7 +476,10 @@ function StatsTab({
   }
   const cards: [string, string][] = [
     ["Sayt daromadi (jami)", formatUZS(stats.saleCommission + stats.feePaid)],
-    ["Sotuvdan komissiya (15%)", formatUZS(stats.saleCommission)],
+    [
+      `Sotuvdan komissiya (${Math.round(PLATFORM_SALES_COMMISSION_RATE * 100)}%)`,
+      formatUZS(stats.saleCommission),
+    ],
     ["Yechishdan komissiya (to‘langan)", formatUZS(stats.feePaid)],
     ["Kutilayotgan yechish komissiyasi", formatUZS(stats.feePending)],
     ["Botlar sotuvi (jami)", formatUZS(stats.salesTotal)],
@@ -496,8 +500,9 @@ function StatsTab({
         ))}
       </div>
       <p className="mt-3 text-xs text-muted-foreground">
-        Sayt daromadi — har bir sotuvdan 15% platforma komissiyasi va sotuvchi pul yechganda
-        olinadigan {Math.round(WITHDRAWAL_FEE_RATE * 100)}% komissiya yig‘indisi.
+        Sayt daromadi — har bir sotuvdan {Math.round(PLATFORM_SALES_COMMISSION_RATE * 100)}%
+        platforma komissiyasi va sotuvchi pul yechganda olinadigan{" "}
+        {Math.round(WITHDRAWAL_FEE_RATE * 100)}% komissiya yig‘indisi.
       </p>
     </>
   );
