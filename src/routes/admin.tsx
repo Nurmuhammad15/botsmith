@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { Check, X } from "lucide-react";
 import { toast } from "sonner";
@@ -22,11 +22,18 @@ import {
   useSupportThread,
 } from "@/lib/api";
 import { categories, formatUZS, orderCode } from "@/lib/data";
+import { MINIMUM_WITHDRAWAL, WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { adminNav } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
+const TABS = ["bots", "orders", "withdrawals", "support", "stats", "users", "settings"] as const;
+type TabKey = (typeof TABS)[number];
+
 export const Route = createFileRoute("/admin")({
+  validateSearch: (search: Record<string, unknown>): { tab?: TabKey | undefined } => ({
+    tab: TABS.find((t) => t === search["tab"]),
+  }),
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
@@ -55,7 +62,10 @@ const fail = (error: unknown) => toast.error(describeError(error));
 function AdminContent() {
   const account = useMarketplaceAccount();
   const isAdmin = Boolean(account?.isAdmin);
-  const [tab, setTab] = useState(0);
+  const { tab: tabKey } = Route.useSearch();
+  const navigate = useNavigate({ from: "/admin" });
+  const tab = Math.max(0, TABS.indexOf(tabKey ?? "bots"));
+  const setTab = (i: number) => void navigate({ search: { tab: TABS[i] ?? "bots" } });
   const bots = useAdminBots(isAdmin);
   const orders = useAdminOrders(isAdmin);
   const withdrawals = useAdminWithdrawals(isAdmin);
@@ -86,6 +96,7 @@ function AdminContent() {
             "Murojaatlar",
             "Statistika",
             "Foydalanuvchilar",
+            "Sozlamalar",
           ]}
           value={tab}
           onChange={setTab}
@@ -100,6 +111,7 @@ function AdminContent() {
         {tab === 3 && <SupportTab threads={threads.data ?? []} loading={threads.isPending} />}
         {tab === 4 && <StatsTab stats={stats.data} loading={stats.isPending} />}
         {tab === 5 && <UsersTab users={users.data ?? []} loading={users.isPending} />}
+        {tab === 6 && <SettingsTab email={account?.email ?? ""} />}
       </div>
     </>
   );
@@ -496,5 +508,25 @@ function UsersTab({
         String(u.sales),
       ])}
     />
+  );
+}
+
+function SettingsTab({ email }: { email: string }) {
+  const rows: [string, string][] = [
+    ["Admin akkaunt", email],
+    ["Komissiya (pul yechishda)", `${Math.round(WITHDRAWAL_FEE_RATE * 100)}%`],
+    ["Minimal yechish summasi", formatUZS(MINIMUM_WITHDRAWAL)],
+    ["To‘lovlar", "Payme / Click yoki admin tasdig‘i"],
+    ["Sotuvchilarga to‘lov", "Qo‘lda (Yechishlar tabida tasdiqlanadi)"],
+  ];
+  return (
+    <div className="card-soft divide-y">
+      {rows.map(([k, v]) => (
+        <div key={k} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
+          <span className="text-muted-foreground">{k}</span>
+          <span className="font-medium">{v}</span>
+        </div>
+      ))}
+    </div>
   );
 }

@@ -434,7 +434,7 @@ export function StatCard({
   );
 }
 
-export type SideItem = { to: string; label: string; icon: LucideIcon };
+export type SideItem = { to: string; label: string; icon: LucideIcon; tab?: string };
 export function DashboardLayout({
   user,
   role,
@@ -476,6 +476,9 @@ function BuyerDashboardLayout({
 }) {
   const { account, ready } = useMarketplaceAuth();
   const navigate = useNavigate();
+  const currentTab = useRouterState({
+    select: (s) => (s.location.search as { tab?: string }).tab,
+  });
 
   useEffect(() => {
     if (ready && !account) {
@@ -506,13 +509,14 @@ function BuyerDashboardLayout({
             </div>
           </div>
           <nav className="flex flex-col gap-1">
-            {items.map(({ to, label, icon: Icon }, i) => (
+            {items.map(({ to, label, icon: Icon, tab }, i) => (
               <Link
                 key={label}
                 to={to}
+                search={(tab ? { tab } : undefined) as never}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-sm",
-                  path === to && i > 0
+                  path === to && i > 0 && (!tab || tab === currentTab)
                     ? "bg-primary-soft font-medium text-primary"
                     : "text-muted-foreground hover:bg-muted",
                 )}

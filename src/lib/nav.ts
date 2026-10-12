@@ -34,11 +34,11 @@ export const sellerNav: SideItem[] = [
 ];
 export const adminNav: SideItem[] = [
   { to: "/", label: "Bosh sahifa", icon: Home },
-  { to: "/admin", label: "Botlar", icon: Bot },
-  { to: "/admin", label: "Foydalanuvchilar", icon: Users },
-  { to: "/admin", label: "Buyurtmalar", icon: Package },
-  { to: "/admin", label: "To'lovlar", icon: CreditCard },
-  { to: "/admin", label: "Komissiya", icon: Percent },
-  { to: "/admin", label: "Murojaatlar", icon: MessageSquare },
-  { to: "/admin", label: "Sozlamalar", icon: Settings },
+  { to: "/admin", tab: "bots", label: "Botlar", icon: Bot },
+  { to: "/admin", tab: "users", label: "Foydalanuvchilar", icon: Users },
+  { to: "/admin", tab: "orders", label: "Buyurtmalar", icon: Package },
+  { to: "/admin", tab: "withdrawals", label: "To'lovlar", icon: CreditCard },
+  { to: "/admin", tab: "stats", label: "Komissiya", icon: Percent },
+  { to: "/admin", tab: "support", label: "Murojaatlar", icon: MessageSquare },
+  { to: "/admin", tab: "settings", label: "Sozlamalar", icon: Settings },
 ];
