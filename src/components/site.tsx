@@ -11,6 +11,7 @@ import {
   User,
   MessageCircle,
   MessageSquare,
+  LogOut,
   type LucideIcon,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -193,13 +194,16 @@ export function Navbar() {
               </Link>
               <button
                 type="button"
-                className="hidden rounded-md px-3 py-2 text-sm text-muted-foreground sm:inline-flex"
+                aria-label="Chiqish"
+                title="Chiqish"
+                className="inline-flex items-center gap-2 rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-muted sm:px-3"
                 onClick={async () => {
                   const { error } = await getSupabaseClient().auth.signOut();
                   if (error) setSignOutError("Hisobdan chiqib bo‘lmadi. Qayta urinib ko‘ring.");
                 }}
               >
-                Chiqish
+                <LogOut className="h-5 w-5 sm:hidden" />
+                <span className="hidden sm:inline">Chiqish</span>
               </button>
             </>
           ) : (
