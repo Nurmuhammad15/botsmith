@@ -2,8 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Bot, CreditCard, Search, UserPlus, Upload, PackageCheck, Wallet } from "lucide-react";
 import { SiteLayout } from "@/components/site";
 import { Button } from "@/components/ui/button";
-import { formatUZS } from "@/lib/data";
-import { MINIMUM_WITHDRAWAL, WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
+import { WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
 
 const steps = [
   {
@@ -44,7 +43,7 @@ const sellerSteps = [
   {
     icon: Wallet,
     title: "Daromadni yechib oling",
-    description: `Balansdan kamida ${formatUZS(MINIMUM_WITHDRAWAL)} yechish mumkin. Har bir yechishdan ${Math.round(WITHDRAWAL_FEE_RATE * 100)}% komissiya ushlanadi; pul administrator tomonidan kartangizga qo‘lda o‘tkaziladi.`,
+    description: `Balansdan istalgan summani yechish mumkin. Har bir yechishdan ${Math.round(WITHDRAWAL_FEE_RATE * 100)}% komissiya ushlanadi; pul administrator tomonidan kartangizga qo‘lda o‘tkaziladi.`,
   },
 ];
 

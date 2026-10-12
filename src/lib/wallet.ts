@@ -1,5 +1,5 @@
 // Platform withdrawal rules. The database enforces the same numbers in request_withdrawal().
-export const MINIMUM_WITHDRAWAL = 100_000;
+export const MINIMUM_WITHDRAWAL = 1;
 export const WITHDRAWAL_FEE_RATE = 0.15;
 
 export function calculateWithdrawalFee(amount: number) {

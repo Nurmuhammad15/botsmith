@@ -22,7 +22,7 @@ import {
   useSupportThread,
 } from "@/lib/api";
 import { categories, formatUZS, orderCode } from "@/lib/data";
-import { MINIMUM_WITHDRAWAL, WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
+import { WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { adminNav } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -516,7 +516,6 @@ function SettingsTab({ email }: { email: string }) {
   const rows: [string, string][] = [
     ["Admin akkaunt", email],
     ["Komissiya (pul yechishda)", `${Math.round(WITHDRAWAL_FEE_RATE * 100)}%`],
-    ["Minimal yechish summasi", formatUZS(MINIMUM_WITHDRAWAL)],
     ["To‘lovlar", "Payme / Click yoki admin tasdig‘i"],
     ["Sotuvchilarga to‘lov", "Qo‘lda (Yechishlar tabida tasdiqlanadi)"],
   ];

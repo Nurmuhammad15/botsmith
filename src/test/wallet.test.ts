@@ -3,8 +3,8 @@ import { orderStep } from "@/lib/data";
 import { calculateWithdrawalFee, getMaximumWithdrawal, MINIMUM_WITHDRAWAL } from "@/lib/wallet";
 
 describe("wallet rules", () => {
-  it("uses a minimum withdrawal of 100,000 UZS", () => {
-    expect(MINIMUM_WITHDRAWAL).toBe(100_000);
+  it("has no minimum withdrawal beyond 1 UZS", () => {
+    expect(MINIMUM_WITHDRAWAL).toBe(1);
   });
 
   it("calculates the 15% fee", () => {

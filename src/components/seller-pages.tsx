@@ -560,9 +560,7 @@ export function Withdrawal() {
       numericAmount < MINIMUM_WITHDRAWAL ||
       numericAmount > maximumWithdrawal
     ) {
-      setError(
-        `Kamida ${formatUZS(MINIMUM_WITHDRAWAL)} va mavjud balansdan oshmagan summani kiriting.`,
-      );
+      setError("Mavjud balansdan oshmagan summani kiriting.");
       return;
     }
     if (!/^\d{16}$/.test(digits)) {
@@ -617,7 +615,7 @@ export function Withdrawal() {
           ) : (
             <form className="space-y-5" onSubmit={submit}>
               <label className="block space-y-2 text-sm">
-                <span>Summa (so‘m) · eng kami {formatUZS(MINIMUM_WITHDRAWAL)}</span>
+                <span>Summa (so‘m)</span>
                 <div className="flex gap-2">
                   <Input
                     aria-label="Yechish summasi"
@@ -628,7 +626,7 @@ export function Withdrawal() {
                     step="1"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    placeholder={String(MINIMUM_WITHDRAWAL)}
+                    placeholder="0"
                   />
                   <Button
                     type="button"

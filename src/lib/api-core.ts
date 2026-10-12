@@ -20,7 +20,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   not_authenticated: "Avval tizimga kiring.",
   not_a_seller: "Bu amal faqat sotuvchilar uchun.",
   invalid_card: "Karta raqami 16 ta raqamdan iborat bo‘lishi kerak.",
-  amount_too_small: "Summa minimal yechish miqdoridan kam.",
+  amount_too_small: "Summa noto‘g‘ri.",
   amount_exceeds_available: "Summa yechish mumkin bo‘lgan balansdan oshib ketdi.",
   bot_not_found: "Bot topilmadi yoki e’lon qilinmagan.",
   own_bot: "Bu o‘zingizning botingiz.",
