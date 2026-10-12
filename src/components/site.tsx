@@ -269,8 +269,33 @@ export function Footer() {
   );
 }
 
-export function MobileTabBar() {
+function AdminMobileTabBar({ items }: { items: SideItem[] }) {
+  const currentTab = useRouterState({
+    select: (s) => (s.location.search as { tab?: string }).tab ?? "bots",
+  });
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex overflow-x-auto border-t bg-background md:hidden">
+      {items.map(({ to, label, icon: Icon, tab }) => (
+        <Link
+          key={label}
+          to={to}
+          search={(tab ? { tab } : undefined) as never}
+          className={cn(
+            "flex min-w-[76px] flex-1 flex-col items-center gap-1 px-2 py-2 text-[11px]",
+            tab && tab === currentTab ? "text-primary" : "text-muted-foreground",
+          )}
+        >
+          <Icon className="h-5 w-5" />
+          {label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+export function MobileTabBar({ adminItems }: { adminItems?: SideItem[] }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  if (adminItems) return <AdminMobileTabBar items={adminItems} />;
   const items: [string, string, LucideIcon][] = [
     ["/", "Asosiy", Home],
     ["/bots", "Botlar", Search],
@@ -530,7 +555,7 @@ function BuyerDashboardLayout({
         </aside>
         <main className="min-w-0 flex-1">{children}</main>
       </div>
-      <MobileTabBar />
+      <MobileTabBar {...(items.some((i) => i.tab) ? { adminItems: items } : {})} />
     </>
   );
 }

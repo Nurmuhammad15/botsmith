@@ -87,7 +87,7 @@ function AdminContent() {
   return (
     <>
       <h1 className="text-xl font-bold">Boshqaruv paneli</h1>
-      <div className="mt-4">
+      <div className="mt-4 hidden md:block">
         <Tabs
           tabs={[
             `Botlar (${pendingBots.length})`,
