@@ -23,6 +23,8 @@ import {
   useAdminResolveSubscriptionRefund,
   useAdminSetCryptoSettings,
   useAdminSetUserPassword,
+  useAdminBanUser,
+  useAdminDeleteUser,
   useCryptoSettings,
   useAdminStats,
   useAdminUsers,
@@ -623,6 +625,9 @@ function UsersTab({
 }) {
   const date = (v: string | null) => (v ? formatDateTime(v) : "—");
   const [target, setTarget] = useState<(typeof users)[number] | null>(null);
+  const [banTarget, setBanTarget] = useState<(typeof users)[number] | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<(typeof users)[number] | null>(null);
+  const ban = useAdminBanUser();
   return (
     <>
       <DataTable
@@ -644,6 +649,11 @@ function UsersTab({
               {u.email}
               {!u.emailConfirmed && " · tasdiqlanmagan"}
             </p>
+            {u.bannedUntil && (
+              <p className="text-xs font-medium text-destructive">
+                Ban: {isForever(u.bannedUntil) ? "umrbod" : `${formatDateTime(u.bannedUntil)} gacha`}
+              </p>
+            )}
           </div>,
           u.role,
           date(u.createdAt),
@@ -651,13 +661,154 @@ function UsersTab({
           String(u.bots),
           String(u.purchases),
           String(u.sales),
-          <Button size="sm" variant="outline" onClick={() => setTarget(u)}>
-            Parol
-          </Button>,
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => setTarget(u)}>
+              Parol
+            </Button>
+            {u.role !== "admin" &&
+              (u.bannedUntil ? (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={ban.isPending}
+                  onClick={() =>
+                    ban.mutate(
+                      { userId: u.id, hours: null, unban: true },
+                      { onSuccess: () => toast.success("Ban olib tashlandi"), onError: fail },
+                    )
+                  }
+                >
+                  Bandan chiqarish
+                </Button>
+              ) : (
+                <Button size="sm" variant="outline" onClick={() => setBanTarget(u)}>
+                  Ban
+                </Button>
+              ))}
+            {u.role !== "admin" && (
+              <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(u)}>
+                O‘chirish
+              </Button>
+            )}
+          </div>,
         ])}
       />
       <PasswordDialog user={target} onClose={() => setTarget(null)} />
+      <BanDialog user={banTarget} onClose={() => setBanTarget(null)} />
+      <DeleteUserDialog user={deleteTarget} onClose={() => setDeleteTarget(null)} />
     </>
+  );
+}
+
+/** Lifetime bans are stored as "now + 100 years". */
+const isForever = (iso: string) => Date.parse(iso) - Date.now() > 50 * 365 * 24 * 3600 * 1000;
+
+const BAN_OPTIONS: { label: string; hours: number | null }[] = [
+  { label: "1 soat", hours: 1 },
+  { label: "24 soat", hours: 24 },
+  { label: "7 kun", hours: 24 * 7 },
+  { label: "30 kun", hours: 24 * 30 },
+  { label: "Umrbod", hours: null },
+];
+
+type DialogUser = { id: string; email: string; fullName: string } | null;
+
+function BanDialog({ user, onClose }: { user: DialogUser; onClose: () => void }) {
+  const ban = useAdminBanUser();
+  const [choice, setChoice] = useState("24");
+  const hours = choice === "forever" ? null : Number(choice);
+  return (
+    <Dialog open={Boolean(user)} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Foydalanuvchini ban qilish</DialogTitle>
+          <DialogDescription>
+            {user?.fullName || "—"} · {user?.email}. U barcha qurilmalardan chiqib ketadi va ban
+            tugaguncha saytga kira olmaydi.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2 text-sm">
+          <p>Qancha muddatga?</p>
+          {BAN_OPTIONS.map((o) => {
+            const value = o.hours === null ? "forever" : String(o.hours);
+            return (
+              <label key={value} className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="ban-duration"
+                  checked={choice === value}
+                  onChange={() => setChoice(value)}
+                />
+                {o.label}
+              </label>
+            );
+          })}
+        </div>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Bekor qilish
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={ban.isPending || !user}
+            onClick={() =>
+              user &&
+              ban.mutate(
+                { userId: user.id, hours },
+                {
+                  onSuccess: () => {
+                    toast.success("Foydalanuvchi ban qilindi");
+                    onClose();
+                  },
+                  onError: fail,
+                },
+              )
+            }
+          >
+            {ban.isPending ? "Saqlanmoqda…" : "Ban qilish"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DeleteUserDialog({ user, onClose }: { user: DialogUser; onClose: () => void }) {
+  const remove = useAdminDeleteUser();
+  return (
+    <Dialog open={Boolean(user)} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Foydalanuvchini o‘chirish</DialogTitle>
+          <DialogDescription>
+            {user?.fullName || "—"} · {user?.email}. Akkaunt, uning botlari, sharhlari va
+            yozishmalari butunlay o‘chiriladi. Buni qaytarib bo‘lmaydi. Buyurtma yoki yechish tarixi
+            bo‘lsa, o‘chirilmaydi — uni ban qiling.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Bekor qilish
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={remove.isPending || !user}
+            onClick={() =>
+              user &&
+              remove.mutate(user.id, {
+                onSuccess: () => {
+                  toast.success("Foydalanuvchi o‘chirildi");
+                  onClose();
+                },
+                onError: fail,
+              })
+            }
+          >
+            {remove.isPending ? "O‘chirilmoqda…" : "O‘chirish"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

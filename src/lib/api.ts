@@ -720,6 +720,8 @@ export type AdminUser = {
   bots: number;
   purchases: number;
   sales: number;
+  /** Set while the account is banned. */
+  bannedUntil: string | null;
 };
 
 export function useAdminUsers(enabled: boolean) {
@@ -738,6 +740,7 @@ export function useAdminUsers(enabled: boolean) {
         bots: num(r["bots"]),
         purchases: num(r["purchases"]),
         sales: num(r["sales"]),
+        bannedUntil: r["banned_until"] ? str(r["banned_until"]) : null,
       })),
   });
 }
@@ -1068,6 +1071,31 @@ export function useAdminSetCryptoSettings() {
       );
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["crypto", "settings"] }),
+  });
+}
+
+export function useAdminBanUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    /** hours = null bans for life; unban = true lifts the ban. */
+    mutationFn: async (input: { userId: string; hours: number | null; unban?: boolean }) => {
+      check(
+        input.unban
+          ? await db().rpc("admin_unban_user", { p_user: input.userId })
+          : await db().rpc("admin_ban_user", { p_user: input.userId, p_hours: input.hours }),
+      );
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["admin", "users"] }),
+  });
+}
+
+export function useAdminDeleteUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      check(await db().rpc("admin_delete_user", { p_user: userId }));
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["admin"] }),
   });
 }
 
