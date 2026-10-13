@@ -10,6 +10,7 @@ import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { adminNav } from "@/lib/nav";
 import { PLATFORM_SALES_COMMISSION_RATE, sellerSubscriptionNet } from "@/lib/subscription";
 import { WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
+import { formatDateTime } from "@/lib/format";
 
 export const Route = createFileRoute("/admin-bots/$id")({
   head: () => ({
@@ -104,7 +105,7 @@ function AdminBotContent() {
         <div>
           <h1 className="text-xl font-bold">{bot.title}</h1>
           <p className="mt-1 text-xs text-muted-foreground">
-            {new Date(bot.createdAt).toLocaleString("uz-UZ")} · ID: {bot.id}
+            {formatDateTime(bot.createdAt)} · ID: {bot.id}
           </p>
         </div>
         <div className="flex items-center gap-2">

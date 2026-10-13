@@ -21,6 +21,7 @@ import type { User as AuthUser } from "@supabase/supabase-js";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { BotCover, FavoriteButton } from "@/components/bot-media";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { PushToggle } from "@/components/push-toggle";
 import { useInboxRealtime, useUnreadCount } from "@/lib/api-chat";
 import { useT, type Lang } from "@/lib/i18n";
@@ -176,16 +177,7 @@ export function Navbar() {
             <UnreadBadge className="absolute -right-0.5 -top-0.5" />
           </Link>
           <PushToggle />
-          <select
-            aria-label="Til"
-            value={lang}
-            onChange={(e) => setLang(e.target.value as Lang)}
-            className="h-9 rounded-md bg-transparent px-2 text-sm font-medium"
-          >
-            <option value="uz">UZ</option>
-            <option value="ru">RU</option>
-            <option value="en">EN</option>
-          </select>
+          <LanguageSwitcher />
           {account ? (
             <>
               <Link
@@ -680,6 +672,7 @@ function SellerDashboardLayout({
               <p className="text-sm font-semibold">{account.name || account.email || user}</p>
               <p className="text-xs text-muted-foreground">{role}</p>
             </div>
+            <LanguageSwitcher />
             <PushToggle />
             <button
               type="button"

@@ -22,6 +22,7 @@ import {
 } from "@/lib/payments";
 import { navForAccount } from "@/lib/nav";
 import { cn } from "@/lib/utils";
+import { formatDateTime } from "@/lib/format";
 
 export const Route = createFileRoute("/dashboard/purchases")({
   // `?pay=payme|click` is added to the return URL we give the payment provider.
@@ -141,9 +142,7 @@ function PurchasesContent() {
           <div className="card-soft h-fit p-5">
             <p className="font-semibold">Buyurtma tafsilotlari</p>
             <p className="mt-3 text-sm font-medium">{orderCode(current.number)}</p>
-            <p className="text-xs text-muted-foreground">
-              {new Date(current.createdAt).toLocaleString("uz-UZ")}
-            </p>
+            <p className="text-xs text-muted-foreground">{formatDateTime(current.createdAt)}</p>
             <div className="mt-4 flex items-center gap-3 rounded-xl border p-3">
               <div className="flex-1">
                 <p className="text-sm font-semibold">{current.botTitle}</p>
@@ -165,7 +164,7 @@ function PurchasesContent() {
             {current.status === "paid" && current.subscriptionExpiresAt && (
               <p className="mt-4 text-sm text-muted-foreground">
                 {isSubscriptionActive(current) ? "Obuna faol" : "Obuna muddati tugagan"}:{" "}
-                {new Date(current.subscriptionExpiresAt).toLocaleString("uz-UZ")} gacha.
+                {formatDateTime(current.subscriptionExpiresAt)} gacha.
               </p>
             )}
             {current.refundResolution === "refunded" ? (

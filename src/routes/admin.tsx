@@ -40,6 +40,7 @@ import { WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { adminNav } from "@/lib/nav";
 import { cn } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/format";
 
 const TABS = ["bots", "orders", "withdrawals", "support", "stats", "users", "settings"] as const;
 type TabKey = (typeof TABS)[number];
@@ -181,9 +182,7 @@ function BotsTab({
             >
               {b.title}
             </Link>
-            <p className="text-xs text-muted-foreground">
-              {new Date(b.createdAt).toLocaleDateString("uz-UZ")}
-            </p>
+            <p className="text-xs text-muted-foreground">{formatDate(b.createdAt)}</p>
             {b.images.length > 0 && (
               <div className="mt-2 flex gap-1">
                 {b.images.map((src) => (
@@ -335,9 +334,7 @@ function OrdersTab({
             </p>
             {o.refundReason && <p className="whitespace-pre-wrap">{o.refundReason}</p>}
             {o.refundRequestedAt && (
-              <p className="text-muted-foreground">
-                {new Date(o.refundRequestedAt).toLocaleString("uz-UZ")}
-              </p>
+              <p className="text-muted-foreground">{formatDateTime(o.refundRequestedAt)}</p>
             )}
             {o.status === "paid" && o.refundResolution === null && (
               <div className="flex flex-wrap gap-1 pt-1">
@@ -395,7 +392,7 @@ function WithdrawalsTab({
         formatUZS(w.amount),
         formatUZS(w.payout),
         <AdminCardCell withdrawal={w} />,
-        new Date(w.createdAt).toLocaleString("uz-UZ"),
+        formatDateTime(w.createdAt),
         label[w.status],
         w.status === "pending" ? (
           <div className="flex gap-2">
@@ -549,7 +546,7 @@ function UsersTab({
   users: NonNullable<ReturnType<typeof useAdminUsers>["data"]>;
   loading: boolean;
 }) {
-  const date = (v: string | null) => (v ? new Date(v).toLocaleString("uz-UZ") : "—");
+  const date = (v: string | null) => (v ? formatDateTime(v) : "—");
   const [target, setTarget] = useState<(typeof users)[number] | null>(null);
   return (
     <>

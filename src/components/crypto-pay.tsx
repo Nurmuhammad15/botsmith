@@ -9,6 +9,7 @@ import {
   useOrderCryptoPayment,
   useSubmitCryptoTxid,
 } from "@/lib/api";
+import { formatTime } from "@/lib/format";
 
 /** USDT (TRC-20) payment for an unpaid order: send to the shown wallet, paste the hash. */
 export function CryptoPay({ orderId, enabled }: { orderId: string; enabled: boolean }) {
@@ -130,11 +131,7 @@ export function CryptoPay({ orderId, enabled }: { orderId: string; enabled: bool
           </dl>
           <p className="text-xs text-muted-foreground">
             Faqat TRON (TRC-20) tarmog‘ida USDT yuboring, boshqa tarmoqdagi pul yo‘qoladi. To‘lovni{" "}
-            {new Date(current.expiresAt).toLocaleTimeString("uz-UZ", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}{" "}
-            gacha amalga oshiring.
+            {formatTime(current.expiresAt)} gacha amalga oshiring.
           </p>
 
           {current.status === "pending" ? (

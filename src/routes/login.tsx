@@ -1,3 +1,4 @@
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { Eye, EyeOff } from "lucide-react";
@@ -78,7 +79,8 @@ function Login() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-muted px-4">
+    <div className="relative grid min-h-screen place-items-center bg-muted px-4">
+      <LanguageSwitcher className="absolute right-4 top-4" />
       <form onSubmit={handleSubmit} className="card-soft w-full max-w-sm p-8">
         <Logo className="justify-center" />
         <h1 className="mt-6 text-center text-xl font-bold">Kirish</h1>

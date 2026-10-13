@@ -14,11 +14,10 @@ import {
 } from "@/lib/api-chat";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { cn } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/format";
 
-const time = (iso: string) =>
-  new Date(iso).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" });
-const day = (iso: string) =>
-  new Date(iso).toLocaleDateString("uz-UZ", { day: "numeric", month: "long" });
+const time = (iso: string) => formatTime(iso);
+const day = (iso: string) => formatDate(iso);
 
 /** Conversation list plus the open thread. `selectedId` comes from the `?c=` search param. */
 export function Inbox({ selectedId }: { selectedId: string | undefined }) {

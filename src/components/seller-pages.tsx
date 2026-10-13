@@ -57,6 +57,7 @@ import {
   MINIMUM_WITHDRAWAL,
   WITHDRAWAL_FEE_RATE,
 } from "@/lib/wallet";
+import { formatDate, formatDateTime } from "@/lib/format";
 
 export function SellerPage({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -176,9 +177,9 @@ export function SellerOrders() {
           <Link to="/bots/$id" params={{ id: o.botId }}>
             {o.botTitle}
           </Link>,
-          new Date(o.createdAt).toLocaleDateString("uz-UZ"),
+          formatDate(o.createdAt),
           `${o.subscriptionDays} kun`,
-          o.subscriptionExpiresAt ? new Date(o.subscriptionExpiresAt).toLocaleString("uz-UZ") : "—",
+          o.subscriptionExpiresAt ? formatDateTime(o.subscriptionExpiresAt) : "—",
           formatUZS(o.amount),
           o.refundResolution === "rejected"
             ? "Qaytarish rad etildi · obuna davom etmoqda"
@@ -950,7 +951,7 @@ export function Withdrawal() {
                     className="mt-1 block text-xs text-muted-foreground"
                     dateTime={item.createdAt}
                   >
-                    {new Date(item.createdAt).toLocaleString("uz-UZ")}
+                    {formatDateTime(item.createdAt)}
                   </time>
                 </li>
               ))}
@@ -1019,12 +1020,7 @@ export function SellerWithdrawalHistory() {
                   <div className="sm:col-span-2">
                     <dt className="text-muted-foreground">So‘rov sanasi va vaqti</dt>
                     <dd className="mt-1">
-                      <time dateTime={item.createdAt}>
-                        {new Date(item.createdAt).toLocaleString("uz-UZ", {
-                          dateStyle: "long",
-                          timeStyle: "medium",
-                        })}
-                      </time>
+                      <time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time>
                     </dd>
                   </div>
                 </dl>

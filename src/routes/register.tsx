@@ -1,3 +1,4 @@
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ShoppingBag, Code2, Eye, EyeOff } from "lucide-react";
@@ -38,7 +39,8 @@ function Register() {
     ["seller", "Dasturchi", "Botlarni sotish uchun", Code2],
   ] as const;
   return (
-    <div className="grid min-h-screen place-items-center bg-muted px-4">
+    <div className="relative grid min-h-screen place-items-center bg-muted px-4">
+      <LanguageSwitcher className="absolute right-4 top-4" />
       <form
         onSubmit={async (e) => {
           e.preventDefault();
