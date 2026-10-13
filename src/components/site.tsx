@@ -192,7 +192,7 @@ export function Navbar() {
                 to={
                   account.isAdmin ? "/admin" : account.isSeller ? "/seller" : "/dashboard/purchases"
                 }
-                className="rounded-md border px-3 py-2 text-sm font-medium"
+                className="max-w-[110px] truncate rounded-md border px-3 py-2 text-sm font-medium sm:max-w-[220px]"
               >
                 {account.name || account.email}
               </Link>
@@ -773,40 +773,66 @@ export function DataTable({
   emptyMessage?: string;
 }) {
   return (
-    <div className="card-soft overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-xs text-muted-foreground">
-            {head.map((h) => (
-              <th key={h} className="px-4 py-3 font-medium">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.length > 0
-            ? rows.map((r, i) => (
-                <tr key={i} className="border-b last:border-0">
-                  {r.map((c, j) => (
-                    <td key={j} className="px-4 py-3">
-                      {c}
+    <>
+      {/* Phones: one card per row, "label: value" pairs, so nothing needs sideways scrolling. */}
+      <div className="space-y-3 md:hidden">
+        {rows.length > 0
+          ? rows.map((r, i) => (
+              <div key={i} className="card-soft space-y-2 p-4 text-sm">
+                {r.map((c, j) => {
+                  const label = head[j];
+                  if (j === 0) return <div key={j}>{c}</div>;
+                  if (c === "" || c === null || c === undefined) return null;
+                  return (
+                    <div key={j} className="flex items-start justify-between gap-4">
+                      <span className="shrink-0 text-xs text-muted-foreground">{label}</span>
+                      <div className="min-w-0 text-right">{c}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))
+          : emptyMessage && (
+              <p className="card-soft px-4 py-10 text-center text-sm text-muted-foreground">
+                {emptyMessage}
+              </p>
+            )}
+      </div>
+      <div className="card-soft hidden overflow-x-auto md:block">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b text-left text-xs text-muted-foreground">
+              {head.map((h) => (
+                <th key={h} className="px-4 py-3 font-medium">
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.length > 0
+              ? rows.map((r, i) => (
+                  <tr key={i} className="border-b last:border-0">
+                    {r.map((c, j) => (
+                      <td key={j} className="px-4 py-3">
+                        {c}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              : emptyMessage && (
+                  <tr>
+                    <td
+                      colSpan={head.length}
+                      className="px-4 py-10 text-center text-muted-foreground"
+                    >
+                      {emptyMessage}
                     </td>
-                  ))}
-                </tr>
-              ))
-            : emptyMessage && (
-                <tr>
-                  <td
-                    colSpan={head.length}
-                    className="px-4 py-10 text-center text-muted-foreground"
-                  >
-                    {emptyMessage}
-                  </td>
-                </tr>
-              )}
-        </tbody>
-      </table>
-    </div>
+                  </tr>
+                )}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }
