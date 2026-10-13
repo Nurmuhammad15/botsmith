@@ -104,9 +104,9 @@ function AdminContent() {
       <div className="mt-4 hidden md:block">
         <Tabs
           tabs={[
-            `Botlar (${pendingBots.length})`,
+            `Botlar (${(bots.data ?? []).length})${pendingBots.length > 0 ? ` · ${pendingBots.length} yangi` : ""}`,
             "Buyurtmalar",
-            `Yechishlar (${pendingWithdrawals.length})`,
+            `Yechishlar (${(withdrawals.data ?? []).length})${pendingWithdrawals.length > 0 ? ` · ${pendingWithdrawals.length} yangi` : ""}`,
             "Murojaatlar",
             "Statistika",
             "Foydalanuvchilar",
@@ -157,6 +157,7 @@ function BotsTab({
   loading: boolean;
 }) {
   const setStatus = useAdminSetBotStatus();
+  const [preview, setPreview] = useState<string | null>(null);
   const act = (id: string, status: "published" | "rejected") =>
     setStatus.mutate(
       { id, status },
@@ -167,57 +168,81 @@ function BotsTab({
     );
   const label = { pending: "pending", published: "published", rejected: "draft" } as const;
   return (
-    <DataTable
-      head={["Bot nomi", "Kategoriya", "Sotuvchi", "Narx", "Holat", "Amallar"]}
-      emptyMessage={loading ? "Yuklanmoqda…" : "Botlar yo‘q."}
-      rows={bots.map((b) => [
-        <div>
-          <Link
-            to="/admin-bots/$id"
-            params={{ id: b.id }}
-            className="font-medium text-primary hover:underline"
-          >
-            {b.title}
-          </Link>
-          <p className="text-xs text-muted-foreground">
-            {new Date(b.createdAt).toLocaleDateString("uz-UZ")}
-          </p>
-          {b.images.length > 0 && (
-            <div className="mt-2 flex gap-1">
-              {b.images.map((src) => (
-                <a key={src} href={src} target="_blank" rel="noreferrer">
-                  <img src={src} alt="" loading="lazy" className="h-10 w-14 rounded object-cover" />
-                </a>
-              ))}
-            </div>
-          )}
-        </div>,
-        categories.find((c) => c.slug === b.category)?.name,
-        <span className="text-primary">{b.seller}</span>,
-        formatUZS(b.price),
-        <StatusBadge status={label[b.status]} />,
-        <div className="flex gap-2">
-          {b.status !== "published" && (
-            <button
-              onClick={() => act(b.id, "published")}
-              aria-label="Tasdiqlash"
-              className="grid h-8 w-8 place-items-center rounded-md bg-success-soft text-success"
+    <>
+      <DataTable
+        head={["Bot nomi", "Kategoriya", "Sotuvchi", "Narx", "Holat", "Amallar"]}
+        emptyMessage={loading ? "Yuklanmoqda…" : "Botlar yo‘q."}
+        rows={bots.map((b) => [
+          <div>
+            <Link
+              to="/admin-bots/$id"
+              params={{ id: b.id }}
+              className="font-medium text-primary hover:underline"
             >
-              <Check className="h-4 w-4" />
-            </button>
+              {b.title}
+            </Link>
+            <p className="text-xs text-muted-foreground">
+              {new Date(b.createdAt).toLocaleDateString("uz-UZ")}
+            </p>
+            {b.images.length > 0 && (
+              <div className="mt-2 flex gap-1">
+                {b.images.map((src) => (
+                  <button
+                    key={src}
+                    type="button"
+                    aria-label="Rasmni kattalashtirish"
+                    onClick={() => setPreview(src)}
+                    className="rounded outline-offset-2"
+                  >
+                    <img
+                      src={src}
+                      alt=""
+                      loading="lazy"
+                      className="h-10 w-14 rounded object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>,
+          categories.find((c) => c.slug === b.category)?.name,
+          <span className="text-primary">{b.seller}</span>,
+          formatUZS(b.price),
+          <StatusBadge status={label[b.status]} />,
+          <div className="flex gap-2">
+            {b.status !== "published" && (
+              <button
+                onClick={() => act(b.id, "published")}
+                aria-label="Tasdiqlash"
+                className="grid h-8 w-8 place-items-center rounded-md bg-success-soft text-success"
+              >
+                <Check className="h-4 w-4" />
+              </button>
+            )}
+            {b.status !== "rejected" && (
+              <button
+                onClick={() => act(b.id, "rejected")}
+                aria-label="Rad etish"
+                className="grid h-8 w-8 place-items-center rounded-md bg-destructive/10 text-destructive"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>,
+        ])}
+      />
+      <Dialog open={preview !== null} onOpenChange={(open) => !open && setPreview(null)}>
+        <DialogContent className="max-w-3xl p-2">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Rasm</DialogTitle>
+            <DialogDescription>Bot rasmi</DialogDescription>
+          </DialogHeader>
+          {preview && (
+            <img src={preview} alt="" className="max-h-[80vh] w-full rounded object-contain" />
           )}
-          {b.status !== "rejected" && (
-            <button
-              onClick={() => act(b.id, "rejected")}
-              aria-label="Rad etish"
-              className="grid h-8 w-8 place-items-center rounded-md bg-destructive/10 text-destructive"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>,
-      ])}
-    />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

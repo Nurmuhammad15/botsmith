@@ -177,4 +177,9 @@ export const dict4: Entry[] = [
     "Можно загружать только JPG, PNG или WebP",
     "Only JPG, PNG or WebP images are allowed",
   ],
+  ["{n} yangi", "новых: {n}", "{n} new"],
+  ["Raqamni yashirish", "Скрыть номер", "Hide number"],
+  ["Rasmni kattalashtirish", "Увеличить изображение", "Enlarge image"],
+  ["Rasm", "Изображение", "Image"],
+  ["Bot rasmi", "Изображение бота", "Bot image"],
 ];

@@ -1,3 +1,4 @@
+import { Eye, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { describeError, revealWithdrawalCard, type AdminWithdrawal } from "@/lib/api";
@@ -29,20 +30,22 @@ export function AdminCardCell({ withdrawal }: { withdrawal: AdminWithdrawal }) {
 
   return (
     <div>
-      <p className="font-mono text-xs">
-        {card ? card.replace(/(.{4})/g, "$1 ").trim() : `•••• •••• •••• ${withdrawal.last4}`}
-      </p>
-      <p className="text-xs text-muted-foreground">{withdrawal.holder}</p>
-      {withdrawal.status === "pending" && !card && (
+      <div className="flex items-center gap-2">
+        <p className="font-mono text-xs">
+          {card ? card.replace(/(.{4})/g, "$1 ").trim() : `•••• •••• •••• ${withdrawal.last4}`}
+        </p>
         <button
           type="button"
           disabled={busy}
-          onClick={reveal}
-          className="mt-1 text-xs font-medium text-primary hover:underline"
+          onClick={() => (card ? setCard(null) : void reveal())}
+          aria-label={card ? "Raqamni yashirish" : "Raqamni ko‘rsatish"}
+          title={card ? "Raqamni yashirish" : "Raqamni ko‘rsatish"}
+          className="text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
-          Raqamni ko‘rsatish
+          {card ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
-      )}
+      </div>
+      <p className="text-xs text-muted-foreground">{withdrawal.holder}</p>
     </div>
   );
 }
