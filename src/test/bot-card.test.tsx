@@ -28,6 +28,13 @@ const bot: BotItem = {
   images: [],
   fileCount: 0,
   sellerId: "seller-1",
+  sellerAvatar: null,
+  sellerHeadline: "",
+  sellerLocation: "",
+  sellerExperience: null,
+  sellerSkills: [],
+  sellerBio: "",
+  sellerWebsite: "",
 };
 
 const signedIn = (favorites: string[] = []) =>

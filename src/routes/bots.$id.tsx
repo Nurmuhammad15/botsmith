@@ -239,14 +239,59 @@ function Detail() {
           <div className="space-y-6">
             <div className="card-soft p-5">
               <div className="flex items-center gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-primary-soft font-semibold text-primary">
-                  {bot.seller.replace("@", "").charAt(0).toUpperCase()}
-                </span>
-                <div>
+                {bot.sellerAvatar ? (
+                  <img
+                    src={bot.sellerAvatar}
+                    alt=""
+                    className="h-14 w-14 rounded-full border object-cover"
+                  />
+                ) : (
+                  <span className="grid h-14 w-14 place-items-center rounded-full bg-primary-soft text-lg font-semibold text-primary">
+                    {bot.seller.replace("@", "").charAt(0).toUpperCase()}
+                  </span>
+                )}
+                <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Sotuvchi</p>
-                  <p className="font-semibold">{bot.seller}</p>
+                  <p className="truncate font-semibold">{bot.seller}</p>
+                  {bot.sellerHeadline && (
+                    <p className="text-xs text-muted-foreground">{bot.sellerHeadline}</p>
+                  )}
                 </div>
               </div>
+              {(bot.sellerLocation || bot.sellerExperience !== null) && (
+                <p className="mt-3 text-xs text-muted-foreground">
+                  {[
+                    bot.sellerLocation,
+                    bot.sellerExperience !== null ? `${bot.sellerExperience} yil tajriba` : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              )}
+              {bot.sellerSkills.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {bot.sellerSkills.map((skill) => (
+                    <span key={skill} className="rounded-full bg-muted px-2.5 py-1 text-xs">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {bot.sellerBio && (
+                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-muted-foreground">
+                  {bot.sellerBio}
+                </p>
+              )}
+              {bot.sellerWebsite && (
+                <a
+                  href={bot.sellerWebsite}
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  className="mt-3 block truncate text-sm text-primary underline"
+                >
+                  {bot.sellerWebsite.replace(/^https?:\/\//, "")}
+                </a>
+              )}
             </div>
             {similar.length > 0 && (
               <div>

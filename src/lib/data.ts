@@ -42,6 +42,13 @@ export type BotItem = {
   /** Number of deliverable files attached (visible only to the seller and paying buyers). */
   fileCount: number;
   sellerId: string;
+  sellerAvatar: string | null;
+  sellerHeadline: string;
+  sellerLocation: string;
+  sellerExperience: number | null;
+  sellerSkills: string[];
+  sellerBio: string;
+  sellerWebsite: string;
 };
 
 export type BotStatus = "pending" | "published" | "rejected";

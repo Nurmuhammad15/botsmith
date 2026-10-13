@@ -19,7 +19,7 @@ import { MediaPicker } from "@/components/media-picker";
 import { SellerSales } from "@/components/seller-sales";
 import { sellerNav } from "@/lib/nav";
 import { sellerFaqs } from "@/lib/faq";
-import { uploadCovers } from "@/lib/api-media";
+import { avatarUrl, uploadCovers, useSetAvatar, validateAvatar } from "@/lib/api-media";
 import { useOpenConversation } from "@/lib/api-chat";
 import { IMAGE_TYPES, MAX_IMAGES, validateImage } from "@/lib/media";
 import {
@@ -243,14 +243,34 @@ export function SellerProfile() {
   const account = useMarketplaceAccount();
   const { data: saved, isPending, isError: loadFailed } = useProfile(account?.id);
   const update = useUpdateProfile(account?.id);
-  const [profile, setProfile] = useState({ name: "", username: "", bio: "" });
+  const setAvatar = useSetAvatar(account?.id);
+  const [profile, setProfile] = useState({
+    name: "",
+    username: "",
+    bio: "",
+    headline: "",
+    location: "",
+    experience: "",
+    skills: "",
+    website: "",
+  });
   const [loaded, setLoaded] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [avatarError, setAvatarError] = useState("");
 
   useEffect(() => {
     if (saved && !loaded) {
-      setProfile({ name: saved.name, username: saved.username, bio: saved.bio });
+      setProfile({
+        name: saved.name,
+        username: saved.username,
+        bio: saved.bio,
+        headline: saved.headline,
+        location: saved.location,
+        experience: saved.experienceYears === null ? "" : String(saved.experienceYears),
+        skills: saved.skills.join(", "),
+        website: saved.website,
+      });
       setLoaded(true);
     }
   }, [saved, loaded]);
@@ -258,8 +278,30 @@ export function SellerProfile() {
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
+    const skills = profile.skills
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (skills.length > 10) {
+      setError("Ko‘pi bilan 10 ta ko‘nikma kiritish mumkin.");
+      return;
+    }
+    const years = profile.experience.trim() === "" ? null : Number(profile.experience);
+    if (years !== null && (!Number.isInteger(years) || years < 0 || years > 60)) {
+      setError("Tajriba 0 dan 60 gacha butun son bo‘lishi kerak.");
+      return;
+    }
     try {
-      await update.mutateAsync(profile);
+      await update.mutateAsync({
+        name: profile.name,
+        username: profile.username,
+        bio: profile.bio,
+        headline: profile.headline,
+        location: profile.location,
+        experienceYears: years,
+        skills,
+        website: profile.website,
+      });
       setDone(true);
     } catch (e) {
       setDone(false);
@@ -267,10 +309,33 @@ export function SellerProfile() {
     }
   }
 
+  async function changeAvatar(file: File | null) {
+    setAvatarError("");
+    if (file) {
+      const problem = validateAvatar(file);
+      if (problem) {
+        setAvatarError(problem);
+        return;
+      }
+    }
+    try {
+      await setAvatar.mutateAsync({ file, previousPath: saved?.avatarPath ?? null });
+    } catch (e) {
+      setAvatarError(describeError(e));
+    }
+  }
+
   const edit = (patch: Partial<typeof profile>) => {
     setProfile({ ...profile, ...patch });
     setDone(false);
   };
+
+  const initials = profile.name
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <SellerPage title="Profil">
@@ -282,20 +347,66 @@ export function SellerProfile() {
         </p>
       ) : (
         <form className="max-w-xl space-y-5" onSubmit={saveProfile}>
-          <div className="flex items-center gap-4 border-b pb-6">
-            <span className="grid h-16 w-16 place-items-center rounded-full bg-primary-soft text-xl font-semibold text-primary">
-              {profile.name
-                .split(/\s+/)
-                .map((part) => part[0])
-                .join("")
-                .slice(0, 2)
-                .toUpperCase()}
-            </span>
-            <div>
-              <p className="font-semibold">{profile.username || profile.name}</p>
-              <p className="text-sm text-muted-foreground">Dasturchi · {account?.email}</p>
+          <div className="flex flex-wrap items-center gap-4 border-b pb-6">
+            {saved?.avatarPath ? (
+              <img
+                src={avatarUrl(saved.avatarPath)}
+                alt=""
+                className="h-20 w-20 rounded-full border object-cover"
+              />
+            ) : (
+              <span className="grid h-20 w-20 place-items-center rounded-full bg-primary-soft text-2xl font-semibold text-primary">
+                {initials}
+              </span>
+            )}
+            <div className="min-w-0 flex-1 space-y-2">
+              <div>
+                <p className="font-semibold">{profile.username || profile.name}</p>
+                <p className="truncate text-sm text-muted-foreground">
+                  Dasturchi · {account?.email}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <label className="inline-flex h-9 cursor-pointer items-center rounded-md border px-3 text-sm font-medium hover:bg-muted">
+                  {setAvatar.isPending ? "Yuklanmoqda…" : "Rasm tanlash"}
+                  <input
+                    type="file"
+                    accept={IMAGE_TYPES.join(",")}
+                    className="sr-only"
+                    disabled={setAvatar.isPending}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      e.target.value = "";
+                      if (file) void changeAvatar(file);
+                    }}
+                  />
+                </label>
+                {saved?.avatarPath && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={setAvatar.isPending}
+                    onClick={() => void changeAvatar(null)}
+                  >
+                    O‘chirish
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">JPG, PNG yoki WebP · 2 MB gacha</p>
+              {avatarError && (
+                <p role="alert" className="text-xs text-destructive">
+                  {avatarError}
+                </p>
+              )}
             </div>
           </div>
+
+          <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+            Rasm, sarlavha, joylashuv, tajriba, ko‘nikmalar, veb-sayt va “O‘zingiz haqingizda”
+            xaridorlarga bot sahifangizda ko‘rinadi.
+          </p>
+
           <label className="block space-y-2 text-sm">
             <span>Ism</span>
             <Input value={profile.name} onChange={(e) => edit({ name: e.target.value })} required />
@@ -310,12 +421,66 @@ export function SellerProfile() {
             />
           </label>
           <label className="block space-y-2 text-sm">
+            <span>Qisqa sarlavha</span>
+            <Input
+              value={profile.headline}
+              onChange={(e) => edit({ headline: e.target.value })}
+              placeholder="Masalan: Telegram bot dasturchi · Python"
+              maxLength={80}
+            />
+          </label>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="block space-y-2 text-sm">
+              <span>Shahar / joylashuv</span>
+              <Input
+                value={profile.location}
+                onChange={(e) => edit({ location: e.target.value })}
+                placeholder="Toshkent"
+                maxLength={80}
+              />
+            </label>
+            <label className="block space-y-2 text-sm">
+              <span>Tajriba (yil)</span>
+              <Input
+                type="number"
+                min={0}
+                max={60}
+                step={1}
+                value={profile.experience}
+                onChange={(e) => edit({ experience: e.target.value })}
+              />
+            </label>
+          </div>
+          <label className="block space-y-2 text-sm">
+            <span>Ko‘nikmalar (vergul bilan, ko‘pi bilan 10 ta)</span>
+            <Input
+              value={profile.skills}
+              onChange={(e) => edit({ skills: e.target.value })}
+              placeholder="Python, aiogram, Node.js, PostgreSQL"
+            />
+          </label>
+          <label className="block space-y-2 text-sm">
+            <span>Veb-sayt / portfolio</span>
+            <Input
+              type="url"
+              value={profile.website}
+              onChange={(e) => edit({ website: e.target.value })}
+              placeholder="https://"
+              maxLength={200}
+            />
+          </label>
+          <label className="block space-y-2 text-sm">
             <span>O‘zingiz haqingizda</span>
             <textarea
               className="min-h-28 w-full rounded-md border bg-background p-3"
               value={profile.bio}
+              maxLength={1000}
               onChange={(e) => edit({ bio: e.target.value })}
+              placeholder="Tajribangiz, qanday botlar yasaysiz, ishlash tartibingiz…"
             />
+            <span className="block text-right text-xs text-muted-foreground">
+              {profile.bio.length}/1000
+            </span>
           </label>
           <Button type="submit" disabled={update.isPending}>
             <Save />

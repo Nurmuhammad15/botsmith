@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { check, db, describeError, num, str, type Row } from "@/lib/api-core";
-import { coverUrl } from "@/lib/api-media";
+import { avatarUrl, coverUrl } from "@/lib/api-media";
 import type {
   BotItem,
   BotStatus,
@@ -40,6 +40,16 @@ function toBot(row: Row): BotItem {
     images: Array.isArray(row["image_paths"]) ? (row["image_paths"] as string[]).map(coverUrl) : [],
     fileCount: num(row["file_count"]),
     sellerId: str(row["seller_id"]),
+    sellerAvatar: row["seller_avatar"] ? avatarUrl(str(row["seller_avatar"])) : null,
+    sellerHeadline: str(row["seller_headline"]),
+    sellerLocation: str(row["seller_location"]),
+    sellerExperience:
+      row["seller_experience"] === null || row["seller_experience"] === undefined
+        ? null
+        : num(row["seller_experience"]),
+    sellerSkills: Array.isArray(row["seller_skills"]) ? (row["seller_skills"] as string[]) : [],
+    sellerBio: str(row["seller_bio"]),
+    sellerWebsite: str(row["seller_website"]),
   };
 }
 
@@ -440,7 +450,18 @@ export function useRequestWithdrawal() {
 
 // --------------------------------------------------------------------------- profile
 
-export type Profile = { name: string; username: string; bio: string; phone: string };
+export type Profile = {
+  name: string;
+  username: string;
+  bio: string;
+  phone: string;
+  avatarPath: string | null;
+  headline: string;
+  location: string;
+  experienceYears: number | null;
+  skills: string[];
+  website: string;
+};
 
 export function useProfile(userId: string | undefined) {
   return useQuery({
@@ -453,6 +474,15 @@ export function useProfile(userId: string | undefined) {
         username: str(row["username"]),
         bio: str(row["bio"]),
         phone: str(row["phone"]),
+        avatarPath: row["avatar_path"] ? str(row["avatar_path"]) : null,
+        headline: str(row["headline"]),
+        location: str(row["location"]),
+        experienceYears:
+          row["experience_years"] === null || row["experience_years"] === undefined
+            ? null
+            : num(row["experience_years"]),
+        skills: Array.isArray(row["skills"]) ? (row["skills"] as string[]) : [],
+        website: str(row["website"]),
       };
     },
   });
@@ -461,7 +491,7 @@ export function useProfile(userId: string | undefined) {
 export function useUpdateProfile(userId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (profile: Omit<Profile, "phone">) => {
+    mutationFn: async (profile: Omit<Profile, "phone" | "avatarPath">) => {
       if (!userId) throw new Error("not_authenticated");
       check(
         await db()
@@ -470,6 +500,11 @@ export function useUpdateProfile(userId: string | undefined) {
             full_name: profile.name.trim(),
             username: profile.username.trim() || null,
             bio: profile.bio.trim(),
+            headline: profile.headline.trim() || null,
+            location: profile.location.trim() || null,
+            experience_years: profile.experienceYears,
+            skills: profile.skills,
+            website: profile.website.trim() || null,
           })
           .eq("id", userId),
       );

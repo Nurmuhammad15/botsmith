@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { check, db, num, str, type Row } from "@/lib/api-core";
 import type { BotFile } from "@/lib/data";
-import { objectPath } from "@/lib/media";
+import { objectPath, safeFileName } from "@/lib/media";
 
 const COVERS = "bot-covers";
 const FILES = "bot-files";
@@ -176,4 +176,54 @@ export function useUploadMedia(sellerId: string | undefined, botId: string) {
       onSettled: refresh,
     }),
   };
+}
+
+const AVATARS = "avatars";
+
+/** Public URL of a profile photo stored in the `avatars` bucket. */
+export function avatarUrl(path: string) {
+  return db().storage.from(AVATARS).getPublicUrl(path).data.publicUrl;
+}
+
+export const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
+
+/** Returns an error message for an unusable profile photo, or null when it is fine. */
+export function validateAvatar(file: { name: string; type: string; size: number }) {
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    return "Faqat JPG, PNG yoki WebP rasm yuklash mumkin.";
+  }
+  if (file.size > MAX_AVATAR_BYTES) return "Rasm hajmi 2 MB dan oshmasligi kerak.";
+  return null;
+}
+
+/** Uploads a new profile photo, points the profile at it and removes the previous object. */
+export function useSetAvatar(userId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { file: File | null; previousPath: string | null }) => {
+      if (!userId) throw new Error("not_authenticated");
+      let path: string | null = null;
+      if (input.file) {
+        path = `${userId}/${crypto.randomUUID()}-${safeFileName(input.file.name)}`;
+        const { error } = await db().storage.from(AVATARS).upload(path, input.file, {
+          contentType: input.file.type,
+          cacheControl: "31536000",
+          upsert: false,
+        });
+        if (error) throw error;
+      }
+      const { error } = await db().from("profiles").update({ avatar_path: path }).eq("id", userId);
+      if (error) {
+        if (path) await db().storage.from(AVATARS).remove([path]);
+        throw error;
+      }
+      // The profile no longer references the old photo; deleting it is best effort.
+      if (input.previousPath) await db().storage.from(AVATARS).remove([input.previousPath]);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+      void queryClient.invalidateQueries({ queryKey: ["bots"] });
+      void queryClient.invalidateQueries({ queryKey: ["bot"] });
+    },
+  });
 }
