@@ -20,7 +20,7 @@ import {
   paymentUrl,
   type PaymentMethod,
 } from "@/lib/payments";
-import { buyerNav } from "@/lib/nav";
+import { navForAccount } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/dashboard/purchases")({
@@ -45,8 +45,9 @@ export const Route = createFileRoute("/dashboard/purchases")({
 });
 
 function Purchases() {
+  const { items, role } = navForAccount(useMarketplaceAccount());
   return (
-    <DashboardLayout user="" role="Xaridor" items={buyerNav}>
+    <DashboardLayout user="" role={role} items={items}>
       <PurchasesContent />
     </DashboardLayout>
   );

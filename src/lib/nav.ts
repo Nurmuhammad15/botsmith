@@ -42,3 +42,10 @@ export const adminNav: SideItem[] = [
   { to: "/admin", tab: "support", label: "Murojaatlar", short: "Murojaat", icon: MessageSquare },
   { to: "/admin", tab: "settings", label: "Sozlamalar", short: "Sozlama", icon: Settings },
 ];
+
+/** The side menu and role label that match the signed-in account (buyers are the default). */
+export function navForAccount(account: { isAdmin: boolean; isSeller: boolean } | null) {
+  if (account?.isAdmin) return { items: adminNav, role: "Administrator" };
+  if (account?.isSeller) return { items: sellerNav, role: "Dasturchi" };
+  return { items: buyerNav, role: "Xaridor" };
+}

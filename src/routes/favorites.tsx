@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BotCard, DashboardLayout } from "@/components/site";
 import { useFavoriteBots } from "@/lib/api";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
-import { buyerNav } from "@/lib/nav";
+import { navForAccount } from "@/lib/nav";
 
 export const Route = createFileRoute("/favorites")({
   head: () => ({
@@ -16,8 +16,9 @@ export const Route = createFileRoute("/favorites")({
 });
 
 function Favorites() {
+  const { items, role } = navForAccount(useMarketplaceAccount());
   return (
-    <DashboardLayout user="" role="Xaridor" items={buyerNav}>
+    <DashboardLayout user="" role={role} items={items}>
       <FavoritesContent />
     </DashboardLayout>
   );

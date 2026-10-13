@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Inbox } from "@/components/inbox";
 import { DashboardLayout } from "@/components/site";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
-import { buyerNav, sellerNav } from "@/lib/nav";
+import { navForAccount } from "@/lib/nav";
 
 export const Route = createFileRoute("/messages")({
   validateSearch: (search: Record<string, unknown>): { c?: string | undefined } => ({
@@ -21,12 +21,9 @@ export const Route = createFileRoute("/messages")({
 function Messages() {
   const account = useMarketplaceAccount();
   const { c: selectedId } = Route.useSearch();
+  const { items, role } = navForAccount(account);
   return (
-    <DashboardLayout
-      user=""
-      role={account?.isSeller ? "Dasturchi" : "Xaridor"}
-      items={account?.isSeller ? sellerNav : buyerNav}
-    >
+    <DashboardLayout user="" role={role} items={items}>
       <Inbox selectedId={selectedId} />
     </DashboardLayout>
   );
