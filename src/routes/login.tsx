@@ -1,7 +1,7 @@
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, MessageCircle } from "lucide-react";
 import { Logo } from "@/components/site";
 import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
 
@@ -84,6 +84,14 @@ function Login() {
   return (
     <div className="relative grid min-h-screen place-items-center bg-muted px-4">
       <LanguageSwitcher className="absolute right-4 top-4" />
+      <Link
+        to="/support-chat"
+        aria-label="Yordam chati"
+        title="Yordam chati"
+        className="fixed bottom-5 right-5 z-40 grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105"
+      >
+        <MessageCircle className="h-6 w-6" />
+      </Link>
       <form onSubmit={handleSubmit} className="card-soft w-full max-w-sm p-8">
         <Logo className="justify-center" />
         <h1 className="mt-6 text-center text-xl font-bold">Kirish</h1>
