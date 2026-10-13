@@ -643,6 +643,16 @@ function SellerDashboardLayout({
               <p className="text-sm font-semibold">{account.name || account.email || user}</p>
               <p className="text-xs text-muted-foreground">{role}</p>
             </div>
+            <button
+              type="button"
+              aria-label="Chiqish"
+              title="Chiqish"
+              className="ml-1 inline-flex items-center gap-2 rounded-md px-2 py-2 text-sm text-muted-foreground hover:bg-muted"
+              onClick={() => void getSupabaseClient().auth.signOut()}
+            >
+              <LogOut className="h-5 w-5" />
+              <span className="hidden sm:inline">Chiqish</span>
+            </button>
           </div>
         </div>
         <nav
