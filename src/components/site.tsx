@@ -111,13 +111,17 @@ export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function Logo({ className }: { className?: string }) {
+export function Logo({ className, compact = false }: { className?: string; compact?: boolean }) {
   return (
-    <Link to="/" className={cn("flex items-center gap-2 font-bold text-foreground", className)}>
+    <Link
+      to="/"
+      aria-label="BotSmith"
+      className={cn("flex shrink-0 items-center gap-2 font-bold text-foreground", className)}
+    >
       <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary text-primary-foreground">
         <Send className="h-4 w-4" />
       </span>
-      BotSmith
+      <span className={cn(compact && "hidden min-[420px]:inline")}>BotSmith</span>
     </Link>
   );
 }
@@ -149,8 +153,8 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-8 px-4">
-        <Logo />
+      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:gap-8">
+        <Logo compact />
         <nav className="hidden gap-6 text-sm text-muted-foreground md:flex">
           <Link to="/bots" activeProps={{ className: "text-primary font-medium" }}>
             {t("bots")}
@@ -158,7 +162,7 @@ export function Navbar() {
           <Link to="/how-it-works">{t("how")}</Link>
           {account.isSeller && <Link to="/seller">{t("sell")}</Link>}
         </nav>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex min-w-0 items-center gap-1 sm:gap-2">
           <Link
             to="/favorites"
             aria-label="Sevimlilar"
@@ -184,9 +188,12 @@ export function Navbar() {
                 to={
                   account.isAdmin ? "/admin" : account.isSeller ? "/seller" : "/dashboard/purchases"
                 }
-                className="max-w-[110px] truncate rounded-md border px-3 py-2 text-sm font-medium sm:max-w-[220px]"
+                className="inline-flex shrink-0 items-center rounded-md text-sm font-medium sm:max-w-[220px] sm:border sm:px-3 sm:py-2"
               >
-                {account.name || account.email}
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-primary-soft font-semibold text-primary sm:hidden">
+                  {(account.name || account.email || "?").charAt(0).toUpperCase()}
+                </span>
+                <span className="hidden truncate sm:inline">{account.name || account.email}</span>
               </Link>
               <button
                 type="button"
@@ -662,13 +669,13 @@ function SellerDashboardLayout({
   return (
     <>
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Logo />
-          <div className="flex items-center gap-3">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-primary-soft text-primary">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-4 sm:gap-4 sm:px-6">
+          <Logo compact />
+          <div className="flex min-w-0 items-center gap-1 sm:gap-3">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
               <User className="h-4 w-4" />
             </span>
-            <div>
+            <div className="hidden min-w-0 sm:block">
               <p className="text-sm font-semibold">{account.name || account.email || user}</p>
               <p className="text-xs text-muted-foreground">{role}</p>
             </div>

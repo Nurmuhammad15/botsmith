@@ -28,13 +28,13 @@ export function LanguageSwitcher({ className }: { className?: string }) {
           <button
             type="button"
             aria-label="Language"
-            className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex h-9 items-center gap-1 rounded-md px-1.5 sm:gap-1.5 sm:px-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Globe className="h-4 w-4 text-muted-foreground" />
             {current.short}
             <ChevronDown
               className={cn(
-                "h-3.5 w-3.5 text-muted-foreground transition-transform",
+                "hidden h-3.5 w-3.5 sm:block text-muted-foreground transition-transform",
                 open && "rotate-180",
               )}
             />
