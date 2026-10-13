@@ -86,6 +86,7 @@ function AdminContent() {
   const withdrawals = useAdminWithdrawals(isAdmin);
   const threads = useAdminThreads(isAdmin);
   const stats = useAdminStats(isAdmin);
+  const crypto = useAdminCryptoPayments(isAdmin);
   const users = useAdminUsers(isAdmin);
 
   if (!isAdmin) {
@@ -133,10 +134,11 @@ function AdminContent() {
       <div className="mt-4">
         {tab === 0 && <BotsTab bots={bots.data ?? []} loading={bots.isPending} />}
         {tab === 1 && (
-          <>
-            <CryptoPaymentsPanel enabled={isAdmin} />
-            <OrdersTab orders={orders.data ?? []} loading={orders.isPending} />
-          </>
+          <OrdersTab
+            orders={orders.data ?? []}
+            crypto={crypto.data ?? []}
+            loading={orders.isPending}
+          />
         )}
         {tab === 2 && (
           <WithdrawalsTab items={withdrawals.data ?? []} loading={withdrawals.isPending} />
@@ -250,11 +252,31 @@ const paymentState = (state: number) =>
 
 function OrdersTab({
   orders,
+  crypto,
   loading,
 }: {
   orders: NonNullable<ReturnType<typeof useAdminOrders>["data"]>;
+  crypto: NonNullable<ReturnType<typeof useAdminCryptoPayments>["data"]>;
   loading: boolean;
 }) {
+  const resolveCrypto = useAdminResolveCryptoPayment();
+  // Newest first, so the first payment seen for an order is its latest attempt.
+  const cryptoByOrder = new Map<string, (typeof crypto)[number]>();
+  for (const payment of crypto)
+    if (!cryptoByOrder.has(payment.orderId)) cryptoByOrder.set(payment.orderId, payment);
+  const actCrypto = (id: string, confirm: boolean) =>
+    resolveCrypto.mutate(
+      { id, confirm },
+      {
+        onSuccess: () => toast.success(confirm ? "To‘lov tasdiqlandi" : "Rad etildi"),
+        onError: fail,
+      },
+    );
+  const cryptoLabel = {
+    submitted: "tekshirilmoqda",
+    confirmed: "tasdiqlangan",
+    rejected: "rad etilgan",
+  } as const;
   const setStatus = useAdminSetOrderStatus();
   const resolveRefund = useAdminResolveSubscriptionRefund();
   const act = (id: string, status: "paid" | "cancelled") =>
@@ -304,63 +326,116 @@ function OrdersTab({
         "Sotuvchi",
         "Summa",
         "Obuna",
+        "TxID",
         "Holat",
-        "Onlayn to‘lov",
         "Qaytarish so‘rovi",
         "Amallar",
       ]}
       emptyMessage={loading ? "Yuklanmoqda…" : "Buyurtmalar yo‘q."}
-      rows={orders.map((o) => [
-        orderCode(o.number),
-        o.botTitle,
-        o.buyer,
-        o.seller,
-        formatUZS(o.amount),
-        `${o.subscriptionDays} kun`,
-        label[o.status],
-        o.payments.length === 0
-          ? "—"
-          : o.payments
-              .map((p) => `${p.provider === "payme" ? "Payme" : "Click"}: ${paymentState(p.state)}`)
-              .join(", "),
-        o.refundRequestedAt ? (
-          <div className="max-w-64 space-y-1 text-xs">
-            <p>
-              {o.refundResolution === "refunded"
-                ? "Qaytarildi"
-                : o.refundResolution === "rejected"
-                  ? "Rad etildi"
-                  : "Ko‘rib chiqilmoqda"}
-            </p>
-            {o.refundReason && <p className="whitespace-pre-wrap">{o.refundReason}</p>}
-            {o.refundRequestedAt && (
-              <p className="text-muted-foreground">{formatDateTime(o.refundRequestedAt)}</p>
+      rows={orders.map((o) => {
+        const pay = cryptoByOrder.get(o.id);
+        return [
+          orderCode(o.number),
+          o.botTitle,
+          o.buyer,
+          o.seller,
+          <div>
+            <p className="font-medium">{formatUZS(o.amount)}</p>
+            {pay && (
+              <p className="text-xs text-muted-foreground">{pay.amountUsdt.toFixed(2)} USDT</p>
             )}
-            {o.status === "paid" && o.refundResolution === null && (
-              <div className="flex flex-wrap gap-1 pt-1">
-                <Button size="sm" onClick={() => resolve(o.id, "refunded")}>
-                  Qaytarildi
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => resolve(o.id, "rejected")}>
-                  Rad etish
-                </Button>
-              </div>
+          </div>,
+          `${o.subscriptionDays} kun`,
+          pay?.txid ? (
+            <a
+              href={`https://tronscan.org/#/transaction/${pay.txid}`}
+              target="_blank"
+              rel="noreferrer"
+              className="break-all font-mono text-xs text-primary underline"
+            >
+              {pay.txid.slice(0, 10)}…{pay.txid.slice(-6)}
+            </a>
+          ) : (
+            "—"
+          ),
+          <div>
+            <p>{label[o.status]}</p>
+            {pay && (
+              <p className="text-xs text-muted-foreground">
+                USDT: {cryptoLabel[pay.status as keyof typeof cryptoLabel] ?? pay.status}
+              </p>
             )}
-          </div>
-        ) : (
-          "—"
-        ),
-        o.status === "pending_payment" ? (
-          <div className="flex gap-2">
-            <Button size="sm" onClick={() => act(o.id, "paid")}>
-              To‘langan
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => act(o.id, "cancelled")}>
-              Bekor qilish
-            </Button>
-          </div>
-        ) : null,
-      ])}
+            {o.payments.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {o.payments
+                  .map(
+                    (p) =>
+                      `${p.provider === "payme" ? "Payme" : "Click"}: ${paymentState(p.state)}`,
+                  )
+                  .join(", ")}
+              </p>
+            )}
+          </div>,
+          o.refundRequestedAt ? (
+            <div className="max-w-64 space-y-1 text-xs">
+              <p>
+                {o.refundResolution === "refunded"
+                  ? "Qaytarildi"
+                  : o.refundResolution === "rejected"
+                    ? "Rad etildi"
+                    : "Ko‘rib chiqilmoqda"}
+              </p>
+              {o.refundReason && <p className="whitespace-pre-wrap">{o.refundReason}</p>}
+              {o.refundRequestedAt && (
+                <p className="text-muted-foreground">{formatDateTime(o.refundRequestedAt)}</p>
+              )}
+              {o.status === "paid" && o.refundResolution === null && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  <Button size="sm" onClick={() => resolve(o.id, "refunded")}>
+                    Qaytarildi
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => resolve(o.id, "rejected")}>
+                    Rad etish
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : (
+            "—"
+          ),
+          pay?.status === "submitted" ? (
+            <div className="flex gap-2">
+              <button
+                onClick={() => actCrypto(pay.id, true)}
+                aria-label="Tasdiqlash"
+                title="USDT to‘lovini tasdiqlash"
+                disabled={resolveCrypto.isPending}
+                className="grid h-8 w-8 place-items-center rounded-md bg-success-soft text-success"
+              >
+                <Check className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => actCrypto(pay.id, false)}
+                aria-label="Rad etish"
+                title="USDT to‘lovini rad etish"
+                disabled={resolveCrypto.isPending}
+                className="grid h-8 w-8 place-items-center rounded-md bg-destructive/10 text-destructive"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : o.status === "pending_payment" ? (
+            <div className="flex gap-2">
+              <Button size="sm" onClick={() => act(o.id, "paid")}>
+                To‘langan
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => act(o.id, "cancelled")}>
+                Bekor qilish
+              </Button>
+            </div>
+          ) : null,
+        ];
+      })}
     />
   );
 }
@@ -753,72 +828,5 @@ function CryptoSettingsForm() {
         {save.isPending ? "Saqlanmoqda…" : "Saqlash"}
       </Button>
     </form>
-  );
-}
-
-function CryptoPaymentsPanel({ enabled }: { enabled: boolean }) {
-  const payments = useAdminCryptoPayments(enabled);
-  const resolve = useAdminResolveCryptoPayment();
-  const items = payments.data ?? [];
-  if (items.length === 0) return null;
-  const act = (id: string, confirm: boolean) =>
-    resolve.mutate(
-      { id, confirm },
-      {
-        onSuccess: () => toast.success(confirm ? "To‘lov tasdiqlandi" : "Rad etildi"),
-        onError: fail,
-      },
-    );
-  const label = { submitted: "tekshirilmoqda", confirmed: "tasdiqlangan", rejected: "rad etilgan" };
-  return (
-    <div className="mb-6">
-      <h2 className="mb-2 font-semibold">USDT to‘lovlari</h2>
-      <DataTable
-        head={["Buyurtma", "Xaridor", "Summa", "TxID", "Holat", "Amallar"]}
-        rows={items.map((p) => [
-          orderCode(p.orderNumber),
-          p.buyer,
-          <div>
-            <p className="font-medium">{p.amountUsdt.toFixed(2)} USDT</p>
-            <p className="text-xs text-muted-foreground">{formatUZS(p.orderAmount)}</p>
-          </div>,
-          p.txid ? (
-            <a
-              href={`https://tronscan.org/#/transaction/${p.txid}`}
-              target="_blank"
-              rel="noreferrer"
-              className="break-all font-mono text-xs text-primary underline"
-            >
-              {p.txid.slice(0, 10)}…{p.txid.slice(-6)}
-            </a>
-          ) : (
-            "—"
-          ),
-          label[p.status as keyof typeof label] ?? p.status,
-          p.status === "submitted" ? (
-            <div className="flex gap-2">
-              <button
-                onClick={() => act(p.id, true)}
-                aria-label="Tasdiqlash"
-                disabled={resolve.isPending}
-                className="grid h-8 w-8 place-items-center rounded-md bg-success-soft text-success"
-              >
-                <Check className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => act(p.id, false)}
-                aria-label="Rad etish"
-                disabled={resolve.isPending}
-                className="grid h-8 w-8 place-items-center rounded-md bg-destructive/10 text-destructive"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          ) : (
-            "—"
-          ),
-        ])}
-      />
-    </div>
   );
 }

@@ -182,4 +182,7 @@ export const dict4: Entry[] = [
   ["Rasmni kattalashtirish", "Увеличить изображение", "Enlarge image"],
   ["Rasm", "Изображение", "Image"],
   ["Bot rasmi", "Изображение бота", "Bot image"],
+  ["USDT to'lovini tasdiqlash", "Подтвердить платёж USDT", "Confirm USDT payment"],
+  ["USDT to'lovini rad etish", "Отклонить платёж USDT", "Reject USDT payment"],
+  ["USDT:", "USDT:", "USDT:"],
 ];
