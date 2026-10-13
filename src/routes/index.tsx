@@ -12,13 +12,13 @@ export const Route = createFileRoute("/")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "BotSmith — Telegram botlarni xarid qiling yoki soting" },
+      { title: "BotHub — Telegram botlarni xarid qiling yoki soting" },
       {
         name: "description",
         content:
           "Tayyor Telegram botlar, ishonchli dasturchilar va xavfsiz to'lov. Payme va Click orqali.",
       },
-      { property: "og:title", content: "BotSmith — Telegram botlar marketplace" },
+      { property: "og:title", content: "BotHub — Telegram botlar marketplace" },
       {
         property: "og:description",
         content: "Tayyor Telegram botlarni xarid qiling yoki o'zingizni soting.",
@@ -170,7 +170,7 @@ function Index() {
           </div>
         </div>
         <div>
-          <h2 className="text-xl font-bold">Nega aynan BotSmith?</h2>
+          <h2 className="text-xl font-bold">Nega aynan BotHub?</h2>
           <div className="card-soft mt-4 flex flex-col gap-5 p-5">
             {[
               [ShieldCheck, "Xavfsiz to'lov", "Payme va Click"],

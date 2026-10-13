@@ -32,7 +32,7 @@ export const buyerFaqs: Faq[] = [
   ],
   [
     "Muammo yuzaga kelsa nima qilaman?",
-    "To‘lov tasdiqlangach 24 soat ichida “Buyurtmalar” sahifasidan sababini ko‘rsatib qaytarish so‘rovini yuboring. BotSmith jamoasi uni ko‘rib chiqadi; batafsil shartlar “Obuna va qaytarish qoidalari” sahifasida.",
+    "To‘lov tasdiqlangach 24 soat ichida “Buyurtmalar” sahifasidan sababini ko‘rsatib qaytarish so‘rovini yuboring. BotHub jamoasi uni ko‘rib chiqadi; batafsil shartlar “Obuna va qaytarish qoidalari” sahifasida.",
   ],
 ];
 
@@ -47,7 +47,7 @@ export const sellerFaqs: Faq[] = [
   ],
   [
     "Botga kirishni qanday boshqaraman?",
-    "“Buyurtmalar” bo‘limida to‘lov, obuna muddati va qaytarish so‘rovi holatini ko‘ring. Xaridorga shu yerdan yozib, botingizga kirishni qo‘lda bering yoki obuna tugaganda bekor qiling. To‘lov va qaytarish qarorlarini BotSmith nazorat qiladi.",
+    "“Buyurtmalar” bo‘limida to‘lov, obuna muddati va qaytarish so‘rovi holatini ko‘ring. Xaridorga shu yerdan yozib, botingizga kirishni qo‘lda bering yoki obuna tugaganda bekor qiling. To‘lov va qaytarish qarorlarini BotHub nazorat qiladi.",
   ],
   [
     "Xaridor bilan qanday gaplashaman?",
@@ -55,7 +55,7 @@ export const sellerFaqs: Faq[] = [
   ],
   [
     "Pulni qanday yechaman?",
-    "To‘langan obuna daromadi 24 soat ushlab turilgach yechish uchun ochiladi. BotSmith sotuv narxidan 5% komissiya ushlab qoladi; yechish so‘rovidan yana 5% olinadi. To‘lovni administrator qo‘lda amalga oshiradi.",
+    "To‘langan obuna daromadi 24 soat ushlab turilgach yechish uchun ochiladi. BotHub sotuv narxidan 5% komissiya ushlab qoladi; yechish so‘rovidan yana 5% olinadi. To‘lovni administrator qo‘lda amalga oshiradi.",
   ],
   [
     "Daromad qachon hisoblanadi?",

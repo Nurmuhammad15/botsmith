@@ -128,9 +128,9 @@ export const dict1: Entry[] = [
   ["Yordam chatini ochish", "Открыть чат поддержки", "Open support chat"],
   ["Telegram botlar marketplace", "Маркетплейс Telegram-ботов", "Telegram bot marketplace"],
   [
-    "BotSmith. Barcha huquqlar himoyalangan.",
-    "BotSmith. Все права защищены.",
-    "BotSmith. All rights reserved.",
+    "BotHub. Barcha huquqlar himoyalangan.",
+    "BotHub. Все права защищены.",
+    "BotHub. All rights reserved.",
   ],
   ["Hisobingiz tekshirilmoqda…", "Проверяем ваш аккаунт…", "Checking your account…"],
   [
@@ -336,7 +336,7 @@ export const dict1: Entry[] = [
     "Не удалось обновить избранное. Попробуйте ещё раз.",
     "Couldn't update favorites. Please try again.",
   ],
-  ["Sevimlilar — BotSmith", "Избранное — BotSmith", "Favorites — BotSmith"],
+  ["Sevimlilar — BotHub", "Избранное — BotHub", "Favorites — BotHub"],
   [
     "Hozircha sevimli botlar yo'q. Bot kartasidagi yurak belgisini bosib saqlang.",
     "Избранных ботов пока нет. Нажмите на сердечко на карточке бота, чтобы сохранить.",
@@ -361,7 +361,7 @@ export const dict1: Entry[] = [
     "The bot may not be published or may have been removed.",
   ],
   ["Bot topilmadi", "Бот не найден", "Bot not found"],
-  ["Bot — BotSmith", "Бот — BotSmith", "Bot — BotSmith"],
+  ["Bot — BotHub", "Бот — BotHub", "Bot — BotHub"],
   ["Botni boshqarish", "Управление ботом", "Manage bot"],
   ["CV:", "Резюме:", "CV:"],
   ["Fikringiz (ixtiyoriy)", "Ваш отзыв (необязательно)", "Your comment (optional)"],
@@ -391,7 +391,7 @@ export const dict1: Entry[] = [
   ["7 kunlik", "7 дней", "7 days"],
   ["30 kunlik", "30 дней", "30 days"],
   ["/ 1 kun", "/ 1 день", "/ 1 day"],
-  ["{n} — BotSmith", "{n} — BotSmith", "{n} — BotSmith"],
+  ["{n} — BotHub", "{n} — BotHub", "{n} — BotHub"],
 
   // ---------------------------------------------------------------- catalog
   ["1 soat", "1 час", "1 hour"],
@@ -399,7 +399,7 @@ export const dict1: Entry[] = [
   ["3–6 soat", "3–6 часов", "3–6 hours"],
   ["6+ soat", "6+ часов", "6+ hours"],
   ["Arzonroq", "Дешевле", "Cheaper"],
-  ["Barcha botlar — BotSmith", "Все боты — BotSmith", "All bots — BotSmith"],
+  ["Barcha botlar — BotHub", "Все боты — BotHub", "All bots — BotHub"],
   ["Bot nomi yoki kategoriya...", "Название бота или категория…", "Bot name or category…"],
   [
     "Botlarni yuklab bo'lmadi. Keyinroq qayta urinib ko'ring.",

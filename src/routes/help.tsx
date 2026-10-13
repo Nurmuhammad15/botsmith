@@ -4,12 +4,12 @@ import { HelpPage } from "@/components/help-page";
 export const Route = createFileRoute("/help")({
   head: () => ({
     meta: [
-      { title: "Yordam — BotSmith" },
+      { title: "Yordam — BotHub" },
       {
         name: "description",
         content: "Bot xarid qilish, sotish, buyurtmalar va pul yechish bo‘yicha savollar.",
       },
-      { property: "og:title", content: "Yordam — BotSmith" },
+      { property: "og:title", content: "Yordam — BotHub" },
       {
         property: "og:description",
         content: "Bot xarid qilish, sotish, buyurtmalar va pul yechish bo‘yicha savollar.",

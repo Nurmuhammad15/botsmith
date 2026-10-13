@@ -11,12 +11,12 @@ export const Route = createFileRoute("/register")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Ro'yxatdan o'tish — BotSmith" },
+      { title: "Ro'yxatdan o'tish — BotHub" },
       {
         name: "description",
-        content: "Xaridor yoki dasturchi sifatida BotSmith'da ro'yxatdan o'ting.",
+        content: "Xaridor yoki dasturchi sifatida BotHub'da ro'yxatdan o'ting.",
       },
-      { property: "og:title", content: "Ro'yxatdan o'tish — BotSmith" },
+      { property: "og:title", content: "Ro'yxatdan o'tish — BotHub" },
       { property: "og:description", content: "Xaridor yoki dasturchi sifatida ro'yxatdan o'ting." },
     ],
   }),

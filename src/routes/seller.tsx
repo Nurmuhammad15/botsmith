@@ -13,12 +13,12 @@ export const Route = createFileRoute("/seller")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Sotuvchi paneli — BotSmith" },
+      { title: "Sotuvchi paneli — BotHub" },
       {
         name: "description",
         content: "Daromad, sotuvlar, ko'rishlar va botlaringizni boshqaring.",
       },
-      { property: "og:title", content: "Sotuvchi paneli — BotSmith" },
+      { property: "og:title", content: "Sotuvchi paneli — BotHub" },
       { property: "og:description", content: "Daromad va botlaringizni boshqaring." },
     ],
   }),

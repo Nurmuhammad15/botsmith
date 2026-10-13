@@ -1,9 +1,9 @@
-# BotSmith
+# BotHub
 
-BotSmith is a marketplace for Telegram bot subscriptions. Buyers choose 1-, 7-, or 30-day access;
-sellers set each plan's price and manage buyer access from the order list. BotSmith tracks payments,
+BotHub is a marketplace for Telegram bot subscriptions. Buyers choose 1-, 7-, or 30-day access;
+sellers set each plan's price and manage buyer access from the order list. BotHub tracks payments,
 subscription periods, refunds, and seller balances; sellers manually grant or revoke access on
-their own bot service. BotSmith does not sell or deliver bot source files.
+their own bot service. BotHub does not sell or deliver bot source files.
 
 ## Development
 
@@ -40,7 +40,7 @@ where id = (select id from auth.users where email = 'you@example.com');
 ```
 
 Storage notes: covers are public images (JPG/PNG/WebP, 5 MB, up to 5 per bot). The old private
-`bot-files` bucket may remain in the database for migration compatibility, but BotSmith no longer
+`bot-files` bucket may remain in the database for migration compatibility, but BotHub no longer
 accepts, sells, or grants access to bot source files.
 
 ### Testing the SQL
@@ -90,11 +90,11 @@ separate agreement, not something the app can switch on by itself.
 
 ## Subscription access and refunds
 
-No seller webhook, public seller endpoint, cron job, or webhook secret is required. BotSmith is the
+No seller webhook, public seller endpoint, cron job, or webhook secret is required. BotHub is the
 source of truth for payment, refund status, and subscription start/end times. Sellers use
 **Seller dashboard → Orders** to see paid, expiring, expired, and refund-requested subscriptions,
 then message buyers there to grant or revoke access on their bot service. Access on a seller's
-external bot is managed manually; it is not automatically changed by BotSmith. This keeps buyer
+external bot is managed manually; it is not automatically changed by BotHub. This keeps buyer
 payments and refund decisions under platform control without requiring sellers to expose a server
 endpoint or subscribe to Vercel Pro.
 

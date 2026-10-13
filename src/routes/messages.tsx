@@ -10,7 +10,7 @@ export const Route = createFileRoute("/messages")({
   }),
   head: () => ({
     meta: [
-      { title: "Xabarlar — BotSmith" },
+      { title: "Xabarlar — BotHub" },
       { name: "description", content: "Sotuvchilar va xaridorlar bilan yozishmalar." },
       { name: "robots", content: "noindex" },
     ],

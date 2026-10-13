@@ -49,7 +49,7 @@ export function SupportChat() {
             </span>
             <div>
               <h1 className="font-semibold">Yordam chati</h1>
-              <p className="text-xs text-muted-foreground">BotSmith qo‘llab-quvvatlashi</p>
+              <p className="text-xs text-muted-foreground">BotHub qo‘llab-quvvatlashi</p>
             </div>
           </header>
           {!ready ? (

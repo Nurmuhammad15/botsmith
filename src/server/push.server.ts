@@ -64,7 +64,7 @@ export async function handlePush(request: Request) {
   } catch {
     return json(400, { error: "invalid_json" });
   }
-  const title = typeof body["title"] === "string" ? body["title"].slice(0, 80) : "BotSmith";
+  const title = typeof body["title"] === "string" ? body["title"].slice(0, 80) : "BotHub";
   const text = typeof body["body"] === "string" ? body["body"].slice(0, 200) : "";
   const url = typeof body["url"] === "string" && body["url"].startsWith("/") ? body["url"] : "/";
   const list = Array.isArray(body["subscriptions"]) ? body["subscriptions"].slice(0, 20) : [];

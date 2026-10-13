@@ -3,7 +3,7 @@ import type { Entry } from "@/lib/i18n-dict-1";
 export const dict3: Entry[] = [
   // ---------------------------------------------------------------- buyer orders
   ["Mening buyurtmalarim", "Мои заказы", "My orders"],
-  ["Mening buyurtmalarim — BotSmith", "Мои заказы — BotSmith", "My orders — BotSmith"],
+  ["Mening buyurtmalarim — BotHub", "Мои заказы — BotHub", "My orders — BotHub"],
   [
     "Xarid qilingan botlar va buyurtma holati.",
     "Купленные боты и статус заказов.",
@@ -36,14 +36,14 @@ export const dict3: Entry[] = [
     "The 24-hour window for a refund request has ended.",
   ],
   [
-    "Qaytarish so'rovingiz qabul qilindi. BotSmith jamoasi uni ko'rib chiqadi.",
-    "Ваш запрос на возврат принят. Команда BotSmith его рассмотрит.",
-    "Your refund request was received. The BotSmith team will review it.",
+    "Qaytarish so'rovingiz qabul qilindi. BotHub jamoasi uni ko'rib chiqadi.",
+    "Ваш запрос на возврат принят. Команда BotHub его рассмотрит.",
+    "Your refund request was received. The BotHub team will review it.",
   ],
   [
-    "Qaytarish so'rovingiz yuborildi. BotSmith jamoasi uni ko'rib chiqadi.",
-    "Ваш запрос на возврат отправлен. Команда BotSmith его рассмотрит.",
-    "Your refund request was sent. The BotSmith team will review it.",
+    "Qaytarish so'rovingiz yuborildi. BotHub jamoasi uni ko'rib chiqadi.",
+    "Ваш запрос на возврат отправлен. Команда BotHub его рассмотрит.",
+    "Your refund request was sent. The BotHub team will review it.",
   ],
   ["Qaytarish so'rovini yuborish", "Отправить запрос на возврат", "Send refund request"],
   ["Rozilikni saqlab bo'lmadi:", "Не удалось сохранить согласие:", "Couldn't save your consent:"],
@@ -80,7 +80,7 @@ export const dict3: Entry[] = [
   ["Sotuvchiga yozish", "Написать продавцу", "Message the seller"],
 
   // ---------------------------------------------------------------- messages / support
-  ["Xabarlar — BotSmith", "Сообщения — BotSmith", "Messages — BotSmith"],
+  ["Xabarlar — BotHub", "Сообщения — BotHub", "Messages — BotHub"],
   [
     "Sotuvchilar va xaridorlar bilan yozishmalar.",
     "Переписка с продавцами и покупателями.",
@@ -116,11 +116,11 @@ export const dict3: Entry[] = [
   ],
   ["Bosh sahifaga qaytish", "Вернуться на главную", "Back to home"],
   [
-    "BotSmith qo'llab-quvvatlash xizmati bilan chat.",
-    "Чат со службой поддержки BotSmith.",
-    "Chat with BotSmith support.",
+    "BotHub qo'llab-quvvatlash xizmati bilan chat.",
+    "Чат со службой поддержки BotHub.",
+    "Chat with BotHub support.",
   ],
-  ["BotSmith qo'llab-quvvatlashi", "Поддержка BotSmith", "BotSmith support"],
+  ["BotHub qo'llab-quvvatlashi", "Поддержка BotHub", "BotHub support"],
   [
     "Salom! Botlar yoki platforma haqida savolingizni yozing.",
     "Здравствуйте! Напишите свой вопрос о ботах или платформе.",
@@ -129,12 +129,12 @@ export const dict3: Entry[] = [
   ["Xabarlarni yuklab bo'lmadi.", "Не удалось загрузить сообщения.", "Couldn't load messages."],
   ["Xabarni yuborish", "Отправить сообщение", "Send message"],
   ["Yordam chati", "Чат поддержки", "Support chat"],
-  ["Yordam chati — BotSmith", "Чат поддержки — BotSmith", "Support chat — BotSmith"],
+  ["Yordam chati — BotHub", "Чат поддержки — BotHub", "Support chat — BotHub"],
   ["Yordam xizmatiga yozish uchun", "Чтобы написать в поддержку,", "To write to support,"],
   ["tizimga kiring", "войдите в систему", "log in"],
 
   // ---------------------------------------------------------------- help
-  ["Yordam — BotSmith", "Помощь — BotSmith", "Help — BotSmith"],
+  ["Yordam — BotHub", "Помощь — BotHub", "Help — BotHub"],
   [
     "Bot xarid qilish, sotish, buyurtmalar va pul yechish bo'yicha savollar.",
     "Вопросы о покупке и продаже ботов, заказах и выводе средств.",
@@ -146,7 +146,7 @@ export const dict3: Entry[] = [
   ["Yordam chatiga yozing", "Напишите в чат поддержки", "Write to support chat"],
 
   // ---------------------------------------------------------------- how it works
-  ["Qanday ishlaydi — BotSmith", "Как это работает — BotSmith", "How it works — BotSmith"],
+  ["Qanday ishlaydi — BotHub", "Как это работает — BotHub", "How it works — BotHub"],
   [
     "Bot tanlash, buyurtma berish va botni qabul qilish.",
     "Выбор бота, заказ и получение бота.",
@@ -211,14 +211,14 @@ export const dict3: Entry[] = [
 
   // ---------------------------------------------------------------- home
   [
-    "BotSmith — Telegram botlar marketplace",
-    "BotSmith — маркетплейс Telegram-ботов",
-    "BotSmith — Telegram bot marketplace",
+    "BotHub — Telegram botlar marketplace",
+    "BotHub — маркетплейс Telegram-ботов",
+    "BotHub — Telegram bot marketplace",
   ],
   [
-    "BotSmith — Telegram botlarni xarid qiling yoki soting",
-    "BotSmith — покупайте и продавайте Telegram-ботов",
-    "BotSmith — buy or sell Telegram bots",
+    "BotHub — Telegram botlarni xarid qiling yoki soting",
+    "BotHub — покупайте и продавайте Telegram-ботов",
+    "BotHub — buy or sell Telegram bots",
   ],
   [
     "Tayyor Telegram botlarni xarid qiling yoki o'zingizni soting.",
@@ -235,7 +235,7 @@ export const dict3: Entry[] = [
   ["Akkauntingiz bormi?", "Уже есть аккаунт?", "Already have an account?"],
   ["Search", "Поиск", "Search"],
   ["Kirish va botlarni ko'rish", "Войти и смотреть ботов", "Log in and browse bots"],
-  ["Nega aynan BotSmith?", "Почему именно BotSmith?", "Why BotSmith?"],
+  ["Nega aynan BotHub?", "Почему именно BotHub?", "Why BotHub?"],
   ["Tasdiqlangan dasturchilar", "Проверенные разработчики", "Verified developers"],
   ["Haqiqiy profil va sharhlar", "Реальные профили и отзывы", "Real profiles and reviews"],
   ["Xavfsiz to'lov", "Безопасная оплата", "Secure payment"],
@@ -275,11 +275,11 @@ export const dict3: Entry[] = [
 
   // ---------------------------------------------------------------- login / register
   ["Kirish", "Вход", "Log in"],
-  ["Kirish — BotSmith", "Вход — BotSmith", "Log in — BotSmith"],
+  ["Kirish — BotHub", "Вход — BotHub", "Log in — BotHub"],
   [
-    "BotSmith hisobingizga kiring.",
-    "Войдите в свой аккаунт BotSmith.",
-    "Log in to your BotSmith account.",
+    "BotHub hisobingizga kiring.",
+    "Войдите в свой аккаунт BotHub.",
+    "Log in to your BotHub account.",
   ],
   ["Hisobingizga kiring", "Войдите в аккаунт", "Log in to your account"],
   ["Xush kelibsiz!", "Добро пожаловать!", "Welcome!"],
@@ -321,11 +321,11 @@ export const dict3: Entry[] = [
     "Сервер не настроен. Обратитесь к администратору.",
     "The server isn't configured. Contact the administrator.",
   ],
-  ["Ro'yxatdan o'tish — BotSmith", "Регистрация — BotSmith", "Sign up — BotSmith"],
+  ["Ro'yxatdan o'tish — BotHub", "Регистрация — BotHub", "Sign up — BotHub"],
   [
-    "Xaridor yoki dasturchi sifatida BotSmith'da ro'yxatdan o'ting.",
-    "Зарегистрируйтесь в BotSmith как покупатель или разработчик.",
-    "Sign up on BotSmith as a buyer or developer.",
+    "Xaridor yoki dasturchi sifatida BotHub'da ro'yxatdan o'ting.",
+    "Зарегистрируйтесь в BotHub как покупатель или разработчик.",
+    "Sign up on BotHub as a buyer or developer.",
   ],
   [
     "Xaridor yoki dasturchi sifatida ro'yxatdan o'ting.",
@@ -368,14 +368,14 @@ export const dict3: Entry[] = [
   // ---------------------------------------------------------------- terms
   ["Obuna va qaytarish qoidalari", "Правила подписки и возврата", "Subscription and refund terms"],
   [
-    "Obuna va qaytarish qoidalari — BotSmith",
-    "Правила подписки и возврата — BotSmith",
-    "Subscription and refund terms — BotSmith",
+    "Obuna va qaytarish qoidalari — BotHub",
+    "Правила подписки и возврата — BotHub",
+    "Subscription and refund terms — BotHub",
   ],
   [
-    "BotSmith obunalari, 24 soatlik qaytarish muddati va platforma shartlari.",
-    "Подписки BotSmith, 24-часовой срок возврата и условия платформы.",
-    "BotSmith subscriptions, the 24-hour refund window and platform terms.",
+    "BotHub obunalari, 24 soatlik qaytarish muddati va platforma shartlari.",
+    "Подписки BotHub, 24-часовой срок возврата и условия платформы.",
+    "BotHub subscriptions, the 24-hour refund window and platform terms.",
   ],
   [
     "Oxirgi yangilanish: 2026-yil 11-oktabr",
@@ -384,32 +384,32 @@ export const dict3: Entry[] = [
   ],
   ["Obuna xaridi", "Покупка подписки", "Buying a subscription"],
   [
-    "BotSmith katalogida ko'rsatilgan botdan 1, 7 yoki 30 kunlik muddatga obuna tanlaysiz. To'lov tasdiqlangach obuna muddati boshlanadi va buyurtma BotSmith hamda bot egasining kabinetida qayd etiladi. Bot egasi siz bilan bog'lanib, o'z botiga kirishni taqdim etadi. Muddat to'lov tasdiqlangan vaqtdan hisoblanadi.",
-    "Вы выбираете подписку на бота из каталога BotSmith на 1, 7 или 30 дней. После подтверждения оплаты начинается срок подписки, а заказ фиксируется в кабинете BotSmith и владельца бота. Владелец бота свяжется с вами и предоставит доступ. Срок отсчитывается с момента подтверждения оплаты.",
-    "You choose a 1, 7 or 30-day subscription to a bot listed in the BotSmith catalog. The subscription period starts when payment is confirmed, and the order is recorded in the BotSmith and bot owner dashboards. The bot owner will contact you and grant access. The period counts from the moment payment is confirmed.",
+    "BotHub katalogida ko'rsatilgan botdan 1, 7 yoki 30 kunlik muddatga obuna tanlaysiz. To'lov tasdiqlangach obuna muddati boshlanadi va buyurtma BotHub hamda bot egasining kabinetida qayd etiladi. Bot egasi siz bilan bog'lanib, o'z botiga kirishni taqdim etadi. Muddat to'lov tasdiqlangan vaqtdan hisoblanadi.",
+    "Вы выбираете подписку на бота из каталога BotHub на 1, 7 или 30 дней. После подтверждения оплаты начинается срок подписки, а заказ фиксируется в кабинете BotHub и владельца бота. Владелец бота свяжется с вами и предоставит доступ. Срок отсчитывается с момента подтверждения оплаты.",
+    "You choose a 1, 7 or 30-day subscription to a bot listed in the BotHub catalog. The subscription period starts when payment is confirmed, and the order is recorded in the BotHub and bot owner dashboards. The bot owner will contact you and grant access. The period counts from the moment payment is confirmed.",
   ],
   ["Narx va komissiya", "Цена и комиссия", "Price and commission"],
   [
-    "Xaridor to'lov vaqtida bot sahifasidagi obuna narxini to'laydi; xaridorga qo'shimcha 5% qo'shilmaydi. BotSmith sotuvchining belgilagan narxidan 5% platforma komissiyasini ushlab qoladi, qolgan 95% sotuvchining hisobiga yoziladi. Pul yechishning alohida komissiyasi 5% ni tashkil etadi. Sotuv daromadi yechishdan oldin 24 soat ushlab turiladi; qaytarish so'rovi ko'rib chiqilayotgan paytda u yechish uchun ochilmaydi.",
-    "Покупатель платит цену подписки со страницы бота; к цене не добавляется 5%. BotSmith удерживает 5% комиссии платформы с цены продавца, остальные 95% зачисляются продавцу. Отдельная комиссия за вывод средств составляет 5%. Доход от продаж удерживается 24 часа перед выводом; пока рассматривается запрос на возврат, он недоступен для вывода.",
-    "The buyer pays the subscription price shown on the bot page; nothing extra of 5% is added. BotSmith keeps a 5% platform commission from the seller's price and the remaining 95% is credited to the seller. A separate withdrawal fee of 5% applies. Sales earnings are held for 24 hours before withdrawal; while a refund request is under review they can't be withdrawn.",
+    "Xaridor to'lov vaqtida bot sahifasidagi obuna narxini to'laydi; xaridorga qo'shimcha 5% qo'shilmaydi. BotHub sotuvchining belgilagan narxidan 5% platforma komissiyasini ushlab qoladi, qolgan 95% sotuvchining hisobiga yoziladi. Pul yechishning alohida komissiyasi 5% ni tashkil etadi. Sotuv daromadi yechishdan oldin 24 soat ushlab turiladi; qaytarish so'rovi ko'rib chiqilayotgan paytda u yechish uchun ochilmaydi.",
+    "Покупатель платит цену подписки со страницы бота; к цене не добавляется 5%. BotHub удерживает 5% комиссии платформы с цены продавца, остальные 95% зачисляются продавцу. Отдельная комиссия за вывод средств составляет 5%. Доход от продаж удерживается 24 часа перед выводом; пока рассматривается запрос на возврат, он недоступен для вывода.",
+    "The buyer pays the subscription price shown on the bot page; nothing extra of 5% is added. BotHub keeps a 5% platform commission from the seller's price and the remaining 95% is credited to the seller. A separate withdrawal fee of 5% applies. Sales earnings are held for 24 hours before withdrawal; while a refund request is under review they can't be withdrawn.",
   ],
   ["24 soat ichida qaytarish", "Возврат в течение 24 часов", "Refund within 24 hours"],
   [
-    "Xarid sizga mos kelmasa, to'lov muvaffaqiyatli tasdiqlanganidan keyin 24 soat ichida “Mening buyurtmalarim” sahifasidan sababini yozib qaytarish so'rovini yuboring. Bu qoida obuna 1, 7 yoki 30 kunlik bo'lishidan qat'i nazar amal qiladi. Murojaat yuborilgach, BotSmith jamoasi so'rovni tekshiradi va tasdiqlangan qaytarishni dastlabki to'lov usuli orqali qo'lda rasmiylashtiradi. Bank yoki to'lov provayderining qayta ishlash muddati farq qilishi mumkin. 24 soat o'tgach yangi qaytarish so'rovi qabul qilinmaydi.",
-    "Если покупка вам не подошла, в течение 24 часов после успешного подтверждения оплаты отправьте запрос на возврат со страницы «Мои заказы», указав причину. Правило действует независимо от того, 1, 7 или 30 дней подписка. После обращения команда BotSmith проверит запрос и вручную оформит подтверждённый возврат тем же способом оплаты. Сроки обработки банка или платёжного провайдера могут отличаться. По истечении 24 часов новые запросы на возврат не принимаются.",
-    "If the purchase doesn't suit you, within 24 hours of successful payment confirmation send a refund request with a reason from the “My orders” page. This applies whether the subscription is 1, 7 or 30 days. After you submit it the BotSmith team reviews the request and manually processes an approved refund through the original payment method. Processing times at your bank or payment provider may vary. After 24 hours new refund requests aren't accepted.",
+    "Xarid sizga mos kelmasa, to'lov muvaffaqiyatli tasdiqlanganidan keyin 24 soat ichida “Mening buyurtmalarim” sahifasidan sababini yozib qaytarish so'rovini yuboring. Bu qoida obuna 1, 7 yoki 30 kunlik bo'lishidan qat'i nazar amal qiladi. Murojaat yuborilgach, BotHub jamoasi so'rovni tekshiradi va tasdiqlangan qaytarishni dastlabki to'lov usuli orqali qo'lda rasmiylashtiradi. Bank yoki to'lov provayderining qayta ishlash muddati farq qilishi mumkin. 24 soat o'tgach yangi qaytarish so'rovi qabul qilinmaydi.",
+    "Если покупка вам не подошла, в течение 24 часов после успешного подтверждения оплаты отправьте запрос на возврат со страницы «Мои заказы», указав причину. Правило действует независимо от того, 1, 7 или 30 дней подписка. После обращения команда BotHub проверит запрос и вручную оформит подтверждённый возврат тем же способом оплаты. Сроки обработки банка или платёжного провайдера могут отличаться. По истечении 24 часов новые запросы на возврат не принимаются.",
+    "If the purchase doesn't suit you, within 24 hours of successful payment confirmation send a refund request with a reason from the “My orders” page. This applies whether the subscription is 1, 7 or 30 days. After you submit it the BotHub team reviews the request and manually processes an approved refund through the original payment method. Processing times at your bank or payment provider may vary. After 24 hours new refund requests aren't accepted.",
   ],
   ["Botga kirish", "Доступ к боту", "Bot access"],
   [
-    "BotSmith to'lov, obuna muddati va qaytarish holatini nazorat qiladi. Bot egasi kirishni o'z xizmatida qo'lda beradi va obuna tugaganda bekor qiladi; buning uchun webhook yoki server manzilini ulash shart emas. BotSmith bot egasiga to'lov yoki qaytarish qarorini qayd etadi, ammo tashqi botga kirishni avtomatik yoqmaydi yoki o'chirmaydi.",
-    "BotSmith контролирует оплату, срок подписки и статус возврата. Владелец бота вручную выдаёт доступ в своём сервисе и отключает его по окончании подписки; для этого не нужно подключать webhook или адрес сервера. BotSmith фиксирует для владельца решение по оплате или возврату, но не включает и не отключает доступ к внешнему боту автоматически.",
-    "BotSmith tracks payment, subscription period and refund status. The bot owner grants access manually in their own service and revokes it when the subscription ends; no webhook or server address is required. BotSmith records the payment or refund decision for the owner but doesn't automatically enable or disable access to an external bot.",
+    "BotHub to'lov, obuna muddati va qaytarish holatini nazorat qiladi. Bot egasi kirishni o'z xizmatida qo'lda beradi va obuna tugaganda bekor qiladi; buning uchun webhook yoki server manzilini ulash shart emas. BotHub bot egasiga to'lov yoki qaytarish qarorini qayd etadi, ammo tashqi botga kirishni avtomatik yoqmaydi yoki o'chirmaydi.",
+    "BotHub контролирует оплату, срок подписки и статус возврата. Владелец бота вручную выдаёт доступ в своём сервисе и отключает его по окончании подписки; для этого не нужно подключать webhook или адрес сервера. BotHub фиксирует для владельца решение по оплате или возврату, но не включает и не отключает доступ к внешнему боту автоматически.",
+    "BotHub tracks payment, subscription period and refund status. The bot owner grants access manually in their own service and revokes it when the subscription ends; no webhook or server address is required. BotHub records the payment or refund decision for the owner but doesn't automatically enable or disable access to an external bot.",
   ],
   [
-    "Qaytarish so'rovi ko'rib chiqilayotgan vaqtda BotSmith buyurtmani belgilaydi va ma'muriyat ko'rib chiqadi. Bot egasi buyurtmalar sahifasida holatni ko'rib, kerak bo'lsa kirishni vaqtincha to'xtatadi. Qaytarish tasdiqlansa obuna bekor qilinadi; rad etilsa, obuna muddati tugamagan bo'lsa, bot egasi xaridor bilan bog'lanib kirishni davom ettiradi.",
-    "Пока запрос на возврат рассматривается, BotSmith помечает заказ, а администрация его проверяет. Владелец бота видит статус на странице заказов и при необходимости временно приостанавливает доступ. Если возврат подтверждён, подписка отменяется; если отклонён и срок подписки не истёк, владелец бота связывается с покупателем и продолжает предоставлять доступ.",
-    "While a refund request is under review BotSmith flags the order and the administration reviews it. The bot owner sees the status on the Orders page and may temporarily pause access. If the refund is approved the subscription is cancelled; if it's rejected and the subscription hasn't expired, the bot owner contacts the buyer and continues access.",
+    "Qaytarish so'rovi ko'rib chiqilayotgan vaqtda BotHub buyurtmani belgilaydi va ma'muriyat ko'rib chiqadi. Bot egasi buyurtmalar sahifasida holatni ko'rib, kerak bo'lsa kirishni vaqtincha to'xtatadi. Qaytarish tasdiqlansa obuna bekor qilinadi; rad etilsa, obuna muddati tugamagan bo'lsa, bot egasi xaridor bilan bog'lanib kirishni davom ettiradi.",
+    "Пока запрос на возврат рассматривается, BotHub помечает заказ, а администрация его проверяет. Владелец бота видит статус на странице заказов и при необходимости временно приостанавливает доступ. Если возврат подтверждён, подписка отменяется; если отклонён и срок подписки не истёк, владелец бота связывается с покупателем и продолжает предоставлять доступ.",
+    "While a refund request is under review BotHub flags the order and the administration reviews it. The bot owner sees the status on the Orders page and may temporarily pause access. If the refund is approved the subscription is cancelled; if it's rejected and the subscription hasn't expired, the bot owner contacts the buyer and continues access.",
   ],
   ["Rozilik", "Согласие", "Consent"],
   [

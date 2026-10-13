@@ -115,13 +115,13 @@ export function Logo({ className, compact = false }: { className?: string; compa
   return (
     <Link
       to="/"
-      aria-label="BotSmith"
+      aria-label="BotHub"
       className={cn("flex shrink-0 items-center gap-2 font-bold text-foreground", className)}
     >
       <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary text-primary-foreground">
         <Send className="h-4 w-4" />
       </span>
-      <span className={cn(compact && "hidden min-[420px]:inline")}>BotSmith</span>
+      <span className={cn(compact && "hidden min-[420px]:inline")}>BotHub</span>
     </Link>
   );
 }
@@ -258,7 +258,7 @@ export function Footer() {
       </div>
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 pb-8">
         <p className="text-xs text-muted-foreground">
-          © {new Date().getFullYear()} BotSmith. Barcha huquqlar himoyalangan.
+          © {new Date().getFullYear()} BotHub. Barcha huquqlar himoyalangan.
         </p>
         <nav className="ml-auto flex gap-4 text-xs text-muted-foreground">
           <Link to="/help" className="hover:text-foreground">

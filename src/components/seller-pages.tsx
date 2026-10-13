@@ -156,7 +156,7 @@ export function SellerOrders() {
         </div>
       </div>
       <p className="mb-5 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-        BotSmith to‘lov, obuna muddati va qaytarish holatini qayd etadi. Xaridorga shu yerdan yozib,
+        BotHub to‘lov, obuna muddati va qaytarish holatini qayd etadi. Xaridorga shu yerdan yozib,
         botga kirishni qo‘lda bering yoki muddati tugaganda bekor qiling.
       </p>
       {error && (

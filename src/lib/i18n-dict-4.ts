@@ -30,9 +30,9 @@ export const dict4: Entry[] = [
     "What if something goes wrong?",
   ],
   [
-    "To'lov tasdiqlangach 24 soat ichida “Buyurtmalar” sahifasidan sababini ko'rsatib qaytarish so'rovini yuboring. BotSmith jamoasi uni ko'rib chiqadi; batafsil shartlar “Obuna va qaytarish qoidalari” sahifasida.",
-    "В течение 24 часов после подтверждения оплаты отправьте запрос на возврат со страницы «Заказы», указав причину. Команда BotSmith его рассмотрит; подробные условия — на странице «Правила подписки и возврата».",
-    "Within 24 hours of payment confirmation, send a refund request from the Orders page with a reason. The BotSmith team will review it; full terms are on the “Subscription and refund terms” page.",
+    "To'lov tasdiqlangach 24 soat ichida “Buyurtmalar” sahifasidan sababini ko'rsatib qaytarish so'rovini yuboring. BotHub jamoasi uni ko'rib chiqadi; batafsil shartlar “Obuna va qaytarish qoidalari” sahifasida.",
+    "В течение 24 часов после подтверждения оплаты отправьте запрос на возврат со страницы «Заказы», указав причину. Команда BotHub его рассмотрит; подробные условия — на странице «Правила подписки и возврата».",
+    "Within 24 hours of payment confirmation, send a refund request from the Orders page with a reason. The BotHub team will review it; full terms are on the “Subscription and refund terms” page.",
   ],
   [
     "Sotuvchi bilan qanday bog'lanaman?",
@@ -92,9 +92,9 @@ export const dict4: Entry[] = [
     "How do I manage bot access?",
   ],
   [
-    "“Buyurtmalar” bo'limida to'lov, obuna muddati va qaytarish so'rovi holatini ko'ring. Xaridorga shu yerdan yozib, botingizga kirishni qo'lda bering yoki obuna tugaganda bekor qiling. To'lov va qaytarish qarorlarini BotSmith nazorat qiladi.",
-    "В разделе «Заказы» смотрите оплату, срок подписки и статус запроса на возврат. Напишите покупателю отсюда, выдайте доступ к боту вручную или отключите по окончании подписки. Решения по оплате и возвратам контролирует BotSmith.",
-    "In the Orders section see the payment, subscription period and refund request status. Message the buyer from there, grant access to your bot manually or revoke it when the subscription ends. BotSmith controls payment and refund decisions.",
+    "“Buyurtmalar” bo'limida to'lov, obuna muddati va qaytarish so'rovi holatini ko'ring. Xaridorga shu yerdan yozib, botingizga kirishni qo'lda bering yoki obuna tugaganda bekor qiling. To'lov va qaytarish qarorlarini BotHub nazorat qiladi.",
+    "В разделе «Заказы» смотрите оплату, срок подписки и статус запроса на возврат. Напишите покупателю отсюда, выдайте доступ к боту вручную или отключите по окончании подписки. Решения по оплате и возвратам контролирует BotHub.",
+    "In the Orders section see the payment, subscription period and refund request status. Message the buyer from there, grant access to your bot manually or revoke it when the subscription ends. BotHub controls payment and refund decisions.",
   ],
   ["Daromad qachon hisoblanadi?", "Когда начисляется доход?", "When are earnings credited?"],
   [
@@ -104,9 +104,9 @@ export const dict4: Entry[] = [
   ],
   ["Pulni qanday yechaman?", "Как вывести деньги?", "How do I withdraw money?"],
   [
-    "To'langan obuna daromadi 24 soat ushlab turilgach yechish uchun ochiladi. BotSmith sotuv narxidan 5% komissiya ushlab qoladi; yechish so'rovidan yana 5% olinadi. To'lovni administrator qo'lda amalga oshiradi.",
-    "Доход от оплаченной подписки становится доступным для вывода после 24-часового удержания. BotSmith удерживает 5% комиссии с цены продажи; с запроса на вывод удерживается ещё 5%. Выплату вручную выполняет администратор.",
-    "Earnings from a paid subscription become withdrawable after a 24-hour hold. BotSmith keeps a 5% commission from the sale price; another 5% is charged on the withdrawal request. The administrator makes the payout manually.",
+    "To'langan obuna daromadi 24 soat ushlab turilgach yechish uchun ochiladi. BotHub sotuv narxidan 5% komissiya ushlab qoladi; yechish so'rovidan yana 5% olinadi. To'lovni administrator qo'lda amalga oshiradi.",
+    "Доход от оплаченной подписки становится доступным для вывода после 24-часового удержания. BotHub удерживает 5% комиссии с цены продажи; с запроса на вывод удерживается ещё 5%. Выплату вручную выполняет администратор.",
+    "Earnings from a paid subscription become withdrawable after a 24-hour hold. BotHub keeps a 5% commission from the sale price; another 5% is charged on the withdrawal request. The administrator makes the payout manually.",
   ],
   ["Xaridor bilan qanday gaplashaman?", "Как общаться с покупателем?", "How do I talk to a buyer?"],
   [
@@ -130,7 +130,7 @@ export const dict4: Entry[] = [
   ["Telegram", "Telegram", "Telegram"],
   ["Payme", "Payme", "Payme"],
   ["Click", "Click", "Click"],
-  ["BotSmith", "BotSmith", "BotSmith"],
+  ["BotHub", "BotHub", "BotHub"],
 
   // ---------------------------------------------------------------- misc additions
   ["Sahifa topilmadi", "Страница не найдена", "Page not found"],

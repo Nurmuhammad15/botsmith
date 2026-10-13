@@ -33,12 +33,12 @@ export const Route = createFileRoute("/dashboard/purchases")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Mening buyurtmalarim — BotSmith" },
+      { title: "Mening buyurtmalarim — BotHub" },
       {
         name: "description",
         content: "Xarid qilingan botlar, buyurtma holati va bot ma'lumotlari.",
       },
-      { property: "og:title", content: "Mening buyurtmalarim — BotSmith" },
+      { property: "og:title", content: "Mening buyurtmalarim — BotHub" },
       { property: "og:description", content: "Xarid qilingan botlar va buyurtma holati." },
     ],
   }),
@@ -177,7 +177,7 @@ function PurchasesContent() {
               </p>
             ) : current.status === "paid" && current.refundRequestedAt ? (
               <p role="status" className="mt-4 rounded-lg bg-muted p-3 text-sm">
-                Qaytarish so‘rovingiz qabul qilindi. BotSmith jamoasi uni ko‘rib chiqadi.
+                Qaytarish so‘rovingiz qabul qilindi. BotHub jamoasi uni ko‘rib chiqadi.
               </p>
             ) : current.status === "paid" &&
               !current.refundRequestedAt &&
@@ -247,7 +247,7 @@ function RefundRequest({ order }: { order: Order }) {
   if (sent) {
     return (
       <p role="status" className="mt-4 rounded-lg bg-muted p-3 text-sm">
-        Qaytarish so‘rovingiz yuborildi. BotSmith jamoasi uni ko‘rib chiqadi.
+        Qaytarish so‘rovingiz yuborildi. BotHub jamoasi uni ko‘rib chiqadi.
       </p>
     );
   }

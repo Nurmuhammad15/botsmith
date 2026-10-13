@@ -53,7 +53,7 @@ export const Route = createFileRoute("/admin")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Moderatsiya navbati — BotSmith Admin" },
+      { title: "Moderatsiya navbati — BotHub Admin" },
       {
         name: "description",
         content: "Yangi botlar, sotuvchilar, buyurtmalar va to'lovlarni moderatsiya qilish.",

@@ -50,9 +50,9 @@ const sellerSteps = [
 export const Route = createFileRoute("/how-it-works")({
   head: () => ({
     meta: [
-      { title: "Qanday ishlaydi — BotSmith" },
+      { title: "Qanday ishlaydi — BotHub" },
       { name: "description", content: "Bot tanlash, buyurtma berish va botni qabul qilish." },
-      { property: "og:title", content: "Qanday ishlaydi — BotSmith" },
+      { property: "og:title", content: "Qanday ishlaydi — BotHub" },
       { property: "og:description", content: "Bot xarid qilish bosqichlari." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

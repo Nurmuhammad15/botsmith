@@ -4,9 +4,9 @@ export const dict2: Entry[] = [
   // ---------------------------------------------------------------- admin
   ["Boshqaruv paneli", "Панель управления", "Admin panel"],
   [
-    "Moderatsiya navbati — BotSmith Admin",
-    "Очередь модерации — BotSmith Admin",
-    "Moderation queue — BotSmith Admin",
+    "Moderatsiya navbati — BotHub Admin",
+    "Очередь модерации — BotHub Admin",
+    "Moderation queue — BotHub Admin",
   ],
   [
     "Yangi botlar, sotuvchilar, buyurtmalar va to'lovlarni moderatsiya qilish.",
@@ -14,9 +14,9 @@ export const dict2: Entry[] = [
     "Moderate new bots, sellers, orders and payments.",
   ],
   [
-    "Bot ma'lumotlari — BotSmith Admin",
-    "Данные бота — BotSmith Admin",
-    "Bot details — BotSmith Admin",
+    "Bot ma'lumotlari — BotHub Admin",
+    "Данные бота — BotHub Admin",
+    "Bot details — BotHub Admin",
   ],
   ["Botlar yo'q.", "Ботов нет.", "No bots."],
   ["Buyurtmalar yo'q.", "Заказов нет.", "No orders."],
@@ -153,7 +153,7 @@ export const dict2: Entry[] = [
   ["· ID:", "· ID:", "· ID:"],
 
   // ---------------------------------------------------------------- seller panel
-  ["Sotuvchi paneli — BotSmith", "Панель продавца — BotSmith", "Seller panel — BotSmith"],
+  ["Sotuvchi paneli — BotHub", "Панель продавца — BotHub", "Seller panel — BotHub"],
   [
     "Daromad va botlaringizni boshqaring.",
     "Управляйте доходом и ботами.",
@@ -202,7 +202,7 @@ export const dict2: Entry[] = [
 
   // ---------------------------------------------------------------- seller bot page
   ["Bot boshqaruvi", "Управление ботом", "Bot management"],
-  ["Bot boshqaruvi — BotSmith", "Управление ботом — BotSmith", "Bot management — BotSmith"],
+  ["Bot boshqaruvi — BotHub", "Управление ботом — BotHub", "Bot management — BotHub"],
   [
     "Bot statistikasi va obuna narxlarini boshqaring.",
     "Управляйте статистикой бота и ценами подписки.",
@@ -281,7 +281,7 @@ export const dict2: Entry[] = [
   ["tagacha", "", ""],
 
   // ---------------------------------------------------------------- seller pages
-  ["Buyurtmalar — BotSmith", "Заказы — BotSmith", "Orders — BotSmith"],
+  ["Buyurtmalar — BotHub", "Заказы — BotHub", "Orders — BotHub"],
   [
     "Bot sotuvlari va buyurtma holatlarini ko'ring.",
     "Смотрите продажи ботов и статусы заказов.",
@@ -305,24 +305,24 @@ export const dict2: Entry[] = [
   ["Tugash vaqti", "Время окончания", "Ends at"],
   ["Xaridorga yozish", "Написать покупателю", "Message buyer"],
   [
-    "BotSmith to'lov, obuna muddati va qaytarish holatini qayd etadi. Xaridorga shu yerdan yozib, botga kirishni qo'lda bering yoki muddati tugaganda bekor qiling.",
-    "BotSmith фиксирует оплату, срок подписки и статус возврата. Напишите покупателю отсюда, выдайте доступ к боту вручную или отключите его по окончании срока.",
-    "BotSmith records the payment, subscription period and refund status. Message the buyer from here, grant access to the bot manually, or revoke it when it expires.",
+    "BotHub to'lov, obuna muddati va qaytarish holatini qayd etadi. Xaridorga shu yerdan yozib, botga kirishni qo'lda bering yoki muddati tugaganda bekor qiling.",
+    "BotHub фиксирует оплату, срок подписки и статус возврата. Напишите покупателю отсюда, выдайте доступ к боту вручную или отключите его по окончании срока.",
+    "BotHub records the payment, subscription period and refund status. Message the buyer from here, grant access to the bot manually, or revoke it when it expires.",
   ],
-  ["Daromadlar — BotSmith", "Доходы — BotSmith", "Earnings — BotSmith"],
+  ["Daromadlar — BotHub", "Доходы — BotHub", "Earnings — BotHub"],
   [
     "Botlar savdosi, balans va sotuvlar tarixi.",
     "Продажи ботов, баланс и история продаж.",
     "Bot sales, balance and sales history.",
   ],
-  ["Pul yechish — BotSmith", "Вывод средств — BotSmith", "Withdraw money — BotSmith"],
+  ["Pul yechish — BotHub", "Вывод средств — BotHub", "Withdraw money — BotHub"],
   [
     "Balans va pul yechish so'rovi.",
     "Баланс и запрос на вывод средств.",
     "Balance and withdrawal request.",
   ],
   ["Pul yechish tarixi", "История выводов", "Withdrawal history"],
-  ["Pul yechish tarixi — BotSmith", "История выводов — BotSmith", "Withdrawal history — BotSmith"],
+  ["Pul yechish tarixi — BotHub", "История выводов — BotHub", "Withdrawal history — BotHub"],
   [
     "Sotuvchining pul yechish so'rovlari tarixi.",
     "История запросов продавца на вывод средств.",
@@ -380,7 +380,7 @@ export const dict2: Entry[] = [
 
   // ---------------------------------------------------------------- new bot
   ["Yangi bot qo'shish", "Добавить нового бота", "Add a new bot"],
-  ["Yangi bot qo'shish — BotSmith", "Добавить бота — BotSmith", "Add a bot — BotSmith"],
+  ["Yangi bot qo'shish — BotHub", "Добавить бота — BotHub", "Add a bot — BotHub"],
   [
     "Bot nomi, kategoriya, narx va tavsifini kiriting.",
     "Укажите название, категорию, цену и описание бота.",
@@ -423,7 +423,7 @@ export const dict2: Entry[] = [
   ["Ko'rib chiqilmoqda", "На рассмотрении", "Under review"],
 
   // ---------------------------------------------------------------- seller profile
-  ["Sotuvchi profili — BotSmith", "Профиль продавца — BotSmith", "Seller profile — BotSmith"],
+  ["Sotuvchi profili — BotHub", "Профиль продавца — BotHub", "Seller profile — BotHub"],
   ["Sotuvchi profil ma'lumotlari.", "Данные профиля продавца.", "Seller profile details."],
   ["Dasturchi ·", "Разработчик ·", "Developer ·"],
   ["Rasm tanlash", "Выбрать фото", "Choose photo"],

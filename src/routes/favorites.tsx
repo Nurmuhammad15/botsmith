@@ -7,7 +7,7 @@ import { navForAccount } from "@/lib/nav";
 export const Route = createFileRoute("/favorites")({
   head: () => ({
     meta: [
-      { title: "Sevimlilar — BotSmith" },
+      { title: "Sevimlilar — BotHub" },
       { name: "description", content: "Siz saqlab qo‘ygan Telegram botlar." },
       { name: "robots", content: "noindex" },
     ],

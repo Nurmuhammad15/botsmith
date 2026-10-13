@@ -13,12 +13,12 @@ export const Route = createFileRoute("/bots/")({
     meta: [
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Barcha botlar — BotSmith" },
+      { title: "Barcha botlar — BotHub" },
       {
         name: "description",
         content: "Siz uchun eng yaxshi Telegram botlar katalogi: filtrlar, reyting va narxlar.",
       },
-      { property: "og:title", content: "Barcha botlar — BotSmith" },
+      { property: "og:title", content: "Barcha botlar — BotHub" },
       { property: "og:description", content: "Siz uchun eng yaxshi Telegram botlar katalogi." },
     ],
   }),

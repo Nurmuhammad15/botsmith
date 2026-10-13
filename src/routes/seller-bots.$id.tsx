@@ -21,7 +21,7 @@ import { IMAGE_TYPES, MAX_IMAGES, validateImage } from "@/lib/media";
 export const Route = createFileRoute("/seller-bots/$id")({
   head: () => ({
     meta: [
-      { title: "Bot boshqaruvi — BotSmith" },
+      { title: "Bot boshqaruvi — BotHub" },
       {
         name: "description",
         content: "Bot statistikasi va obuna narxlarini boshqaring.",

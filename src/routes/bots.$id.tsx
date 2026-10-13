@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/bots/$id")({
   head: () => ({
     meta: [
-      { title: "Bot — BotSmith" },
+      { title: "Bot — BotHub" },
       { name: "description", content: "Telegram bot tafsilotlari, narxi va sharhlari." },
     ],
   }),
@@ -53,7 +53,7 @@ function Detail() {
   }, [id, ready, account?.id, recordView]);
 
   useEffect(() => {
-    if (bot) document.title = `${bot.title} — BotSmith`;
+    if (bot) document.title = `${bot.title} — BotHub`;
   }, [bot]);
 
   if (isPending) {

@@ -1,4 +1,4 @@
-// BotSmith service worker: shows push notifications and opens the right page when one is clicked.
+// BotHub service worker: shows push notifications and opens the right page when one is clicked.
 self.addEventListener("push", (event) => {
   let data = {};
   try {
@@ -7,7 +7,7 @@ self.addEventListener("push", (event) => {
     data = {};
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || "BotSmith", {
+    self.registration.showNotification(data.title || "BotHub", {
       body: data.body || "",
       icon: "/favicon.png",
       badge: "/favicon.png",

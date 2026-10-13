@@ -14,7 +14,7 @@ import { formatDateTime } from "@/lib/format";
 
 export const Route = createFileRoute("/admin-bots/$id")({
   head: () => ({
-    meta: [{ title: "Bot ma’lumotlari — BotSmith Admin" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Bot ma’lumotlari — BotHub Admin" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminBotPage,
 });
