@@ -265,7 +265,7 @@ function Catalog() {
                   onClick={() => setPage(Math.max(1, currentPage - 1))}
                   disabled={currentPage === 1}
                   className="grid h-8 w-8 place-items-center disabled:opacity-40"
-                  aria-label="Prev"
+                  aria-label="Oldingi sahifa"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
@@ -287,7 +287,7 @@ function Catalog() {
                   onClick={() => setPage(Math.min(pageCount, currentPage + 1))}
                   disabled={currentPage === pageCount}
                   className="grid h-8 w-8 place-items-center disabled:opacity-40"
-                  aria-label="Next"
+                  aria-label="Keyingi sahifa"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>

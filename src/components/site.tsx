@@ -177,7 +177,7 @@ export function Navbar() {
           </Link>
           <PushToggle />
           <select
-            aria-label="Language"
+            aria-label="Til"
             value={lang}
             onChange={(e) => setLang(e.target.value as Lang)}
             className="h-9 rounded-md bg-transparent px-2 text-sm font-medium"
@@ -414,11 +414,11 @@ type Status =
   | "active"
   | "expired";
 const statusMap: Record<Status, [string, string]> = {
-  published: ["Published", "bg-success-soft text-success"],
+  published: ["E'lon qilingan", "bg-success-soft text-success"],
   done: ["Yakunlandi", "bg-success-soft text-success"],
   ready: ["Tayyor", "bg-success-soft text-success"],
-  draft: ["Draft", "bg-destructive/10 text-destructive"],
-  review: ["Review", "bg-warning-soft text-warning"],
+  draft: ["Rad etilgan", "bg-destructive/10 text-destructive"],
+  review: ["Tekshiruvda", "bg-warning-soft text-warning"],
   pending: ["Tekshirish", "bg-warning-soft text-warning"],
   delivering: ["Yetkazib berilyapti", "bg-primary-soft text-primary"],
   active: ["Obuna faol", "bg-success-soft text-success"],

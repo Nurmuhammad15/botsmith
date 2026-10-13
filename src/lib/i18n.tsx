@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { startTranslating } from "@/lib/translate";
 
 export type Lang = "uz" | "ru" | "en";
 const dict = {
@@ -38,8 +39,36 @@ const Ctx = createContext<{ lang: Lang; setLang: (l: Lang) => void; t: (k: Key) 
   setLang: () => {},
   t: (k) => dict[k].uz,
 });
+const STORAGE_KEY = "botsmith-lang";
+
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>("uz");
+  const [lang, setLangState] = useState<Lang>("uz");
+
+  // The server and first render are Uzbek; the saved language is applied right after hydration.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved === "ru" || saved === "en" || saved === "uz") setLangState(saved);
+    } catch {
+      /* storage unavailable: stay on Uzbek */
+    }
+  }, []);
+
+  const setLang = useCallback((next: Lang) => {
+    setLangState(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // Translate everything on the page (and whatever React renders later) into the chosen language.
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    return lang === "uz" ? undefined : startTranslating(lang);
+  }, [lang]);
+
   return <Ctx.Provider value={{ lang, setLang, t: (k) => dict[k][lang] }}>{children}</Ctx.Provider>;
 }
 export const useT = () => useContext(Ctx);
