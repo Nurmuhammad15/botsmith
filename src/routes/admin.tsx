@@ -564,6 +564,13 @@ function UsersTab({
   );
 }
 
+/** 14 random characters without look-alikes (0/O, 1/l/I), from the browser's secure RNG. */
+function randomPassword() {
+  const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(14));
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+}
+
 function PasswordDialog({
   user,
   onClose,
@@ -619,10 +626,22 @@ function PasswordDialog({
               onChange={(e) => setValue(e.target.value)}
             />
           </label>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input type="checkbox" checked={shown} onChange={(e) => setShown(e.target.checked)} />
-            Parolni ko‘rsatish
-          </label>
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input type="checkbox" checked={shown} onChange={(e) => setShown(e.target.checked)} />
+              Parolni ko‘rsatish
+            </label>
+            <button
+              type="button"
+              className="text-xs text-primary underline"
+              onClick={() => {
+                setValue(randomPassword());
+                setShown(true);
+              }}
+            >
+              Tasodifiy parol yaratish
+            </button>
+          </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={close}>
               Bekor qilish
