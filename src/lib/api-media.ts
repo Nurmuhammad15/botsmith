@@ -278,3 +278,35 @@ export function useSetCv(userId: string | undefined) {
     },
   });
 }
+
+const REVIEW_IMAGES = "review-images";
+export const MAX_REVIEW_IMAGES = 3;
+
+/** Public URL of a photo attached to a review. */
+export function reviewImageUrl(path: string) {
+  return db().storage.from(REVIEW_IMAGES).getPublicUrl(path).data.publicUrl;
+}
+
+/** Uploads review photos; returns the stored paths (nothing is left behind if one fails). */
+export async function uploadReviewImages(userId: string, botId: string, files: File[]) {
+  const storage = db().storage.from(REVIEW_IMAGES);
+  const paths: string[] = [];
+  for (const file of files) {
+    const path = objectPath(userId, botId, file.name);
+    const { error } = await storage.upload(path, file, {
+      contentType: file.type,
+      cacheControl: "31536000",
+      upsert: false,
+    });
+    if (error) {
+      if (paths.length > 0) await storage.remove(paths);
+      throw error;
+    }
+    paths.push(path);
+  }
+  return paths;
+}
+
+export async function removeReviewImages(paths: string[]) {
+  if (paths.length > 0) await db().storage.from(REVIEW_IMAGES).remove(paths);
+}

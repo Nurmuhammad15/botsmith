@@ -1,6 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
 import { ArrowLeft, ChevronRight, Languages, MessageSquare, RefreshCw, Star } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { BotGallery, FavoriteButton } from "@/components/bot-media";
 import { SiteLayout, Rating, Tabs } from "@/components/site";
@@ -233,7 +240,7 @@ function Detail() {
                   <p className="whitespace-pre-line text-muted-foreground">{bot.desc}</p>
                 </>
               ) : (
-                <Reviews botId={bot.id} userId={account?.id} />
+                <Reviews botId={bot.id} />
               )}
             </div>
           </div>
@@ -325,80 +332,12 @@ function Detail() {
   );
 }
 
-function Reviews({ botId, userId }: { botId: string; userId: string | undefined }) {
+function Reviews({ botId }: { botId: string }) {
   const { data: reviews = [], isPending } = useBotReviews(botId);
-  const { data: orders = [] } = useOrders("buyer", userId);
-  const submit = useSubmitReview(botId, userId ?? "");
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState("");
-  const [error, setError] = useState("");
-
-  const hasPurchased = orders.some(
-    (o) => o.botId === botId && ["paid", "delivering", "done"].includes(o.status),
-  );
-
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    setError("");
-    try {
-      await submit.mutateAsync({ rating, comment: comment.trim() });
-      setComment("");
-    } catch (e) {
-      const message = e && typeof e === "object" && "message" in e ? String(e.message) : "";
-      setError(
-        message.includes("duplicate key") || message.includes("row-level security")
-          ? "Siz bu bot uchun allaqachon sharh qoldirgansiz."
-          : describeError(e),
-      );
-    }
-  }
+  const [preview, setPreview] = useState<string | null>(null);
 
   return (
     <div className="space-y-4">
-      {hasPurchased && (
-        <form onSubmit={onSubmit} className="card-soft space-y-3 p-4">
-          <p className="font-medium">Sharh qoldiring</p>
-          <div className="flex items-center gap-3">
-            <span>Baho</span>
-            <div className="flex items-center gap-0.5" role="radiogroup" aria-label="Baho">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  role="radio"
-                  aria-checked={rating === n}
-                  aria-label={`${n}`}
-                  onClick={() => setRating(n)}
-                  className="rounded p-0.5"
-                >
-                  <Star
-                    className={cn(
-                      "h-7 w-7 transition-colors",
-                      n <= rating ? "fill-star text-star" : "text-muted-foreground/40",
-                    )}
-                  />
-                </button>
-              ))}
-            </div>
-            <span className="text-sm text-muted-foreground">{rating}/5</span>
-          </div>
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            maxLength={2000}
-            placeholder="Fikringiz (ixtiyoriy)"
-            className="min-h-20 w-full rounded-md border bg-background p-3"
-          />
-          {error && (
-            <p role="alert" className="text-destructive">
-              {error}
-            </p>
-          )}
-          <Button type="submit" disabled={submit.isPending}>
-            Yuborish
-          </Button>
-        </form>
-      )}
       {isPending ? (
         <p className="text-muted-foreground">Yuklanmoqda…</p>
       ) : reviews.length === 0 ? (
@@ -409,9 +348,40 @@ function Reviews({ botId, userId }: { botId: string; userId: string | undefined 
             <p className="font-medium">{r.reviewer || "Xaridor"}</p>
             <Rating value={r.rating} />
             {r.comment && <p className="mt-1 text-muted-foreground">{r.comment}</p>}
+            {r.images.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {r.images.map((src) => (
+                  <button
+                    key={src}
+                    type="button"
+                    aria-label="Rasmni kattalashtirish"
+                    onClick={() => setPreview(src)}
+                    className="rounded"
+                  >
+                    <img
+                      src={src}
+                      alt=""
+                      loading="lazy"
+                      className="h-16 w-20 rounded-lg border object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         ))
       )}
+      <Dialog open={preview !== null} onOpenChange={(open) => !open && setPreview(null)}>
+        <DialogContent className="max-w-3xl p-2">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Rasm</DialogTitle>
+            <DialogDescription>Sharh rasmi</DialogDescription>
+          </DialogHeader>
+          {preview && (
+            <img src={preview} alt="" className="max-h-[80vh] w-full rounded object-contain" />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

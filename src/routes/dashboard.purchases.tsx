@@ -3,6 +3,7 @@ import { MessageSquare } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { CryptoPay } from "@/components/crypto-pay";
+import { ReviewBox } from "@/components/review-box";
 import { DashboardLayout, StatusBadge, Tabs } from "@/components/site";
 import {
   describeError,
@@ -189,6 +190,9 @@ function PurchasesContent() {
                 Qaytarish so‘rovi uchun 24 soatlik muddat yakunlangan.
               </p>
             ) : null}
+            {["paid", "delivering", "done"].includes(current.status) && (
+              <ReviewBox key={current.botId} botId={current.botId} botTitle={current.botTitle} />
+            )}
             <WriteToSeller botId={current.botId} />
           </div>
         </div>

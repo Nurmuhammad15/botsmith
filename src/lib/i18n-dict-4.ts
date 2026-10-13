@@ -185,4 +185,10 @@ export const dict4: Entry[] = [
   ["USDT to'lovini tasdiqlash", "Подтвердить платёж USDT", "Confirm USDT payment"],
   ["USDT to'lovini rad etish", "Отклонить платёж USDT", "Reject USDT payment"],
   ["USDT:", "USDT:", "USDT:"],
+  ["Sizning sharhingiz", "Ваш отзыв", "Your review"],
+  ["Rasm qo'shish (ixtiyoriy)", "Добавить фото (необязательно)", "Add photos (optional)"],
+  ["JPG, PNG yoki WebP", "JPG, PNG или WebP", "JPG, PNG or WebP"],
+  ["{n} MB gacha", "до {n} МБ", "up to {n} MB"],
+  ["ko'pi bilan {n} ta", "не более {n}", "at most {n}"],
+  ["Sharh rasmi", "Фото к отзыву", "Review photo"],
 ];

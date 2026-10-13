@@ -1,6 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { check, db, describeError, num, str, type Row } from "@/lib/api-core";
-import { avatarUrl, coverUrl, cvUrl } from "@/lib/api-media";
+import {
+  avatarUrl,
+  coverUrl,
+  cvUrl,
+  removeReviewImages,
+  reviewImageUrl,
+  uploadReviewImages,
+} from "@/lib/api-media";
 import type {
   BotItem,
   BotStatus,
@@ -96,7 +103,16 @@ export function useFavoriteBots(userId: string | undefined) {
   });
 }
 
-export type Review = { id: string; rating: number; comment: string; reviewer: string };
+export type Review = {
+  id: string;
+  rating: number;
+  comment: string;
+  reviewer: string;
+  images: string[];
+};
+
+const reviewImages = (value: unknown) =>
+  Array.isArray(value) ? (value as string[]).map(reviewImageUrl) : [];
 
 export function useBotReviews(botId: string) {
   return useQuery({
@@ -115,6 +131,7 @@ export function useBotReviews(botId: string) {
         rating: num(r["rating"]),
         comment: str(r["comment"]),
         reviewer: str(r["reviewer"]),
+        images: reviewImages(r["image_paths"]),
       })) satisfies Review[],
   });
 }
@@ -127,22 +144,53 @@ export function useRecordBotView(botId: string) {
   });
 }
 
+/** The signed-in buyer's own review of a bot, or null when they have not written one yet. */
+export function useMyReview(botId: string, userId: string | undefined) {
+  return useQuery({
+    queryKey: ["my-review", botId, userId],
+    enabled: Boolean(userId),
+    queryFn: async (): Promise<Omit<Review, "reviewer"> | null> => {
+      const row = check(
+        await db()
+          .from("reviews")
+          .select("id, rating, comment, image_paths")
+          .eq("bot_id", botId)
+          .eq("buyer_id", userId!)
+          .maybeSingle(),
+      ) as Row | null;
+      if (!row) return null;
+      return {
+        id: str(row["id"]),
+        rating: num(row["rating"]),
+        comment: str(row["comment"]),
+        images: reviewImages(row["image_paths"]),
+      };
+    },
+  });
+}
+
 export function useSubmitReview(botId: string, userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { rating: number; comment: string }) => {
-      check(
-        await db().from("reviews").insert({
-          bot_id: botId,
-          buyer_id: userId,
-          rating: input.rating,
-          comment: input.comment,
-        }),
-      );
+    mutationFn: async (input: { rating: number; comment: string; files: File[] }) => {
+      const paths = await uploadReviewImages(userId, botId, input.files);
+      const { error } = await db().from("reviews").insert({
+        bot_id: botId,
+        buyer_id: userId,
+        rating: input.rating,
+        comment: input.comment,
+        image_paths: paths,
+      });
+      if (error) {
+        await removeReviewImages(paths);
+        throw error;
+      }
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["reviews", botId] });
+      void queryClient.invalidateQueries({ queryKey: ["my-review", botId, userId] });
       void queryClient.invalidateQueries({ queryKey: ["bot", botId] });
+      void queryClient.invalidateQueries({ queryKey: ["bots"] });
     },
   });
 }
