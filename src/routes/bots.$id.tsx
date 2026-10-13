@@ -87,12 +87,17 @@ function Detail() {
   }
 
   const isOwnBot = account?.id === bot.sellerId;
+  const singlePrice = bot.price7Days === null && bot.price30Days === null;
 
   async function buy() {
     if (!bot) return;
     setActionError("");
     try {
-      await createOrder.mutateAsync({ botId: bot.id, subscriptionDays });
+      await createOrder.mutateAsync({
+        botId: bot.id,
+        // Bots without tariffs are bought once, at their single price.
+        subscriptionDays: singlePrice ? 0 : subscriptionDays,
+      });
       await navigate({ to: "/dashboard/purchases" });
     } catch (error) {
       setActionError(describeError(error));
@@ -142,34 +147,41 @@ function Detail() {
             </div>
             <p className="mt-4 line-clamp-4 text-sm text-muted-foreground">{bot.desc}</p>
             <div className="mt-5 space-y-4">
-              <fieldset>
-                <legend className="mb-2 text-sm font-semibold">Obuna muddatini tanlang</legend>
-                <div className="grid grid-cols-3 gap-2">
-                  {(
-                    [
-                      [1, "1 kun", bot.price],
-                      [7, "7 kun", bot.price7Days],
-                      [30, "30 kun", bot.price30Days],
-                    ] as const
-                  ).map(([days, label, price]) => (
-                    <button
-                      key={days}
-                      type="button"
-                      disabled={price === null}
-                      aria-pressed={subscriptionDays === days}
-                      onClick={() => setSubscriptionDays(days)}
-                      className={`rounded-lg border p-3 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40 ${
-                        subscriptionDays === days ? "border-primary bg-primary/5" : ""
-                      }`}
-                    >
-                      <span className="block font-medium">{label}</span>
-                      <span className="mt-1 block text-xs text-muted-foreground">
-                        {price === null ? "Hozircha mavjud emas" : formatUZS(price)}
-                      </span>
-                    </button>
-                  ))}
+              {singlePrice ? (
+                <div className="rounded-lg border border-primary bg-primary/5 p-3 text-sm">
+                  <span className="block font-medium">Narx</span>
+                  <span className="mt-1 block text-lg font-bold">{formatUZS(bot.price)}</span>
                 </div>
-              </fieldset>
+              ) : (
+                <fieldset>
+                  <legend className="mb-2 text-sm font-semibold">Obuna muddatini tanlang</legend>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(
+                      [
+                        [1, "1 kun", bot.price],
+                        [7, "7 kun", bot.price7Days],
+                        [30, "30 kun", bot.price30Days],
+                      ] as const
+                    ).map(([days, label, price]) => (
+                      <button
+                        key={days}
+                        type="button"
+                        disabled={price === null}
+                        aria-pressed={subscriptionDays === days}
+                        onClick={() => setSubscriptionDays(days)}
+                        className={`rounded-lg border p-3 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40 ${
+                          subscriptionDays === days ? "border-primary bg-primary/5" : ""
+                        }`}
+                      >
+                        <span className="block font-medium">{label}</span>
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          {price === null ? "Hozircha mavjud emas" : formatUZS(price)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
               <div className="flex flex-wrap gap-3">
                 {isOwnBot ? (
                   <Button asChild variant="outline" size="lg">
@@ -185,7 +197,11 @@ function Detail() {
                       disabled={createOrder.isPending}
                       className="px-8"
                     >
-                      {createOrder.isPending ? "Yuborilmoqda…" : "Obuna bo‘lish"}
+                      {createOrder.isPending
+                        ? "Yuborilmoqda…"
+                        : singlePrice
+                          ? "Sotib olish"
+                          : "Obuna bo‘lish"}
                     </Button>
                     <Button
                       size="lg"

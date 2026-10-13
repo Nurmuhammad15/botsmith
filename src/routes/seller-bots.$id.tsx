@@ -260,6 +260,8 @@ function SubscriptionSettings({ botId }: { botId: string }) {
   const { data, isPending, isError } = useSellerSubscriptionConfig(botId);
   const configure = useConfigureBotSubscription();
   const [prices, setPrices] = useState({ one: "", seven: "", thirty: "" });
+  // A bot without tariffs is sold at one fixed price (price stored in `one`).
+  const [noTariffs, setNoTariffs] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -270,6 +272,7 @@ function SubscriptionSettings({ botId }: { botId: string }) {
         seven: data.price7Days === null ? "" : String(data.price7Days),
         thirty: data.price30Days === null ? "" : String(data.price30Days),
       });
+      setNoTariffs(data.price7Days === null && data.price30Days === null);
     }
   }, [data]);
 
@@ -277,17 +280,23 @@ function SubscriptionSettings({ botId }: { botId: string }) {
     event.preventDefault();
     setError("");
     setMessage("");
-    const amounts = [prices.one, prices.seven, prices.thirty].map(Number);
+    const amounts = (noTariffs ? [prices.one] : [prices.one, prices.seven, prices.thirty]).map(
+      Number,
+    );
     if (!amounts.every((value) => Number.isSafeInteger(value) && value > 0)) {
-      setError("Uchala obuna narxini ham musbat butun so‘m qiymatida kiriting.");
+      setError(
+        noTariffs
+          ? "Narxni musbat butun so‘m qiymatida kiriting."
+          : "Uchala obuna narxini ham musbat butun so‘m qiymatida kiriting.",
+      );
       return;
     }
     try {
       await configure.mutateAsync({
         botId,
         price1Day: amounts[0]!,
-        price7Days: amounts[1]!,
-        price30Days: amounts[2]!,
+        price7Days: noTariffs ? null : amounts[1]!,
+        price30Days: noTariffs ? null : amounts[2]!,
       });
       setMessage("Obuna narxlari saqlandi.");
     } catch (e) {
@@ -315,12 +324,23 @@ function SubscriptionSettings({ botId }: { botId: string }) {
         </p>
       ) : (
         <form onSubmit={(event) => void submit(event)} className="space-y-4">
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={noTariffs}
+              onChange={(event) => setNoTariffs(event.target.checked)}
+            />
+            <span>Botda tariflar yo‘q — bitta narx qo‘yish</span>
+          </label>
           {(
-            [
-              ["one", "1 kunlik narx"],
-              ["seven", "7 kunlik narx"],
-              ["thirty", "30 kunlik narx"],
-            ] as const
+            (noTariffs
+              ? [["one", "Narx"]]
+              : [
+                  ["one", "1 kunlik narx"],
+                  ["seven", "7 kunlik narx"],
+                  ["thirty", "30 kunlik narx"],
+                ]) as readonly (readonly ["one" | "seven" | "thirty", string])[]
           ).map(([key, label]) => {
             const amount = Number(prices[key]);
             const net =

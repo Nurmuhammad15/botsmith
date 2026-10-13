@@ -37,7 +37,7 @@ import {
   useSupportThread,
 } from "@/lib/api";
 import { categories, formatUZS, orderCode } from "@/lib/data";
-import { PLATFORM_SALES_COMMISSION_RATE } from "@/lib/subscription";
+import { PLATFORM_SALES_COMMISSION_RATE, subscriptionLabel } from "@/lib/subscription";
 import { WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { adminNav } from "@/lib/nav";
@@ -347,7 +347,7 @@ function OrdersTab({
               <p className="text-xs text-muted-foreground">{pay.amountUsdt.toFixed(2)} USDT</p>
             )}
           </div>,
-          `${o.subscriptionDays} kun`,
+          subscriptionLabel(o.subscriptionDays),
           pay?.txid ? (
             <a
               href={`https://tronscan.org/#/transaction/${pay.txid}`}

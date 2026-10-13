@@ -13,6 +13,7 @@ import {
 } from "@/lib/api";
 import { useOpenConversation } from "@/lib/api-chat";
 import { formatUZS, orderCode, type Order } from "@/lib/data";
+import { subscriptionLabel } from "@/lib/subscription";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import {
   availablePaymentMethods,
@@ -127,7 +128,7 @@ function PurchasesContent() {
                     <p className="text-sm font-semibold">{orderCode(x.number)}</p>
                     <p className="text-xs text-muted-foreground">{x.botTitle}</p>
                     <p className="text-xs">
-                      {formatUZS(x.amount)} · {x.subscriptionDays} kun
+                      {formatUZS(x.amount)} · {subscriptionLabel(x.subscriptionDays)}
                     </p>
                   </div>
                   <StatusBadge status={statusBadge(x)} />
@@ -148,7 +149,10 @@ function PurchasesContent() {
               <div className="flex-1">
                 <p className="text-sm font-semibold">{current.botTitle}</p>
                 <p className="text-xs text-muted-foreground">
-                  {formatUZS(current.amount)} · {current.subscriptionDays} kunlik obuna
+                  {formatUZS(current.amount)} ·{" "}
+                  {current.subscriptionDays === 0
+                    ? "bir martalik to‘lov"
+                    : `${current.subscriptionDays} kunlik obuna`}
                 </p>
               </div>
               <span className="text-xs font-medium">

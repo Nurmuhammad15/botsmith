@@ -88,7 +88,8 @@ export type Order = {
   botTitle: string;
   buyerId: string;
   amount: number;
-  subscriptionDays: 1 | 7 | 30;
+  /** 0 = one-time purchase of a bot without tariffs. */
+  subscriptionDays: 0 | 1 | 7 | 30;
   status: OrderStatus;
   createdAt: string;
   paidAt: string | null;

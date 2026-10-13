@@ -91,11 +91,14 @@ function AdminBotContent() {
     );
   }
 
-  const tariffs: [string, number | null][] = [
-    ["1 kunlik", bot.price1Day],
-    ["7 kunlik", bot.price7Days],
-    ["30 kunlik", bot.price30Days],
-  ];
+  const tariffs: [string, number | null][] =
+    bot.price7Days === null && bot.price30Days === null
+      ? [["Bitta narx (tarifsiz)", bot.price1Day]]
+      : [
+          ["1 kunlik", bot.price1Day],
+          ["7 kunlik", bot.price7Days],
+          ["30 kunlik", bot.price30Days],
+        ];
   const net = (price: number) => sellerSubscriptionNet(price);
 
   return (

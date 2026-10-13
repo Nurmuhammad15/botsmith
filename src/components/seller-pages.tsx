@@ -49,7 +49,11 @@ import {
   type Withdrawal,
   type WithdrawalStatus,
 } from "@/lib/data";
-import { PLATFORM_SALES_COMMISSION_RATE, sellerSubscriptionNet } from "@/lib/subscription";
+import {
+  PLATFORM_SALES_COMMISSION_RATE,
+  sellerSubscriptionNet,
+  subscriptionLabel,
+} from "@/lib/subscription";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import {
   calculateWithdrawalFee,
@@ -178,7 +182,7 @@ export function SellerOrders() {
             {o.botTitle}
           </Link>,
           formatDate(o.createdAt),
-          `${o.subscriptionDays} kun`,
+          subscriptionLabel(o.subscriptionDays),
           o.subscriptionExpiresAt ? formatDateTime(o.subscriptionExpiresAt) : "—",
           formatUZS(o.amount),
           o.refundResolution === "rejected"
@@ -568,18 +572,24 @@ export function SellerNewBot() {
   const [error, setError] = useState("");
   const [images, setImages] = useState<File[]>([]);
   const [prices, setPrices] = useState({ one: "", seven: "", thirty: "" });
+  // A bot without tariffs is sold at one fixed price.
+  const [noTariffs, setNoTariffs] = useState(false);
+  const [singlePrice, setSinglePrice] = useState("");
   const busy = stage !== "";
 
   async function submit(form: HTMLFormElement) {
     if (!account) return;
     const formData = new FormData(form);
-    const price = Number(formData.get("price-1"));
-    const price7Days = Number(formData.get("price-7"));
-    const price30Days = Number(formData.get("price-30"));
-    if (
-      ![price, price7Days, price30Days].every((value) => Number.isSafeInteger(value) && value > 0)
-    ) {
-      setError("Uchala obuna narxini ham musbat butun so‘m qiymatida kiriting.");
+    const price = Number(formData.get(noTariffs ? "price-single" : "price-1"));
+    const price7Days = noTariffs ? null : Number(formData.get("price-7"));
+    const price30Days = noTariffs ? null : Number(formData.get("price-30"));
+    const entered = noTariffs ? [price] : [price, price7Days, price30Days];
+    if (!entered.every((value) => Number.isSafeInteger(value) && Number(value) > 0)) {
+      setError(
+        noTariffs
+          ? "Narxni musbat butun so‘m qiymatida kiriting."
+          : "Uchala obuna narxini ham musbat butun so‘m qiymatida kiriting.",
+      );
       return;
     }
     setError("");
@@ -692,38 +702,74 @@ export function SellerNewBot() {
               ))}
             </select>
           </label>
-          {(
-            [
-              ["price-1", "1 kunlik narx (so‘m)", "one"],
-              ["price-7", "7 kunlik narx (so‘m)", "seven"],
-              ["price-30", "30 kunlik narx (so‘m)", "thirty"],
-            ] as const
-          ).map(([name, label, key]) => {
-            const amount = Number(prices[key]);
-            const net =
-              Number.isSafeInteger(amount) && amount > 0 ? sellerSubscriptionNet(amount) : null;
-            return (
-              <label key={name} className="block space-y-2 text-sm">
-                <span>{label}</span>
-                <Input
-                  name={name}
-                  required
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="450000"
-                  value={prices[key]}
-                  onChange={(event) =>
-                    setPrices((previous) => ({ ...previous, [key]: event.target.value }))
-                  }
-                />
-                <span className="block text-xs text-muted-foreground">
-                  Platforma komissiyasi: −{Math.round(PLATFORM_SALES_COMMISSION_RATE * 100)}%
-                  {net !== null ? ` · Sizga qoladi: ${formatUZS(net)}` : ""}
-                </span>
-              </label>
-            );
-          })}
+          {!noTariffs &&
+            (
+              [
+                ["price-1", "1 kunlik narx (so‘m)", "one"],
+                ["price-7", "7 kunlik narx (so‘m)", "seven"],
+                ["price-30", "30 kunlik narx (so‘m)", "thirty"],
+              ] as const
+            ).map(([name, label, key]) => {
+              const amount = Number(prices[key]);
+              const net =
+                Number.isSafeInteger(amount) && amount > 0 ? sellerSubscriptionNet(amount) : null;
+              return (
+                <label key={name} className="block space-y-2 text-sm">
+                  <span>{label}</span>
+                  <Input
+                    name={name}
+                    required
+                    type="number"
+                    min="1"
+                    step="1"
+                    placeholder="450000"
+                    value={prices[key]}
+                    onChange={(event) =>
+                      setPrices((previous) => ({ ...previous, [key]: event.target.value }))
+                    }
+                  />
+                  <span className="block text-xs text-muted-foreground">
+                    Platforma komissiyasi: −{Math.round(PLATFORM_SALES_COMMISSION_RATE * 100)}%
+                    {net !== null ? ` · Sizga qoladi: ${formatUZS(net)}` : ""}
+                  </span>
+                </label>
+              );
+            })}
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={noTariffs}
+              onChange={(event) => setNoTariffs(event.target.checked)}
+            />
+            <span>
+              Botda tariflar yo‘q — bitta narx qo‘yish
+              <span className="block text-xs text-muted-foreground">
+                Telegram botingizda 1/7/30 kunlik tariflar bo‘lmasa, shuni belgilang.
+              </span>
+            </span>
+          </label>
+          {noTariffs && (
+            <label className="block space-y-2 text-sm">
+              <span>Narx (so‘m)</span>
+              <Input
+                name="price-single"
+                required
+                type="number"
+                min="1"
+                step="1"
+                placeholder="450000"
+                value={singlePrice}
+                onChange={(event) => setSinglePrice(event.target.value)}
+              />
+              <span className="block text-xs text-muted-foreground">
+                Platforma komissiyasi: −{Math.round(PLATFORM_SALES_COMMISSION_RATE * 100)}%
+                {Number.isSafeInteger(Number(singlePrice)) && Number(singlePrice) > 0
+                  ? ` · Sizga qoladi: ${formatUZS(sellerSubscriptionNet(Number(singlePrice)))}`
+                  : ""}
+              </span>
+            </label>
+          )}
           <label className="block space-y-2 text-sm">
             <span>Tavsif</span>
             <textarea

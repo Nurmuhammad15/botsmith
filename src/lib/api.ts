@@ -205,12 +205,15 @@ function toOrder(row: Row): Order {
     botTitle: str(row["bot_title"]),
     buyerId: str(row["buyer_id"]),
     amount: num(row["amount"]),
-    subscriptionDays: num(row["subscription_days"]) as 1 | 7 | 30,
+    subscriptionDays: num(row["subscription_days"]) as 0 | 1 | 7 | 30,
     status: str(row["status"]) as OrderStatus,
     createdAt: str(row["created_at"]),
     paidAt: typeof row["paid_at"] === "string" ? row["paid_at"] : null,
+    // One-time (no-tariff) orders never expire.
     subscriptionExpiresAt:
-      typeof row["subscription_expires_at"] === "string" ? row["subscription_expires_at"] : null,
+      typeof row["subscription_expires_at"] === "string" && num(row["subscription_days"]) !== 0
+        ? row["subscription_expires_at"]
+        : null,
     refundRequestedAt:
       typeof row["refund_requested_at"] === "string" ? row["refund_requested_at"] : null,
     refundReason: typeof row["refund_reason"] === "string" ? row["refund_reason"] : null,
@@ -259,7 +262,7 @@ export function useOrders(
 export function useCreateOrder() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { botId: string; subscriptionDays: 1 | 7 | 30 }) =>
+    mutationFn: async (input: { botId: string; subscriptionDays: 0 | 1 | 7 | 30 }) =>
       toOrder(
         check(
           await db().rpc("create_order", {
@@ -299,8 +302,9 @@ export type NewBotInput = {
   title: string;
   category: string;
   price: number;
-  price7Days: number;
-  price30Days: number;
+  /** price7Days and price30Days are both null for a single-price (no tariffs) bot. */
+  price7Days: number | null;
+  price30Days: number | null;
   desc: string;
 };
 
@@ -405,8 +409,8 @@ export function useConfigureBotSubscription() {
     mutationFn: async (input: {
       botId: string;
       price1Day: number;
-      price7Days: number;
-      price30Days: number;
+      price7Days: number | null;
+      price30Days: number | null;
     }) => {
       check(
         await db().rpc("configure_bot_subscription", {
