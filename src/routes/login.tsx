@@ -57,6 +57,9 @@ function Login() {
             "Avval emailingizga yuborilgan tasdiqlash havolasini bosing, keyin qayta kiring.",
           );
         }
+        if (code === "user_banned" || errorMessage.includes("banned")) {
+          throw new Error("Akkauntingiz administrator tomonidan bloklangan.");
+        }
         if (errorMessage.includes("invalid login credentials")) {
           throw new Error("Email yoki parol noto‘g‘ri. Email tasdiqlanganini ham tekshiring.");
         }

@@ -20,6 +20,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { User as AuthUser } from "@supabase/supabase-js";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { formatDateTime } from "@/lib/format";
 import { BotCover, FavoriteButton } from "@/components/bot-media";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { PushToggle } from "@/components/push-toggle";
@@ -61,7 +70,33 @@ export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
   const [account, setAccount] = useState<MarketplaceAccount | null>(null);
   const [authError, setAuthError] = useState("");
   const [ready, setReady] = useState(!isSupabaseConfigured());
+  // End of the ban when an admin banned the signed-in account; shown in a dialog after sign-out.
+  const [banUntil, setBanUntil] = useState<string | null>(null);
   useInboxRealtime(account?.id);
+
+  // Supabase only blocks new sign-ins for banned users, so ask the database regularly and sign
+  // the user out as soon as a ban appears.
+  const signedInId = account?.id;
+  useEffect(() => {
+    if (!signedInId || !isSupabaseConfigured()) return;
+    const supabase = getSupabaseClient();
+    let stopped = false;
+    async function check() {
+      const { data, error } = await supabase.rpc("my_ban_status");
+      if (stopped || error || !data) return;
+      setBanUntil(String(data));
+      await supabase.auth.signOut();
+    }
+    void check();
+    const timer = window.setInterval(() => void check(), 15_000);
+    const onFocus = () => void check();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      stopped = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [signedInId]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
@@ -107,6 +142,22 @@ export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
         </p>
       )}
       {children}
+      <Dialog open={banUntil !== null} onOpenChange={(open) => !open && setBanUntil(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Akkauntingiz bloklandi</DialogTitle>
+            <DialogDescription>
+              {banUntil !== null && Date.parse(banUntil) - Date.now() > 50 * 365 * 24 * 3600 * 1000
+                ? "Administrator akkauntingizni umrbod bloklagan."
+                : `Administrator akkauntingizni ${banUntil ? formatDateTime(banUntil) : ""} gacha bloklagan.`}{" "}
+              Shu vaqtgacha saytga kira olmaysiz. Savollar bo‘lsa, qo‘llab-quvvatlashga yozing.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setBanUntil(null)}>Tushunarli</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MarketplaceAccountContext.Provider>
   );
 }
