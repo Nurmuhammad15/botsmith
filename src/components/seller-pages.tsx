@@ -200,10 +200,11 @@ export function SellerEarnings() {
 
   return (
     <SellerPage title="Daromadlar">
-      <div className="grid gap-6 border-b pb-7 sm:grid-cols-3">
+      <div className="grid gap-6 border-b pb-7 sm:grid-cols-2 lg:grid-cols-4">
         {[
-          ["Jami daromad", wallet?.earned ?? 0],
+          ["Jami daromad", (wallet?.earned ?? 0) + (wallet?.held ?? 0)],
           ["Yechish uchun balans", wallet?.balance ?? 0],
+          ["24 soat ushlab turilmoqda", wallet?.held ?? 0],
           ["So‘ralgan summa", wallet?.withdrawn ?? 0],
         ].map(([label, value]) => (
           <div key={String(label)}>

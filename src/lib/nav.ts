@@ -24,21 +24,21 @@ export const buyerNav: SideItem[] = [
   { to: "/help", label: "Yordam", icon: HelpCircle },
 ];
 export const sellerNav: SideItem[] = [
-  { to: "/seller", label: "Mening botlarim", icon: Bot },
+  { to: "/seller", label: "Mening botlarim", short: "Botlarim", icon: Bot },
   { to: "/seller-orders", label: "Buyurtmalar", icon: Package },
   { to: "/messages", label: "Xabarlar", icon: MessageSquare },
   { to: "/seller-earnings", label: "Daromadlar", icon: Wallet },
-  { to: "/seller-withdrawal-history", label: "Yechish tarixi", icon: History },
+  { to: "/seller-withdrawal-history", label: "Yechish tarixi", short: "Tarix", icon: History },
   { to: "/seller-profile", label: "Profil", icon: User },
   { to: "/help", label: "Yordam", icon: HelpCircle },
 ];
 export const adminNav: SideItem[] = [
-  { to: "/", label: "Bosh sahifa", icon: Home },
+  { to: "/", label: "Bosh sahifa", short: "Bosh", icon: Home },
   { to: "/admin", tab: "bots", label: "Botlar", icon: Bot },
-  { to: "/admin", tab: "users", label: "Foydalanuvchilar", icon: Users },
+  { to: "/admin", tab: "users", label: "Foydalanuvchilar", short: "Userlar", icon: Users },
   { to: "/admin", tab: "orders", label: "Buyurtmalar", icon: Package },
   { to: "/admin", tab: "withdrawals", label: "To'lovlar", icon: CreditCard },
   { to: "/admin", tab: "stats", label: "Komissiya", icon: Percent },
-  { to: "/admin", tab: "support", label: "Murojaatlar", icon: MessageSquare },
-  { to: "/admin", tab: "settings", label: "Sozlamalar", icon: Settings },
+  { to: "/admin", tab: "support", label: "Murojaatlar", short: "Murojaat", icon: MessageSquare },
+  { to: "/admin", tab: "settings", label: "Sozlamalar", short: "Sozlama", icon: Settings },
 ];

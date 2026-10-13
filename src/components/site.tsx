@@ -273,27 +273,56 @@ export function Footer() {
   );
 }
 
+/** Phone bottom bar for dashboards with many sections: equal-width, horizontally scrollable. */
+function BottomNav({
+  items,
+  isActive,
+  label,
+}: {
+  items: SideItem[];
+  isActive: (item: SideItem) => boolean;
+  label: string;
+}) {
+  return (
+    <nav
+      aria-label={label}
+      className="fixed inset-x-0 bottom-0 z-40 flex overflow-x-auto border-t bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+    >
+      {items.map((item) => {
+        const { to, label: text, short, icon: Icon, tab } = item;
+        return (
+          <Link
+            key={text}
+            to={to}
+            search={(tab ? { tab } : undefined) as never}
+            className={cn(
+              "relative flex w-20 shrink-0 flex-col items-center gap-1 px-1 py-2 text-center text-[11px] leading-tight",
+              isActive(item) ? "text-primary" : "text-muted-foreground",
+            )}
+          >
+            <Icon className="h-5 w-5" />
+            <span className="w-full truncate">{short ?? text}</span>
+            {to === "/messages" && <UnreadBadge className="absolute right-3 top-1" />}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
 function AdminMobileTabBar({ items }: { items: SideItem[] }) {
   const currentTab = useRouterState({
     select: (s) => (s.location.search as { tab?: string }).tab ?? "bots",
   });
+  const path = useRouterState({ select: (s) => s.location.pathname });
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex overflow-x-auto border-t bg-background md:hidden">
-      {items.map(({ to, label, icon: Icon, tab }) => (
-        <Link
-          key={label}
-          to={to}
-          search={(tab ? { tab } : undefined) as never}
-          className={cn(
-            "flex min-w-[76px] flex-1 flex-col items-center gap-1 px-2 py-2 text-[11px]",
-            tab && tab === currentTab ? "text-primary" : "text-muted-foreground",
-          )}
-        >
-          <Icon className="h-5 w-5" />
-          {label}
-        </Link>
-      ))}
-    </nav>
+    <BottomNav
+      label="Admin menyusi"
+      items={items}
+      isActive={(item) =>
+        item.tab ? path === "/admin" && item.tab === currentTab : path === item.to
+      }
+    />
   );
 }
 
@@ -463,7 +492,14 @@ export function StatCard({
   );
 }
 
-export type SideItem = { to: string; label: string; icon: LucideIcon; tab?: string };
+export type SideItem = {
+  to: string;
+  label: string;
+  icon: LucideIcon;
+  tab?: string;
+  /** Shorter label for the phone bottom bar. */
+  short?: string;
+};
 export function DashboardLayout({
   user,
   role,
@@ -611,7 +647,7 @@ function SellerDashboardLayout({
         </div>
         <nav
           aria-label="Sotuvchi menyusi"
-          className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 sm:px-6"
+          className="mx-auto hidden max-w-7xl gap-1 overflow-x-auto px-4 sm:px-6 md:flex"
         >
           {items.map(({ to, label, icon: Icon }) => (
             <Button
@@ -636,7 +672,16 @@ function SellerDashboardLayout({
           ))}
         </nav>
       </header>
-      <main className="mx-auto min-w-0 max-w-7xl px-4 py-8 sm:px-6">{children}</main>
+      <main className="mx-auto min-w-0 max-w-7xl px-4 py-8 pb-28 sm:px-6 md:pb-8">{children}</main>
+      <BottomNav
+        label="Sotuvchi menyusi"
+        items={items}
+        isActive={({ to }) =>
+          path === to ||
+          (to === "/seller-earnings" && path === "/withdraw") ||
+          (to === "/seller" && path === "/seller-new-bot")
+        }
+      />
     </>
   );
 }

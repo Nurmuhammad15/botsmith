@@ -366,7 +366,7 @@ export function useConfigureBotSubscription() {
   });
 }
 
-export type Wallet = { earned: number; withdrawn: number; balance: number };
+export type Wallet = { earned: number; withdrawn: number; balance: number; held: number };
 
 export function useWallet(enabled = true) {
   return useQuery({
@@ -378,6 +378,7 @@ export function useWallet(enabled = true) {
         earned: num(row["earned"]),
         withdrawn: num(row["withdrawn"]),
         balance: num(row["balance"]),
+        held: num(row["held"]),
       };
     },
   });
