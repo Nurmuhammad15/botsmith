@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
-import { Check, X } from "lucide-react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { ArrowLeft, Check, MessageCircle, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -496,9 +496,14 @@ function SupportTab({
   const account = useMarketplaceAccount();
   const [selected, setSelected] = useState<string | null>(null);
   const [reply, setReply] = useState("");
-  const current = threads.find((t) => t.userId === selected) ?? threads[0];
+  // Like Telegram: nothing is open until a conversation is picked.
+  const current = threads.find((t) => t.userId === selected);
   const { data: messages = [] } = useSupportThread(current?.userId);
   const send = useSendSupportMessage(current?.userId, account?.id, true);
+  const bottom = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    bottom.current?.scrollIntoView?.({ block: "end" });
+  }, [messages.length, selected]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -522,7 +527,7 @@ function SupportTab({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[18rem_1fr]">
-      <div className="space-y-2">
+      <div className={cn("space-y-2", current && "hidden lg:block")}>
         {threads.map((t) => (
           <button
             key={t.userId}
@@ -537,33 +542,52 @@ function SupportTab({
           </button>
         ))}
       </div>
-      <div className="card-soft flex flex-col">
-        <div className="max-h-96 min-h-64 space-y-3 overflow-y-auto p-4">
-          {messages.map((m) => (
-            <p
-              key={m.id}
-              className={cn(
-                "max-w-[85%] rounded-2xl p-3 text-sm",
-                m.fromStaff ? "ml-auto bg-primary text-primary-foreground" : "bg-muted",
-              )}
-            >
-              {m.body}
-            </p>
-          ))}
+      {!current ? (
+        <div className="card-soft hidden min-h-64 flex-col items-center justify-center gap-2 p-8 text-center text-sm text-muted-foreground lg:flex">
+          <MessageCircle className="h-8 w-8" />
+          Suhbatni ochish uchun chapdan foydalanuvchini tanlang.
         </div>
-        <form onSubmit={submit} className="flex gap-2 border-t p-3">
-          <Input
-            aria-label="Javob"
-            value={reply}
-            onChange={(e) => setReply(e.target.value)}
-            maxLength={2000}
-            placeholder="Javob yozing..."
-          />
-          <Button type="submit" disabled={!reply.trim() || send.isPending}>
-            Yuborish
-          </Button>
-        </form>
-      </div>
+      ) : (
+        <div className="card-soft flex flex-col">
+          <div className="flex items-center gap-3 border-b p-3">
+            <button
+              type="button"
+              aria-label="Orqaga"
+              onClick={() => setSelected(null)}
+              className="grid h-9 w-9 place-items-center rounded-full border hover:bg-muted"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <p className="font-medium">{current.user}</p>
+          </div>
+          <div className="max-h-96 min-h-64 space-y-3 overflow-y-auto p-4">
+            {messages.map((m) => (
+              <p
+                key={m.id}
+                className={cn(
+                  "max-w-[85%] rounded-2xl p-3 text-sm",
+                  m.fromStaff ? "ml-auto bg-primary text-primary-foreground" : "bg-muted",
+                )}
+              >
+                {m.body}
+              </p>
+            ))}
+            <div ref={bottom} />
+          </div>
+          <form onSubmit={submit} className="flex gap-2 border-t p-3">
+            <Input
+              aria-label="Javob"
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              maxLength={2000}
+              placeholder="Javob yozing..."
+            />
+            <Button type="submit" disabled={!reply.trim() || send.isPending}>
+              Yuborish
+            </Button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
@@ -651,7 +675,8 @@ function UsersTab({
             </p>
             {u.bannedUntil && (
               <p className="text-xs font-medium text-destructive">
-                Ban: {isForever(u.bannedUntil) ? "umrbod" : `${formatDateTime(u.bannedUntil)} gacha`}
+                Ban:{" "}
+                {isForever(u.bannedUntil) ? "umrbod" : `${formatDateTime(u.bannedUntil)} gacha`}
               </p>
             )}
           </div>,
