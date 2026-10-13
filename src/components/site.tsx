@@ -12,6 +12,8 @@ import {
   MessageCircle,
   MessageSquare,
   LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
   type LucideIcon,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -546,6 +548,26 @@ function BuyerDashboardLayout({
   const currentTab = useRouterState({
     select: (s) => (s.location.search as { tab?: string }).tab,
   });
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem("sidebar-collapsed") === "1");
+    } catch {
+      /* storage unavailable: keep the menu open */
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    setCollapsed((prev) => {
+      try {
+        localStorage.setItem("sidebar-collapsed", prev ? "0" : "1");
+      } catch {
+        /* ignore */
+      }
+      return !prev;
+    });
+  };
 
   useEffect(() => {
     if (ready && !account) {
@@ -561,11 +583,13 @@ function BuyerDashboardLayout({
     );
   }
 
+  const SidebarIcon = collapsed ? PanelLeftOpen : PanelLeftClose;
+
   return (
     <>
       <Navbar />
       <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6 pb-24 md:pb-6">
-        <aside className="hidden w-56 shrink-0 md:block">
+        <aside className={cn("hidden w-56 shrink-0", collapsed ? "md:hidden" : "md:block")}>
           <div className="mb-6 flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-full bg-primary-soft font-semibold text-primary">
               {(account.name || account.email || user).charAt(0).toUpperCase()}
@@ -595,7 +619,18 @@ function BuyerDashboardLayout({
             ))}
           </nav>
         </aside>
-        <main className="min-w-0 flex-1">{children}</main>
+        <main className="min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={collapsed ? "Menyuni ochish" : "Menyuni yopish"}
+            title={collapsed ? "Menyuni ochish" : "Menyuni yopish"}
+            className="mb-3 hidden h-9 w-9 place-items-center rounded-md border text-muted-foreground hover:bg-muted md:grid"
+          >
+            <SidebarIcon className="h-5 w-5" />
+          </button>
+          {children}
+        </main>
       </div>
       <MobileTabBar {...(items.some((i) => i.tab) ? { adminItems: items } : {})} />
     </>
