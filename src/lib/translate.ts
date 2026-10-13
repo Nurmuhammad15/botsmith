@@ -9,7 +9,7 @@ import { dict4 } from "@/lib/i18n-dict-4";
 export type TargetLang = "ru" | "en";
 export type Lang = "uz" | TargetLang;
 
-const NUMBER = /\d+(?:[  ]\d{3})*(?:[.,]\d+)?/g;
+const NUMBER = /\d+(?:[ \u00a0]\d{3})*(?:[.,]\d+)?/g;
 
 /** Plain apostrophes, collapsed whitespace, lower case: the dictionary lookup form. */
 export const normalizeKey = (value: string) =>
