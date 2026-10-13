@@ -19,6 +19,7 @@ import type { User as AuthUser } from "@supabase/supabase-js";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { BotCover, FavoriteButton } from "@/components/bot-media";
+import { PushToggle } from "@/components/push-toggle";
 import { useInboxRealtime, useUnreadCount } from "@/lib/api-chat";
 import { useT, type Lang } from "@/lib/i18n";
 import { formatUZS, type BotItem } from "@/lib/data";
@@ -172,6 +173,7 @@ export function Navbar() {
             <MessageSquare className="h-5 w-5" />
             <UnreadBadge className="absolute -right-0.5 -top-0.5" />
           </Link>
+          <PushToggle />
           <select
             aria-label="Language"
             value={lang}
@@ -643,6 +645,7 @@ function SellerDashboardLayout({
               <p className="text-sm font-semibold">{account.name || account.email || user}</p>
               <p className="text-xs text-muted-foreground">{role}</p>
             </div>
+            <PushToggle />
             <button
               type="button"
               aria-label="Chiqish"

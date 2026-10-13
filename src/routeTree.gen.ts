@@ -28,6 +28,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WithdrawRouteImport } from './routes/withdraw'
 import { Route as ApiClickRouteImport } from './routes/api.click'
 import { Route as ApiPaymeRouteImport } from './routes/api.payme'
+import { Route as ApiPushRouteImport } from './routes/api.push'
 import { Route as BotsIndexRouteImport } from './routes/bots.index'
 import { Route as BotsIdRouteImport } from './routes/bots.$id'
 import { Route as DashboardPurchasesRouteImport } from './routes/dashboard.purchases'
@@ -129,6 +130,11 @@ const ApiPaymeRoute = ApiPaymeRouteImport.update({
   path: '/api/payme',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPushRoute = ApiPushRouteImport.update({
+  id: '/api/push',
+  path: '/api/push',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BotsIndexRoute = BotsIndexRouteImport.update({
   id: '/bots/',
   path: '/bots/',
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/withdraw': typeof WithdrawRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
+  '/api/push': typeof ApiPushRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByTo {
   '/withdraw': typeof WithdrawRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
+  '/api/push': typeof ApiPushRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -228,6 +236,7 @@ export interface FileRoutesById {
   '/withdraw': typeof WithdrawRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
+  '/api/push': typeof ApiPushRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
     | '/withdraw'
     | '/api/click'
     | '/api/payme'
+    | '/api/push'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -282,6 +292,7 @@ export interface FileRouteTypes {
     | '/withdraw'
     | '/api/click'
     | '/api/payme'
+    | '/api/push'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/withdraw'
     | '/api/click'
     | '/api/payme'
+    | '/api/push'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
@@ -335,6 +347,7 @@ export interface RootRouteChildren {
   WithdrawRoute: typeof WithdrawRoute
   ApiClickRoute: typeof ApiClickRoute
   ApiPaymeRoute: typeof ApiPaymeRoute
+  ApiPushRoute: typeof ApiPushRoute
   BotsIdRoute: typeof BotsIdRoute
   DashboardPurchasesRoute: typeof DashboardPurchasesRoute
   SellerBotsIdRoute: typeof SellerBotsIdRoute
@@ -477,6 +490,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPaymeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/push': {
+      id: '/api/push'
+      path: '/api/push'
+      fullPath: '/api/push'
+      preLoaderRoute: typeof ApiPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bots/': {
       id: '/bots/'
       path: '/bots'
@@ -535,6 +555,7 @@ const rootRouteChildren: RootRouteChildren = {
   WithdrawRoute: WithdrawRoute,
   ApiClickRoute: ApiClickRoute,
   ApiPaymeRoute: ApiPaymeRoute,
+  ApiPushRoute: ApiPushRoute,
   BotsIdRoute: BotsIdRoute,
   DashboardPurchasesRoute: DashboardPurchasesRoute,
   SellerBotsIdRoute: SellerBotsIdRoute,

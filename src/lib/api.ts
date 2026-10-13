@@ -977,7 +977,9 @@ export function useAdminCryptoPayments(enabled: boolean) {
         check(
           await db()
             .from("crypto_payments")
-            .select("*, buyer:profiles!buyer_id(full_name, username), order:orders(number, amount)")
+            .select(
+              "*, buyer:profiles!buyer_id(full_name, username), order:orders(order_number, amount)",
+            )
             .in("status", ["submitted", "confirmed", "rejected"])
             .order("created_at", { ascending: false })
             .limit(50),
@@ -987,7 +989,7 @@ export function useAdminCryptoPayments(enabled: boolean) {
         return {
           ...mapCryptoPayment(r),
           buyer: sellerLabel(r["buyer"]),
-          orderNumber: num(o["number"]),
+          orderNumber: num(o["order_number"]),
           orderAmount: num(o["amount"]),
         };
       }),
