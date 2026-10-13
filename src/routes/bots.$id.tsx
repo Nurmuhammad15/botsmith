@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent } from "react";
-import { ArrowLeft, ChevronRight, Languages, MessageSquare, RefreshCw } from "lucide-react";
+import { ArrowLeft, ChevronRight, Languages, MessageSquare, RefreshCw, Star } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { BotGallery, FavoriteButton } from "@/components/bot-media";
 import { SiteLayout, Rating, Tabs } from "@/components/site";
 import {
@@ -357,20 +358,30 @@ function Reviews({ botId, userId }: { botId: string; userId: string | undefined 
       {hasPurchased && (
         <form onSubmit={onSubmit} className="card-soft space-y-3 p-4">
           <p className="font-medium">Sharh qoldiring</p>
-          <label className="flex items-center gap-2">
-            Baho
-            <select
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-              className="h-9 rounded-md border bg-background px-2"
-            >
-              {[5, 4, 3, 2, 1].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
+          <div className="flex items-center gap-3">
+            <span>Baho</span>
+            <div className="flex items-center gap-0.5" role="radiogroup" aria-label="Baho">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  role="radio"
+                  aria-checked={rating === n}
+                  aria-label={`${n}`}
+                  onClick={() => setRating(n)}
+                  className="rounded p-0.5"
+                >
+                  <Star
+                    className={cn(
+                      "h-7 w-7 transition-colors",
+                      n <= rating ? "fill-star text-star" : "text-muted-foreground/40",
+                    )}
+                  />
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
+            <span className="text-sm text-muted-foreground">{rating}/5</span>
+          </div>
           <textarea
             value={comment}
             onChange={(e) => setComment(e.target.value)}
