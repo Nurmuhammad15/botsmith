@@ -12,7 +12,7 @@ const dict = {
   heroB: { uz: "botlarni", ru: "ботов", en: "Telegram" },
   heroC: { uz: "xarid qiling", ru: "покупайте", en: "bots" },
   heroD: { uz: "yoki", ru: "или", en: "or" },
-  heroE: { uz: "o'zingizni soting.", ru: "продавайте своих.", en: "sell your own." },
+  heroE: { uz: "o'zingizning botingizni soting.", ru: "продавайте своих.", en: "sell your own." },
   heroSub: {
     uz: "Tayyor Telegram botlar, ishonchli dasturchilar va xavfsiz to'lov. Bizning platforma orqali o'z biznesingizni avtomatlashtiring yoki o'z botlaringizni soting.",
     ru: "Готовые Telegram-боты, надёжные разработчики и безопасная оплата. Автоматизируйте бизнес или продавайте своих ботов.",

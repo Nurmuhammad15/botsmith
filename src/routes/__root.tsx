@@ -82,7 +82,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "BotHub — Telegram botlar marketplace" },
       {
         name: "description",
-        content: "Tayyor Telegram botlarni xarid qiling yoki o'zingizni soting.",
+        content: "Tayyor Telegram botlarni xarid qiling yoki o'zingizning botingizni soting.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

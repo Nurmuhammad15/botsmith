@@ -221,7 +221,7 @@ export const dict3: Entry[] = [
     "BotHub — buy or sell Telegram bots",
   ],
   [
-    "Tayyor Telegram botlarni xarid qiling yoki o'zingizni soting.",
+    "Tayyor Telegram botlarni xarid qiling yoki o'zingizning botingizni soting.",
     "Покупайте готовых Telegram-ботов или продавайте своих.",
     "Buy ready-made Telegram bots or sell your own.",
   ],

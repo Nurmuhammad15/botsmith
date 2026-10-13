@@ -21,7 +21,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "BotHub — Telegram botlar marketplace" },
       {
         property: "og:description",
-        content: "Tayyor Telegram botlarni xarid qiling yoki o'zingizni soting.",
+        content: "Tayyor Telegram botlarni xarid qiling yoki o'zingizning botingizni soting.",
       },
     ],
   }),
