@@ -46,7 +46,8 @@ import {
 } from "@/lib/marketplace-auth-context";
 
 async function loadAccount(user: AuthUser | undefined): Promise<MarketplaceAccount | null> {
-  if (!user) return null;
+  // Support-chat guests have an anonymous session but are not marketplace accounts.
+  if (!user || user.is_anonymous) return null;
   // The role lives in the profiles table (set by the server); user_metadata is client-editable.
   const { data, error } = await getSupabaseClient()
     .from("profiles")

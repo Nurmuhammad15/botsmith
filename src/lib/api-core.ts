@@ -40,6 +40,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   try_again_later: "Hozir band, birozdan keyin qayta urinib ko‘ring.",
   invalid_rate: "Kurs noto‘g‘ri.",
   weak_password: "Parol kamida 8 ta belgidan iborat bo‘lishi kerak.",
+  guest_unavailable: "Chat hozircha ishlamayapti. Birozdan so‘ng qayta urinib ko‘ring.",
   invalid_duration: "Muddat noto‘g‘ri.",
   user_has_history:
     "Bu foydalanuvchida buyurtmalar yoki yechishlar tarixi bor, uni o‘chirib bo‘lmaydi. Uni ban qiling.",

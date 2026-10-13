@@ -6,11 +6,28 @@ import { Input } from "@/components/ui/input";
 import { SiteLayout } from "@/components/site";
 import { describeError, useSendSupportMessage, useSupportThread } from "@/lib/api";
 import { useMarketplaceAuth } from "@/lib/marketplace-auth-context";
+import { getSupabaseClient, isSupabaseConfigured } from "@/lib/supabase";
+
+/** A visitor without an account chats through an anonymous Supabase session (created on first send). */
+function useGuestId(enabled: boolean) {
+  const [guestId, setGuestId] = useState<string | undefined>();
+  useEffect(() => {
+    if (!enabled || !isSupabaseConfigured()) return;
+    void getSupabaseClient()
+      .auth.getSession()
+      .then(({ data }) => {
+        if (data.session?.user.is_anonymous) setGuestId(data.session.user.id);
+      });
+  }, [enabled]);
+  return [guestId, setGuestId] as const;
+}
 
 export function SupportChat() {
   const { account, ready } = useMarketplaceAuth();
-  const { data: messages = [], isError } = useSupportThread(account?.id);
-  const send = useSendSupportMessage(account?.id, account?.id);
+  const [guestId, setGuestId] = useGuestId(ready && !account);
+  const threadId = account?.id ?? guestId;
+  const { data: messages = [], isError } = useSupportThread(threadId);
+  const send = useSendSupportMessage(threadId, threadId);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const bottom = useRef<HTMLDivElement>(null);
@@ -25,7 +42,16 @@ export function SupportChat() {
     if (!text) return;
     setError("");
     try {
-      await send.mutateAsync(text);
+      if (threadId) {
+        await send.mutateAsync(text);
+      } else {
+        const { data, error: signInError } = await getSupabaseClient().auth.signInAnonymously({
+          options: { data: { full_name: "Mehmon" } },
+        });
+        if (signInError || !data.user) throw new Error("guest_unavailable");
+        setGuestId(data.user.id);
+        await send.mutateAsync({ body: text, guestId: data.user.id });
+      }
       setMessage("");
     } catch (e) {
       setError(describeError(e));
@@ -54,14 +80,6 @@ export function SupportChat() {
           </header>
           {!ready ? (
             <p className="p-5 text-sm text-muted-foreground">Yuklanmoqda…</p>
-          ) : !account ? (
-            <p className="p-5 text-sm text-muted-foreground">
-              Yordam xizmatiga yozish uchun{" "}
-              <Link to="/login" className="font-medium text-primary">
-                tizimga kiring
-              </Link>
-              .
-            </p>
           ) : (
             <>
               <div

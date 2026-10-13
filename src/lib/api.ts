@@ -606,19 +606,24 @@ export function useSendSupportMessage(
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: string) => {
-      if (!threadUserId || !senderId) throw new Error("not_authenticated");
+    // `guestId` is for a visitor whose anonymous session was created while sending.
+    mutationFn: async (input: string | { body: string; guestId: string }) => {
+      const body = typeof input === "string" ? input : input.body;
+      const thread = typeof input === "string" ? threadUserId : input.guestId;
+      const sender = typeof input === "string" ? senderId : input.guestId;
+      if (!thread || !sender) throw new Error("not_authenticated");
       check(
         await db().from("support_messages").insert({
-          thread_user_id: threadUserId,
-          sender_id: senderId,
+          thread_user_id: thread,
+          sender_id: sender,
           from_staff: fromStaff,
           body,
         }),
       );
     },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["support", threadUserId] });
+    onSuccess: (_result, input) => {
+      const thread = typeof input === "string" ? threadUserId : input.guestId;
+      void queryClient.invalidateQueries({ queryKey: ["support", thread] });
       void queryClient.invalidateQueries({ queryKey: ["admin", "threads"] });
     },
   });
