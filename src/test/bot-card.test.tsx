@@ -32,9 +32,10 @@ const bot: BotItem = {
   sellerHeadline: "",
   sellerLocation: "",
   sellerExperience: null,
-  sellerSkills: [],
   sellerBio: "",
   sellerWebsite: "",
+  sellerCv: null,
+  sellerCvName: "CV",
 };
 
 const signedIn = (favorites: string[] = []) =>

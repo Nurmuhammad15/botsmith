@@ -19,7 +19,15 @@ import { MediaPicker } from "@/components/media-picker";
 import { SellerSales } from "@/components/seller-sales";
 import { sellerNav } from "@/lib/nav";
 import { sellerFaqs } from "@/lib/faq";
-import { avatarUrl, uploadCovers, useSetAvatar, validateAvatar } from "@/lib/api-media";
+import {
+  avatarUrl,
+  cvUrl,
+  uploadCovers,
+  useSetAvatar,
+  useSetCv,
+  validateAvatar,
+  validateCv,
+} from "@/lib/api-media";
 import { useOpenConversation } from "@/lib/api-chat";
 import { IMAGE_TYPES, MAX_IMAGES, validateImage } from "@/lib/media";
 import {
@@ -244,6 +252,7 @@ export function SellerProfile() {
   const { data: saved, isPending, isError: loadFailed } = useProfile(account?.id);
   const update = useUpdateProfile(account?.id);
   const setAvatar = useSetAvatar(account?.id);
+  const setCv = useSetCv(account?.id);
   const [profile, setProfile] = useState({
     name: "",
     username: "",
@@ -251,13 +260,13 @@ export function SellerProfile() {
     headline: "",
     location: "",
     experience: "",
-    skills: "",
     website: "",
   });
   const [loaded, setLoaded] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const [avatarError, setAvatarError] = useState("");
+  const [cvError, setCvError] = useState("");
 
   useEffect(() => {
     if (saved && !loaded) {
@@ -268,7 +277,6 @@ export function SellerProfile() {
         headline: saved.headline,
         location: saved.location,
         experience: saved.experienceYears === null ? "" : String(saved.experienceYears),
-        skills: saved.skills.join(", "),
         website: saved.website,
       });
       setLoaded(true);
@@ -278,14 +286,6 @@ export function SellerProfile() {
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-    const skills = profile.skills
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (skills.length > 10) {
-      setError("Ko‘pi bilan 10 ta ko‘nikma kiritish mumkin.");
-      return;
-    }
     const years = profile.experience.trim() === "" ? null : Number(profile.experience);
     if (years !== null && (!Number.isInteger(years) || years < 0 || years > 60)) {
       setError("Tajriba 0 dan 60 gacha butun son bo‘lishi kerak.");
@@ -299,7 +299,6 @@ export function SellerProfile() {
         headline: profile.headline,
         location: profile.location,
         experienceYears: years,
-        skills,
         website: profile.website,
       });
       setDone(true);
@@ -322,6 +321,22 @@ export function SellerProfile() {
       await setAvatar.mutateAsync({ file, previousPath: saved?.avatarPath ?? null });
     } catch (e) {
       setAvatarError(describeError(e));
+    }
+  }
+
+  async function changeCv(file: File | null) {
+    setCvError("");
+    if (file) {
+      const problem = validateCv(file);
+      if (problem) {
+        setCvError(problem);
+        return;
+      }
+    }
+    try {
+      await setCv.mutateAsync({ file, previousPath: saved?.cvPath ?? null });
+    } catch (e) {
+      setCvError(describeError(e));
     }
   }
 
@@ -403,8 +418,8 @@ export function SellerProfile() {
           </div>
 
           <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-            Rasm, sarlavha, joylashuv, tajriba, ko‘nikmalar, veb-sayt va “O‘zingiz haqingizda”
-            xaridorlarga bot sahifangizda ko‘rinadi.
+            Rasm, sarlavha, joylashuv, tajriba, veb-sayt, CV va “O‘zingiz haqingizda” xaridorlarga
+            bot sahifangizda ko‘rinadi.
           </p>
 
           <label className="block space-y-2 text-sm">
@@ -452,14 +467,6 @@ export function SellerProfile() {
             </label>
           </div>
           <label className="block space-y-2 text-sm">
-            <span>Ko‘nikmalar (vergul bilan, ko‘pi bilan 10 ta)</span>
-            <Input
-              value={profile.skills}
-              onChange={(e) => edit({ skills: e.target.value })}
-              placeholder="Python, aiogram, Node.js, PostgreSQL"
-            />
-          </label>
-          <label className="block space-y-2 text-sm">
             <span>Veb-sayt / portfolio</span>
             <Input
               type="url"
@@ -482,6 +489,55 @@ export function SellerProfile() {
               {profile.bio.length}/1000
             </span>
           </label>
+          <div className="space-y-2 text-sm">
+            <span>CV (ixtiyoriy, PDF, 5 MB gacha)</span>
+            <div className="flex flex-wrap items-center gap-2">
+              {saved?.cvPath && (
+                <a
+                  href={cvUrl(saved.cvPath)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="max-w-full truncate text-primary underline"
+                >
+                  {saved.cvName || "CV"}
+                </a>
+              )}
+              <label className="inline-flex h-9 cursor-pointer items-center rounded-md border px-3 text-sm font-medium hover:bg-muted">
+                {setCv.isPending
+                  ? "Yuklanmoqda…"
+                  : saved?.cvPath
+                    ? "CV ni almashtirish"
+                    : "CV yuklash"}
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  className="sr-only"
+                  disabled={setCv.isPending}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    e.target.value = "";
+                    if (file) void changeCv(file);
+                  }}
+                />
+              </label>
+              {saved?.cvPath && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={setCv.isPending}
+                  onClick={() => void changeCv(null)}
+                >
+                  O‘chirish
+                </Button>
+              )}
+            </div>
+            {cvError && (
+              <p role="alert" className="text-xs text-destructive">
+                {cvError}
+              </p>
+            )}
+          </div>
           <Button type="submit" disabled={update.isPending}>
             <Save />
             Saqlash

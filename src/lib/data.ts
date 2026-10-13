@@ -46,9 +46,10 @@ export type BotItem = {
   sellerHeadline: string;
   sellerLocation: string;
   sellerExperience: number | null;
-  sellerSkills: string[];
   sellerBio: string;
   sellerWebsite: string;
+  sellerCv: string | null;
+  sellerCvName: string;
 };
 
 export type BotStatus = "pending" | "published" | "rejected";

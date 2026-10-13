@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { check, db, describeError, num, str, type Row } from "@/lib/api-core";
-import { avatarUrl, coverUrl } from "@/lib/api-media";
+import { avatarUrl, coverUrl, cvUrl } from "@/lib/api-media";
 import type {
   BotItem,
   BotStatus,
@@ -47,9 +47,10 @@ function toBot(row: Row): BotItem {
       row["seller_experience"] === null || row["seller_experience"] === undefined
         ? null
         : num(row["seller_experience"]),
-    sellerSkills: Array.isArray(row["seller_skills"]) ? (row["seller_skills"] as string[]) : [],
     sellerBio: str(row["seller_bio"]),
     sellerWebsite: str(row["seller_website"]),
+    sellerCv: row["seller_cv"] ? cvUrl(str(row["seller_cv"])) : null,
+    sellerCvName: str(row["seller_cv_name"]) || "CV",
   };
 }
 
@@ -459,8 +460,9 @@ export type Profile = {
   headline: string;
   location: string;
   experienceYears: number | null;
-  skills: string[];
   website: string;
+  cvPath: string | null;
+  cvName: string;
 };
 
 export function useProfile(userId: string | undefined) {
@@ -481,8 +483,9 @@ export function useProfile(userId: string | undefined) {
           row["experience_years"] === null || row["experience_years"] === undefined
             ? null
             : num(row["experience_years"]),
-        skills: Array.isArray(row["skills"]) ? (row["skills"] as string[]) : [],
         website: str(row["website"]),
+        cvPath: row["cv_path"] ? str(row["cv_path"]) : null,
+        cvName: str(row["cv_name"]),
       };
     },
   });
@@ -491,7 +494,7 @@ export function useProfile(userId: string | undefined) {
 export function useUpdateProfile(userId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (profile: Omit<Profile, "phone" | "avatarPath">) => {
+    mutationFn: async (profile: Omit<Profile, "phone" | "avatarPath" | "cvPath" | "cvName">) => {
       if (!userId) throw new Error("not_authenticated");
       check(
         await db()
@@ -503,7 +506,6 @@ export function useUpdateProfile(userId: string | undefined) {
             headline: profile.headline.trim() || null,
             location: profile.location.trim() || null,
             experience_years: profile.experienceYears,
-            skills: profile.skills,
             website: profile.website.trim() || null,
           })
           .eq("id", userId),

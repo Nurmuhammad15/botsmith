@@ -268,19 +268,20 @@ function Detail() {
                     .join(" · ")}
                 </p>
               )}
-              {bot.sellerSkills.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {bot.sellerSkills.map((skill) => (
-                    <span key={skill} className="rounded-full bg-muted px-2.5 py-1 text-xs">
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              )}
               {bot.sellerBio && (
                 <p className="mt-3 whitespace-pre-line text-sm leading-6 text-muted-foreground">
                   {bot.sellerBio}
                 </p>
+              )}
+              {bot.sellerCv && (
+                <a
+                  href={bot.sellerCv}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 block truncate text-sm text-primary underline"
+                >
+                  CV: {bot.sellerCvName}
+                </a>
               )}
               {bot.sellerWebsite && (
                 <a

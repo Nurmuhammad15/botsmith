@@ -227,3 +227,54 @@ export function useSetAvatar(userId: string | undefined) {
     },
   });
 }
+
+const CVS = "cvs";
+
+/** Public URL of a seller CV stored in the `cvs` bucket. */
+export function cvUrl(path: string) {
+  return db().storage.from(CVS).getPublicUrl(path).data.publicUrl;
+}
+
+export const MAX_CV_BYTES = 5 * 1024 * 1024;
+
+/** Returns an error message for an unusable CV, or null when it is fine. */
+export function validateCv(file: { name: string; type: string; size: number }) {
+  if (file.type !== "application/pdf") return "CV faqat PDF formatida bo‘lishi kerak.";
+  if (file.size === 0) return "Fayl bo‘sh.";
+  if (file.size > MAX_CV_BYTES) return "CV hajmi 5 MB dan oshmasligi kerak.";
+  return null;
+}
+
+/** Uploads a CV (or removes it when `file` is null) and deletes the previous object. */
+export function useSetCv(userId: string | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { file: File | null; previousPath: string | null }) => {
+      if (!userId) throw new Error("not_authenticated");
+      let path: string | null = null;
+      if (input.file) {
+        path = `${userId}/${crypto.randomUUID()}-${safeFileName(input.file.name)}`;
+        const { error } = await db().storage.from(CVS).upload(path, input.file, {
+          contentType: "application/pdf",
+          cacheControl: "31536000",
+          upsert: false,
+        });
+        if (error) throw error;
+      }
+      const { error } = await db()
+        .from("profiles")
+        .update({ cv_path: path, cv_name: input.file ? input.file.name.slice(0, 120) : null })
+        .eq("id", userId);
+      if (error) {
+        if (path) await db().storage.from(CVS).remove([path]);
+        throw error;
+      }
+      if (input.previousPath) await db().storage.from(CVS).remove([input.previousPath]);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["profile", userId] });
+      void queryClient.invalidateQueries({ queryKey: ["bots"] });
+      void queryClient.invalidateQueries({ queryKey: ["bot"] });
+    },
+  });
+}
