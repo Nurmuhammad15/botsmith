@@ -29,7 +29,7 @@ Run the files in `supabase/migrations/` **in order** in the Supabase SQL editor 
 | `0004_withdrawal_card_privacy.sql`    | private seller card numbers and audited admin reveal                                 |
 | `0005_review_fixes.sql`               | refund, media moderation, review privacy, and size-limit fixes                       |
 | `0006_chat_fixes.sql`                 | chat access and consistency fixes                                                    |
-| `0007_subscriptions.sql`              | 1/7/30-day plans, consent and refunds, 5% commission, and expiry tracking            |
+| `0007_subscriptions.sql`              | 1/7/30-day plans, consent and refunds, 8% commission, and expiry tracking            |
 | `0008_manual_subscription_access.sql` | Removes seller webhooks; sellers manage access from paid orders                      |
 
 To create the first administrator, register normally, then run in the SQL editor:
@@ -101,7 +101,7 @@ endpoint or subscribe to Vercel Pro.
 Subscription refund requests are reviewed by an administrator, and approved refunds must first be
 manually processed through the original payment provider before being marked complete in Admin.
 
-Seller revenue is 85% of the listed plan price. It becomes withdrawable 24 hours after payment if
+Seller revenue is 92% of the listed plan price. It becomes withdrawable 24 hours after payment if
 no refund request is under review. Each manual withdrawal also charges a separate 5% fee.
 
 ## Supabase authentication

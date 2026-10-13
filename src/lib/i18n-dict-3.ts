@@ -390,9 +390,9 @@ export const dict3: Entry[] = [
   ],
   ["Narx va komissiya", "Цена и комиссия", "Price and commission"],
   [
-    "Xaridor to'lov vaqtida bot sahifasidagi obuna narxini to'laydi; xaridorga qo'shimcha 5% qo'shilmaydi. BotHub sotuvchining belgilagan narxidan 5% platforma komissiyasini ushlab qoladi, qolgan 95% sotuvchining hisobiga yoziladi. Pul yechishning alohida komissiyasi 5% ni tashkil etadi. Sotuv daromadi yechishdan oldin 24 soat ushlab turiladi; qaytarish so'rovi ko'rib chiqilayotgan paytda u yechish uchun ochilmaydi.",
-    "Покупатель платит цену подписки со страницы бота; к цене не добавляется 5%. BotHub удерживает 5% комиссии платформы с цены продавца, остальные 95% зачисляются продавцу. Отдельная комиссия за вывод средств составляет 5%. Доход от продаж удерживается 24 часа перед выводом; пока рассматривается запрос на возврат, он недоступен для вывода.",
-    "The buyer pays the subscription price shown on the bot page; nothing extra of 5% is added. BotHub keeps a 5% platform commission from the seller's price and the remaining 95% is credited to the seller. A separate withdrawal fee of 5% applies. Sales earnings are held for 24 hours before withdrawal; while a refund request is under review they can't be withdrawn.",
+    "Xaridor to'lov vaqtida bot sahifasidagi obuna narxini to'laydi; xaridorga qo'shimcha 5% qo'shilmaydi. BotHub sotuvchining belgilagan narxidan 8% platforma komissiyasini ushlab qoladi, qolgan 92% sotuvchining hisobiga yoziladi. Pul yechishning alohida komissiyasi 5% ni tashkil etadi. Sotuv daromadi yechishdan oldin 24 soat ushlab turiladi; qaytarish so'rovi ko'rib chiqilayotgan paytda u yechish uchun ochilmaydi.",
+    "Покупатель платит цену подписки со страницы бота; к цене не добавляется 5%. BotHub удерживает 8% комиссии платформы с цены продавца, остальные 92% зачисляются продавцу. Отдельная комиссия за вывод средств составляет 5%. Доход от продаж удерживается 24 часа перед выводом; пока рассматривается запрос на возврат, он недоступен для вывода.",
+    "The buyer pays the subscription price shown on the bot page; nothing extra of 5% is added. BotHub keeps an 8% platform commission from the seller's price and the remaining 92% is credited to the seller. A separate withdrawal fee of 5% applies. Sales earnings are held for 24 hours before withdrawal; while a refund request is under review they can't be withdrawn.",
   ],
   ["24 soat ichida qaytarish", "Возврат в течение 24 часов", "Refund within 24 hours"],
   [

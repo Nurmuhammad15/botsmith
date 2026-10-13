@@ -49,8 +49,8 @@ function Terms() {
         <h2 className="mt-8 text-xl font-semibold">Narx va komissiya</h2>
         <p className="mt-3 text-sm leading-7">
           Xaridor to‘lov vaqtida bot sahifasidagi obuna narxini to‘laydi; xaridorga qo‘shimcha 5%
-          qo‘shilmaydi. BotHub sotuvchining belgilagan narxidan 5% platforma komissiyasini ushlab
-          qoladi, qolgan 95% sotuvchining hisobiga yoziladi. Pul yechishning alohida komissiyasi 5%
+          qo‘shilmaydi. BotHub sotuvchining belgilagan narxidan 8% platforma komissiyasini ushlab
+          qoladi, qolgan 92% sotuvchining hisobiga yoziladi. Pul yechishning alohida komissiyasi 5%
           ni tashkil etadi. Sotuv daromadi yechishdan oldin 24 soat ushlab turiladi; qaytarish
           so‘rovi ko‘rib chiqilayotgan paytda u yechish uchun ochilmaydi.
         </p>

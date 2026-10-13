@@ -104,9 +104,9 @@ export const dict4: Entry[] = [
   ],
   ["Pulni qanday yechaman?", "Как вывести деньги?", "How do I withdraw money?"],
   [
-    "To'langan obuna daromadi 24 soat ushlab turilgach yechish uchun ochiladi. BotHub sotuv narxidan 5% komissiya ushlab qoladi; yechish so'rovidan yana 5% olinadi. To'lovni administrator qo'lda amalga oshiradi.",
-    "Доход от оплаченной подписки становится доступным для вывода после 24-часового удержания. BotHub удерживает 5% комиссии с цены продажи; с запроса на вывод удерживается ещё 5%. Выплату вручную выполняет администратор.",
-    "Earnings from a paid subscription become withdrawable after a 24-hour hold. BotHub keeps a 5% commission from the sale price; another 5% is charged on the withdrawal request. The administrator makes the payout manually.",
+    "To'langan obuna daromadi 24 soat ushlab turilgach yechish uchun ochiladi. BotHub sotuv narxidan 8% komissiya ushlab qoladi; yechish so'rovidan yana 5% olinadi. To'lovni administrator qo'lda amalga oshiradi.",
+    "Доход от оплаченной подписки становится доступным для вывода после 24-часового удержания. BotHub удерживает 8% комиссии с цены продажи; с запроса на вывод удерживается ещё 5%. Выплату вручную выполняет администратор.",
+    "Earnings from a paid subscription become withdrawable after a 24-hour hold. BotHub keeps an 8% commission from the sale price; another 5% is charged on the withdrawal request. The administrator makes the payout manually.",
   ],
   ["Xaridor bilan qanday gaplashaman?", "Как общаться с покупателем?", "How do I talk to a buyer?"],
   [
