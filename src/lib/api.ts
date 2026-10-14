@@ -330,6 +330,44 @@ export function useAddBot(sellerId: string | undefined) {
   });
 }
 
+export type PendingBotApiKey = { botId: string; title: string; apiKey: string };
+
+/** API keys the seller has not confirmed yet (shown in a window that cannot be closed). */
+export function usePendingBotApiKeys(enabled: boolean) {
+  return useQuery({
+    queryKey: ["bot-api-keys", "pending"],
+    enabled,
+    refetchInterval: 30_000,
+    queryFn: async (): Promise<PendingBotApiKey[]> =>
+      (check(await db().rpc("pending_bot_api_keys")) as Row[]).map((r) => ({
+        botId: str(r["bot_id"]),
+        title: str(r["title"]),
+        apiKey: str(r["api_key"]),
+      })),
+  });
+}
+
+export function useConfirmBotApiKey() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (botId: string) => {
+      check(await db().rpc("confirm_bot_api_key", { p_bot: botId }));
+    },
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["bot-api-keys"] }),
+  });
+}
+
+export function useRotateBotApiKey() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (botId: string) => {
+      check(await db().rpc("rotate_bot_api_key", { p_bot: botId }));
+    },
+    // The new key appears in the same must-confirm window.
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["bot-api-keys"] }),
+  });
+}
+
 export function useAcceptSubscriptionTerms(orderId: string) {
   return useMutation({
     mutationFn: async () => {

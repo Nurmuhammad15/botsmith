@@ -26,14 +26,15 @@ import { Route as SellerWithdrawalHistoryRouteImport } from './routes/seller-wit
 import { Route as SupportChatRouteImport } from './routes/support-chat'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WithdrawRouteImport } from './routes/withdraw'
+import { Route as AdminBotsIdRouteImport } from './routes/admin-bots.$id'
 import { Route as ApiClickRouteImport } from './routes/api.click'
 import { Route as ApiPaymeRouteImport } from './routes/api.payme'
 import { Route as ApiPushRouteImport } from './routes/api.push'
+import { Route as ApiSellerAccessRouteImport } from './routes/api.seller-access'
 import { Route as BotsIndexRouteImport } from './routes/bots.index'
 import { Route as BotsIdRouteImport } from './routes/bots.$id'
 import { Route as DashboardPurchasesRouteImport } from './routes/dashboard.purchases'
 import { Route as SellerBotsIdRouteImport } from './routes/seller-bots.$id'
-import { Route as AdminBotsIdRouteImport } from './routes/admin-bots.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -120,6 +121,11 @@ const WithdrawRoute = WithdrawRouteImport.update({
   path: '/withdraw',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminBotsIdRoute = AdminBotsIdRouteImport.update({
+  id: '/admin-bots/$id',
+  path: '/admin-bots/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiClickRoute = ApiClickRouteImport.update({
   id: '/api/click',
   path: '/api/click',
@@ -133,6 +139,11 @@ const ApiPaymeRoute = ApiPaymeRouteImport.update({
 const ApiPushRoute = ApiPushRouteImport.update({
   id: '/api/push',
   path: '/api/push',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSellerAccessRoute = ApiSellerAccessRouteImport.update({
+  id: '/api/seller-access',
+  path: '/api/seller-access',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BotsIndexRoute = BotsIndexRouteImport.update({
@@ -155,11 +166,6 @@ const SellerBotsIdRoute = SellerBotsIdRouteImport.update({
   path: '/seller-bots/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminBotsIdRoute = AdminBotsIdRouteImport.update({
-  id: '/admin-bots/$id',
-  path: '/admin-bots/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -179,13 +185,14 @@ export interface FileRoutesByFullPath {
   '/support-chat': typeof SupportChatRoute
   '/terms': typeof TermsRoute
   '/withdraw': typeof WithdrawRoute
+  '/admin-bots/$id': typeof AdminBotsIdRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
   '/api/push': typeof ApiPushRoute
+  '/api/seller-access': typeof ApiSellerAccessRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
-  '/admin-bots/$id': typeof AdminBotsIdRoute
   '/bots/': typeof BotsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -206,13 +213,14 @@ export interface FileRoutesByTo {
   '/support-chat': typeof SupportChatRoute
   '/terms': typeof TermsRoute
   '/withdraw': typeof WithdrawRoute
+  '/admin-bots/$id': typeof AdminBotsIdRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
   '/api/push': typeof ApiPushRoute
+  '/api/seller-access': typeof ApiSellerAccessRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
-  '/admin-bots/$id': typeof AdminBotsIdRoute
   '/bots': typeof BotsIndexRoute
 }
 export interface FileRoutesById {
@@ -234,13 +242,14 @@ export interface FileRoutesById {
   '/support-chat': typeof SupportChatRoute
   '/terms': typeof TermsRoute
   '/withdraw': typeof WithdrawRoute
+  '/admin-bots/$id': typeof AdminBotsIdRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
   '/api/push': typeof ApiPushRoute
+  '/api/seller-access': typeof ApiSellerAccessRoute
   '/bots/$id': typeof BotsIdRoute
   '/dashboard/purchases': typeof DashboardPurchasesRoute
   '/seller-bots/$id': typeof SellerBotsIdRoute
-  '/admin-bots/$id': typeof AdminBotsIdRoute
   '/bots/': typeof BotsIndexRoute
 }
 export interface FileRouteTypes {
@@ -263,13 +272,14 @@ export interface FileRouteTypes {
     | '/support-chat'
     | '/terms'
     | '/withdraw'
+    | '/admin-bots/$id'
     | '/api/click'
     | '/api/payme'
     | '/api/push'
+    | '/api/seller-access'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
-    | '/admin-bots/$id'
     | '/bots/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -290,13 +300,14 @@ export interface FileRouteTypes {
     | '/support-chat'
     | '/terms'
     | '/withdraw'
+    | '/admin-bots/$id'
     | '/api/click'
     | '/api/payme'
     | '/api/push'
+    | '/api/seller-access'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
-    | '/admin-bots/$id'
     | '/bots'
   id:
     | '__root__'
@@ -317,13 +328,14 @@ export interface FileRouteTypes {
     | '/support-chat'
     | '/terms'
     | '/withdraw'
+    | '/admin-bots/$id'
     | '/api/click'
     | '/api/payme'
     | '/api/push'
+    | '/api/seller-access'
     | '/bots/$id'
     | '/dashboard/purchases'
     | '/seller-bots/$id'
-    | '/admin-bots/$id'
     | '/bots/'
   fileRoutesById: FileRoutesById
 }
@@ -345,13 +357,14 @@ export interface RootRouteChildren {
   SupportChatRoute: typeof SupportChatRoute
   TermsRoute: typeof TermsRoute
   WithdrawRoute: typeof WithdrawRoute
+  AdminBotsIdRoute: typeof AdminBotsIdRoute
   ApiClickRoute: typeof ApiClickRoute
   ApiPaymeRoute: typeof ApiPaymeRoute
   ApiPushRoute: typeof ApiPushRoute
+  ApiSellerAccessRoute: typeof ApiSellerAccessRoute
   BotsIdRoute: typeof BotsIdRoute
   DashboardPurchasesRoute: typeof DashboardPurchasesRoute
   SellerBotsIdRoute: typeof SellerBotsIdRoute
-  AdminBotsIdRoute: typeof AdminBotsIdRoute
   BotsIndexRoute: typeof BotsIndexRoute
 }
 
@@ -476,6 +489,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WithdrawRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-bots/$id': {
+      id: '/admin-bots/$id'
+      path: '/admin-bots/$id'
+      fullPath: '/admin-bots/$id'
+      preLoaderRoute: typeof AdminBotsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/click': {
       id: '/api/click'
       path: '/api/click'
@@ -495,6 +515,13 @@ declare module '@tanstack/react-router' {
       path: '/api/push'
       fullPath: '/api/push'
       preLoaderRoute: typeof ApiPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/seller-access': {
+      id: '/api/seller-access'
+      path: '/api/seller-access'
+      fullPath: '/api/seller-access'
+      preLoaderRoute: typeof ApiSellerAccessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bots/': {
@@ -525,13 +552,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SellerBotsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin-bots/$id': {
-      id: '/admin-bots/$id'
-      path: '/admin-bots/$id'
-      fullPath: '/admin-bots/$id'
-      preLoaderRoute: typeof AdminBotsIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -553,13 +573,14 @@ const rootRouteChildren: RootRouteChildren = {
   SupportChatRoute: SupportChatRoute,
   TermsRoute: TermsRoute,
   WithdrawRoute: WithdrawRoute,
+  AdminBotsIdRoute: AdminBotsIdRoute,
   ApiClickRoute: ApiClickRoute,
   ApiPaymeRoute: ApiPaymeRoute,
   ApiPushRoute: ApiPushRoute,
+  ApiSellerAccessRoute: ApiSellerAccessRoute,
   BotsIdRoute: BotsIdRoute,
   DashboardPurchasesRoute: DashboardPurchasesRoute,
   SellerBotsIdRoute: SellerBotsIdRoute,
-  AdminBotsIdRoute: AdminBotsIdRoute,
   BotsIndexRoute: BotsIndexRoute,
 }
 export const routeTree = rootRouteImport

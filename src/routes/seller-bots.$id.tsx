@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Eye, ShoppingBag, Trash2, Wallet } from "lucide-react";
+import { ArrowLeft, Eye, KeyRound, RefreshCw, ShoppingBag, Trash2, Wallet } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import {
   describeError,
   useConfigureBotSubscription,
   useMyBots,
+  useRotateBotApiKey,
   useSellerSubscriptionConfig,
 } from "@/lib/api";
 import { coverUrl, useUploadMedia, type UploadResult } from "@/lib/api-media";
@@ -80,11 +81,54 @@ function SellerBotContent() {
             </p>
           )}
 
+          {bot.status === "published" && <BotApiAccess botId={bot.id} />}
           <SubscriptionSettings botId={bot.id} />
           <MediaManager bot={bot} sellerId={account.id} />
         </>
       )}
     </>
+  );
+}
+
+function BotApiAccess({ botId }: { botId: string }) {
+  const rotate = useRotateBotApiKey();
+  const [error, setError] = useState("");
+
+  async function rotateKey() {
+    if (!window.confirm("Eski API kaliti darhol ishlamay qoladi. Davom etasizmi?")) return;
+    setError("");
+    try {
+      await rotate.mutateAsync(botId);
+    } catch (err) {
+      setError(describeError(err));
+    }
+  }
+
+  return (
+    <section className="mt-8 space-y-3 rounded-lg border p-4" aria-labelledby="bot-api-title">
+      <h3 id="bot-api-title" className="flex items-center gap-2 font-semibold">
+        <KeyRound className="h-4 w-4" />
+        API orqali obunani tekshirish
+      </h3>
+      <p className="text-sm text-muted-foreground">
+        API kaliti bot tasdiqlanganda yaratiladi va alohida oynada ko‘rsatiladi. Uni botingizga
+        qo‘shing: bot xaridorning BotHub ID raqami bilan so‘rov yuborib, tarif faol yoki yo‘qligini
+        tekshiradi. Kalit yo‘qolgan bo‘lsa, yangisini yarating, u yangi oynada chiqadi.
+      </p>
+      <Button type="button" variant="outline" onClick={rotateKey} disabled={rotate.isPending}>
+        <RefreshCw />
+        {rotate.isPending ? "Yangilanmoqda…" : "Yangi kalit yaratish"}
+      </Button>
+      <p className="text-xs text-muted-foreground">
+        POST /api/seller-access · Authorization: Bearer &lt;kalit&gt; · JSON:{" "}
+        {`{"buyer_id":"BotHub xaridor ID raqami"}`}
+      </p>
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+    </section>
   );
 }
 

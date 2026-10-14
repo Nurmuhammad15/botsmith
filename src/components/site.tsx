@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatDateTime } from "@/lib/format";
+import { ApiKeyGate } from "@/components/api-key-gate";
 import { BotCover, FavoriteButton } from "@/components/bot-media";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { PushToggle } from "@/components/push-toggle";
@@ -143,6 +144,7 @@ export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
         </p>
       )}
       {children}
+      <ApiKeyGate isSeller={Boolean(account?.isSeller)} />
       <Dialog open={banUntil !== null} onOpenChange={(open) => !open && setBanUntil(null)}>
         <DialogContent>
           <DialogHeader>
