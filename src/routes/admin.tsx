@@ -39,6 +39,7 @@ import {
 import { categories, formatUZS, orderCode } from "@/lib/data";
 import { PLATFORM_SALES_COMMISSION_RATE, subscriptionLabel } from "@/lib/subscription";
 import { WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
+import { useAdminSetUserRole, useSuperAdminIds, type UserRole } from "@/lib/api-roles";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { adminNav } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -652,6 +653,10 @@ function UsersTab({
   const [banTarget, setBanTarget] = useState<(typeof users)[number] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<(typeof users)[number] | null>(null);
   const ban = useAdminBanUser();
+  const account = useMarketplaceAccount();
+  const { data: superIds = [] } = useSuperAdminIds(true);
+  const iAmSuper = Boolean(account && superIds.includes(account.id));
+  const setRole = useAdminSetUserRole();
   return (
     <>
       <DataTable
@@ -680,7 +685,36 @@ function UsersTab({
               </p>
             )}
           </div>,
-          u.role,
+          iAmSuper && !superIds.includes(u.id) ? (
+            <select
+              aria-label="Rol"
+              className="h-9 rounded-md border bg-background px-2 text-sm"
+              value={u.role}
+              disabled={setRole.isPending}
+              onChange={(event) => {
+                const role = event.target.value as UserRole;
+                if (
+                  role === "admin" &&
+                  !window.confirm(`${u.email} ga administrator huquqlari beriladi. Davom etasizmi?`)
+                ) {
+                  return;
+                }
+                setRole.mutate(
+                  { userId: u.id, role },
+                  { onSuccess: () => toast.success("Rol o‘zgartirildi"), onError: fail },
+                );
+              }}
+            >
+              <option value="buyer">buyer</option>
+              <option value="seller">seller</option>
+              <option value="admin">admin</option>
+            </select>
+          ) : (
+            <span>
+              {u.role}
+              {superIds.includes(u.id) && " · super admin"}
+            </span>
+          ),
           date(u.createdAt),
           date(u.lastSignInAt),
           String(u.bots),

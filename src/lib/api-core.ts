@@ -45,6 +45,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   user_has_history:
     "Bu foydalanuvchida buyurtmalar yoki yechishlar tarixi bor, uni o‘chirib bo‘lmaydi. Uni ban qiling.",
   cannot_change_admin: "Boshqa administratorning parolini o‘zgartirib bo‘lmaydi.",
+  cannot_change_super_admin: "Super adminning rolini o‘zgartirib bo‘lmaydi.",
   user_not_found: "Foydalanuvchi topilmadi.",
   payments_unavailable: "Onlayn to‘lov hozircha ulanmagan.",
 };
