@@ -11,6 +11,8 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "BotHub" },
+      { property: "og:url", content: "https://bothub.work/" },
       { name: "twitter:card", content: "summary_large_image" },
       { title: "BotHub — Telegram botlarni xarid qiling yoki soting" },
       {
@@ -22,6 +24,21 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content: "Tayyor Telegram botlarni xarid qiling yoki o'zingizning botingizni soting.",
+      },
+    ],
+    links: [{ rel: "canonical", href: "https://bothub.work/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "BotHub",
+          alternateName: ["BotHub.work", "bothub.work"],
+          url: "https://bothub.work/",
+          description: "Telegram botlar marketplace: tayyor botlarni xarid qiling yoki soting.",
+          inLanguage: ["uz", "ru", "en"],
+        }),
       },
     ],
   }),
