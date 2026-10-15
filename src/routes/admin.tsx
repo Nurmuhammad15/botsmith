@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, Check, MessageCircle, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, MessageCircle, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -657,101 +657,173 @@ function UsersTab({
   const { data: superIds = [] } = useSuperAdminIds(true);
   const iAmSuper = Boolean(account && superIds.includes(account.id));
   const setRole = useAdminSetUserRole();
+  const [filter, setFilter] = useState<"all" | "seller" | "buyer" | "admin">("all");
+  const [open, setOpen] = useState<string | null>(null);
+  const visible = filter === "all" ? users : users.filter((u) => u.role === filter);
   return (
     <>
-      <DataTable
-        head={[
-          "Foydalanuvchi",
-          "Rol",
-          "Ro‘yxatdan o‘tgan",
-          "Oxirgi kirish",
-          "Botlar",
-          "Xaridlar",
-          "Sotuvlar",
-          "Amallar",
-        ]}
-        emptyMessage={loading ? "Yuklanmoqda…" : "Foydalanuvchilar yo‘q."}
-        rows={users.map((u) => [
-          <div>
-            <p className="font-medium">{u.fullName || "—"}</p>
-            <p className="text-xs text-muted-foreground">
-              {u.email}
-              {!u.emailConfirmed && " · tasdiqlanmagan"}
-            </p>
-            {u.bannedUntil && (
-              <p className="text-xs font-medium text-destructive">
-                Ban:{" "}
-                {isForever(u.bannedUntil) ? "umrbod" : `${formatDateTime(u.bannedUntil)} gacha`}
-              </p>
+      <div className="mb-4 flex flex-wrap gap-2">
+        {(
+          [
+            ["all", "Hammasi"],
+            ["seller", "Sotuvchilar"],
+            ["buyer", "Xaridorlar"],
+            ["admin", "Adminlar"],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={filter === key}
+            onClick={() => setFilter(key)}
+            className={cn(
+              "rounded-full border px-4 py-1.5 text-sm",
+              filter === key ? "border-primary bg-primary-soft font-medium text-primary" : "",
             )}
-          </div>,
-          iAmSuper && !superIds.includes(u.id) ? (
-            <select
-              aria-label="Rol"
-              className="h-9 rounded-md border bg-background px-2 text-sm"
-              value={u.role}
-              disabled={setRole.isPending}
-              onChange={(event) => {
-                const role = event.target.value as UserRole;
-                if (
-                  role === "admin" &&
-                  !window.confirm(`${u.email} ga administrator huquqlari beriladi. Davom etasizmi?`)
-                ) {
-                  return;
-                }
-                setRole.mutate(
-                  { userId: u.id, role },
-                  { onSuccess: () => toast.success("Rol o‘zgartirildi"), onError: fail },
-                );
-              }}
-            >
-              <option value="buyer">buyer</option>
-              <option value="seller">seller</option>
-              <option value="admin">admin</option>
-            </select>
-          ) : (
-            <span>
-              {u.role}
-              {superIds.includes(u.id) && " · super admin"}
-            </span>
-          ),
-          date(u.createdAt),
-          date(u.lastSignInAt),
-          String(u.bots),
-          String(u.purchases),
-          String(u.sales),
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" onClick={() => setTarget(u)}>
-              Parol
-            </Button>
-            {u.role !== "admin" &&
-              (u.bannedUntil ? (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={ban.isPending}
-                  onClick={() =>
-                    ban.mutate(
-                      { userId: u.id, hours: null, unban: true },
-                      { onSuccess: () => toast.success("Ban olib tashlandi"), onError: fail },
-                    )
-                  }
-                >
-                  Bandan chiqarish
-                </Button>
-              ) : (
-                <Button size="sm" variant="outline" onClick={() => setBanTarget(u)}>
-                  Ban
-                </Button>
-              ))}
-            {u.role !== "admin" && (
-              <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(u)}>
-                O‘chirish
-              </Button>
-            )}
-          </div>,
-        ])}
-      />
+          >
+            {label} ({key === "all" ? users.length : users.filter((u) => u.role === key).length})
+          </button>
+        ))}
+      </div>
+      {visible.length === 0 ? (
+        <p className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+          {loading ? "Yuklanmoqda…" : "Foydalanuvchilar yo‘q."}
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {visible.map((u) => {
+            const isOpen = open === u.id;
+            return (
+              <div key={u.id} className="card-soft overflow-hidden">
+                <div className="flex flex-wrap items-center gap-3 p-3">
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    onClick={() => setOpen(isOpen ? null : u.id)}
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                  >
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-transform",
+                        isOpen && "rotate-180",
+                      )}
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate font-medium">{u.fullName || "—"}</span>
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {u.email}
+                        {!u.emailConfirmed && " · tasdiqlanmagan"}
+                      </span>
+                      {u.bannedUntil && (
+                        <span className="block text-xs font-medium text-destructive">
+                          Ban:{" "}
+                          {isForever(u.bannedUntil)
+                            ? "umrbod"
+                            : `${formatDateTime(u.bannedUntil)} gacha`}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                  {iAmSuper && !superIds.includes(u.id) ? (
+                    <select
+                      aria-label="Rol"
+                      className="h-9 rounded-md border bg-background px-2 text-sm"
+                      value={u.role}
+                      disabled={setRole.isPending}
+                      onChange={(event) => {
+                        const role = event.target.value as UserRole;
+                        if (
+                          role === "admin" &&
+                          !window.confirm(
+                            `${u.email} ga administrator huquqlari beriladi. Davom etasizmi?`,
+                          )
+                        ) {
+                          return;
+                        }
+                        setRole.mutate(
+                          { userId: u.id, role },
+                          { onSuccess: () => toast.success("Rol o‘zgartirildi"), onError: fail },
+                        );
+                      }}
+                    >
+                      <option value="buyer">buyer</option>
+                      <option value="seller">seller</option>
+                      <option value="admin">admin</option>
+                    </select>
+                  ) : (
+                    <span className="text-sm">
+                      {u.role}
+                      {superIds.includes(u.id) && " · super admin"}
+                    </span>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setTarget(u)}>
+                      Parol
+                    </Button>
+                    {u.role !== "admin" &&
+                      (u.bannedUntil ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={ban.isPending}
+                          onClick={() =>
+                            ban.mutate(
+                              { userId: u.id, hours: null, unban: true },
+                              {
+                                onSuccess: () => toast.success("Ban olib tashlandi"),
+                                onError: fail,
+                              },
+                            )
+                          }
+                        >
+                          Bandan chiqarish
+                        </Button>
+                      ) : (
+                        <Button size="sm" variant="outline" onClick={() => setBanTarget(u)}>
+                          Ban
+                        </Button>
+                      ))}
+                    {u.role !== "admin" && (
+                      <Button size="sm" variant="destructive" onClick={() => setDeleteTarget(u)}>
+                        O‘chirish
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {isOpen && (
+                  <dl className="grid gap-x-6 gap-y-3 border-t bg-muted/40 p-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                    {(
+                      [
+                        ["Telegram", u.username],
+                        ["Telefon", u.phone],
+                        ["Email", u.email],
+                        ["Ro‘yxatdan o‘tgan", date(u.createdAt)],
+                        ["Oxirgi kirish", date(u.lastSignInAt)],
+                        ["Botlar / Xaridlar / Sotuvlar", `${u.bots} / ${u.purchases} / ${u.sales}`],
+                        ["Lavozim", u.headline],
+                        ["Joylashuv", u.location],
+                        ["Tajriba", u.experienceYears === null ? "" : `${u.experienceYears} yil`],
+                        ["Sayt", u.website],
+                      ] as const
+                    ).map(([label, value]) => (
+                      <div key={label}>
+                        <dt className="text-xs text-muted-foreground">{label}</dt>
+                        <dd className="break-words font-medium">{value || "—"}</dd>
+                      </div>
+                    ))}
+                    {u.bio && (
+                      <div className="sm:col-span-2 lg:col-span-3">
+                        <dt className="text-xs text-muted-foreground">Haqida</dt>
+                        <dd className="whitespace-pre-wrap">{u.bio}</dd>
+                      </div>
+                    )}
+                  </dl>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
       <PasswordDialog user={target} onClose={() => setTarget(null)} />
       <BanDialog user={banTarget} onClose={() => setBanTarget(null)} />
       <DeleteUserDialog user={deleteTarget} onClose={() => setDeleteTarget(null)} />

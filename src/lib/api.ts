@@ -769,6 +769,14 @@ export type AdminUser = {
   sales: number;
   /** Set while the account is banned. */
   bannedUntil: string | null;
+  phone: string;
+  /** Telegram @username. */
+  username: string;
+  headline: string;
+  location: string;
+  experienceYears: number | null;
+  bio: string;
+  website: string;
 };
 
 export function useAdminUsers(enabled: boolean) {
@@ -788,6 +796,13 @@ export function useAdminUsers(enabled: boolean) {
         purchases: num(r["purchases"]),
         sales: num(r["sales"]),
         bannedUntil: r["banned_until"] ? str(r["banned_until"]) : null,
+        phone: str(r["phone"]),
+        username: str(r["username"]),
+        headline: str(r["headline"]),
+        location: str(r["location"]),
+        experienceYears: r["experience_years"] == null ? null : num(r["experience_years"]),
+        bio: str(r["bio"]),
+        website: str(r["website"]),
       })),
   });
 }

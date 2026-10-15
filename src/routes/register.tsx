@@ -57,11 +57,31 @@ function Register() {
             return;
           }
 
+          // Sellers give their Telegram username so buyers and the team can reach them.
+          let telegram = "";
+          if (role === "seller") {
+            const raw = String(formData.get("telegram") ?? "").trim();
+            telegram = raw.startsWith("@") ? raw : "@" + raw;
+            if (!/^@[A-Za-z0-9_]{5,32}$/.test(telegram)) {
+              setMessage("Telegram username noto‘g‘ri: 5–32 ta harf, raqam yoki _ bo‘lishi kerak.");
+              return;
+            }
+          }
+
           setIsSubmitting(true);
           setMessage("");
           try {
             if (!supabaseConfigured) {
               throw new Error("Server sozlanmagan. Administratorga murojaat qiling.");
+            }
+
+            if (telegram) {
+              const { data: free } = await getSupabaseClient().rpc("username_available", {
+                p_username: telegram,
+              });
+              if (free === false) {
+                throw new Error("Bu Telegram username allaqachon band.");
+              }
             }
 
             const { data, error } = await getSupabaseClient().auth.signUp({
@@ -72,6 +92,7 @@ function Register() {
                 data: {
                   full_name: String(formData.get("name")),
                   phone: String(formData.get("phone")),
+                  ...(telegram ? { username: telegram } : {}),
                   role,
                 },
               },
@@ -166,6 +187,20 @@ function Register() {
             className={field}
           />
         </label>
+        {role === "seller" && (
+          <label className="mt-4 block text-sm">
+            Telegram username
+            <input
+              name="telegram"
+              type="text"
+              required
+              minLength={5}
+              maxLength={33}
+              placeholder="@username"
+              className={field}
+            />
+          </label>
+        )}
         <label className="mt-4 block text-sm">
           Email
           <input
