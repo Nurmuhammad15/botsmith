@@ -29,6 +29,7 @@ import { Route as WithdrawRouteImport } from './routes/withdraw'
 import { Route as AdminBotsIdRouteImport } from './routes/admin-bots.$id'
 import { Route as ApiClickRouteImport } from './routes/api.click'
 import { Route as ApiPaymeRouteImport } from './routes/api.payme'
+import { Route as ApiEmailRouteImport } from './routes/api.push'
 import { Route as ApiPushRouteImport } from './routes/api.push'
 import { Route as ApiSellerAccessRouteImport } from './routes/api.seller-access'
 import { Route as BotsIndexRouteImport } from './routes/bots.index'
@@ -136,6 +137,11 @@ const ApiPaymeRoute = ApiPaymeRouteImport.update({
   path: '/api/payme',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiEmailRoute = ApiEmailRouteImport.update({
+  id: '/api/email',
+  path: '/api/email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPushRoute = ApiPushRouteImport.update({
   id: '/api/push',
   path: '/api/push',
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/admin-bots/$id': typeof AdminBotsIdRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
+  '/api/email': typeof ApiEmailRoute
   '/api/push': typeof ApiPushRoute
   '/api/seller-access': typeof ApiSellerAccessRoute
   '/bots/$id': typeof BotsIdRoute
@@ -216,6 +223,7 @@ export interface FileRoutesByTo {
   '/admin-bots/$id': typeof AdminBotsIdRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
+  '/api/email': typeof ApiEmailRoute
   '/api/push': typeof ApiPushRoute
   '/api/seller-access': typeof ApiSellerAccessRoute
   '/bots/$id': typeof BotsIdRoute
@@ -245,6 +253,7 @@ export interface FileRoutesById {
   '/admin-bots/$id': typeof AdminBotsIdRoute
   '/api/click': typeof ApiClickRoute
   '/api/payme': typeof ApiPaymeRoute
+  '/api/email': typeof ApiEmailRoute
   '/api/push': typeof ApiPushRoute
   '/api/seller-access': typeof ApiSellerAccessRoute
   '/bots/$id': typeof BotsIdRoute
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
     | '/admin-bots/$id'
     | '/api/click'
     | '/api/payme'
+    | '/api/email'
     | '/api/push'
     | '/api/seller-access'
     | '/bots/$id'
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/admin-bots/$id'
     | '/api/click'
     | '/api/payme'
+    | '/api/email'
     | '/api/push'
     | '/api/seller-access'
     | '/bots/$id'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/admin-bots/$id'
     | '/api/click'
     | '/api/payme'
+    | '/api/email'
     | '/api/push'
     | '/api/seller-access'
     | '/bots/$id'
@@ -360,6 +372,7 @@ export interface RootRouteChildren {
   AdminBotsIdRoute: typeof AdminBotsIdRoute
   ApiClickRoute: typeof ApiClickRoute
   ApiPaymeRoute: typeof ApiPaymeRoute
+  ApiEmailRoute: typeof ApiEmailRoute
   ApiPushRoute: typeof ApiPushRoute
   ApiSellerAccessRoute: typeof ApiSellerAccessRoute
   BotsIdRoute: typeof BotsIdRoute
@@ -510,6 +523,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPaymeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/email': {
+      id: '/api/email'
+      path: '/api/email'
+      fullPath: '/api/email'
+      preLoaderRoute: typeof ApiEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/push': {
       id: '/api/push'
       path: '/api/push'
@@ -576,6 +596,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminBotsIdRoute: AdminBotsIdRoute,
   ApiClickRoute: ApiClickRoute,
   ApiPaymeRoute: ApiPaymeRoute,
+  ApiEmailRoute: ApiEmailRoute,
   ApiPushRoute: ApiPushRoute,
   ApiSellerAccessRoute: ApiSellerAccessRoute,
   BotsIdRoute: BotsIdRoute,

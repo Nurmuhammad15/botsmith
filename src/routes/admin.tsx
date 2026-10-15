@@ -939,6 +939,7 @@ function SendNotificationDialog({
   const [title, setTitle] = useState(presetEmail ? "" : NOTIFY_TEMPLATE.title);
   const [body, setBody] = useState(presetEmail ? "" : NOTIFY_TEMPLATE.body);
   const [toProfile, setToProfile] = useState(true);
+  const [alsoEmail, setAlsoEmail] = useState(true);
   const selected = audience === "selected";
   const emailList = Array.from(
     new Set(
@@ -963,7 +964,7 @@ function SendNotificationDialog({
         return;
       }
       sendToEmails.mutate(
-        { emails: emailList, title, body, link: null },
+        { emails: emailList, title, body, link: null, sendEmail: alsoEmail },
         {
           onSuccess: ({ sent, missing }) => {
             toast.success(`Xabar ${sent} ta foydalanuvchiga yuborildi`);
@@ -981,7 +982,13 @@ function SendNotificationDialog({
       return;
     }
     send.mutate(
-      { audience, title, body, link: toProfile && sellersOnly ? "/seller-profile" : null },
+      {
+        audience,
+        title,
+        body,
+        link: toProfile && sellersOnly ? "/seller-profile" : null,
+        sendEmail: alsoEmail,
+      },
       {
         onSuccess: (sent) => {
           toast.success(`Xabar ${sent} ta foydalanuvchiga yuborildi`);
@@ -1063,6 +1070,14 @@ function SendNotificationDialog({
               onChange={(event) => setToProfile(event.target.checked)}
             />
             “Ochish” tugmasi profil sahifasiga olib borsin
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={alsoEmail}
+              onChange={(event) => setAlsoEmail(event.target.checked)}
+            />
+            Pochtaga ham yuborish (Gmail va boshqalar)
           </label>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

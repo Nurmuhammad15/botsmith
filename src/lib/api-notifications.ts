@@ -65,6 +65,7 @@ export function useAdminSendNotification() {
       title: string;
       body: string;
       link: string | null;
+      sendEmail: boolean;
     }): Promise<number> =>
       num(
         check(
@@ -73,6 +74,7 @@ export function useAdminSendNotification() {
             p_title: input.title,
             p_body: input.body,
             p_link: input.link,
+            p_send_email: input.sendEmail,
           }),
         ),
       ),
@@ -87,6 +89,7 @@ export function useAdminSendNotificationToEmails() {
       title: string;
       body: string;
       link: string | null;
+      sendEmail: boolean;
     }): Promise<{ sent: number; missing: string[] }> => {
       const result = check(
         await db().rpc("admin_send_notification_to_emails", {
@@ -94,6 +97,7 @@ export function useAdminSendNotificationToEmails() {
           p_title: input.title,
           p_body: input.body,
           p_link: input.link,
+          p_send_email: input.sendEmail,
         }),
       ) as { sent?: unknown; missing?: unknown };
       return {
