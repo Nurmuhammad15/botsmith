@@ -584,13 +584,14 @@ export function useProfile(userId: string | undefined) {
 export function useUpdateProfile(userId: string | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (profile: Omit<Profile, "phone" | "avatarPath" | "cvPath" | "cvName">) => {
+    mutationFn: async (profile: Omit<Profile, "avatarPath" | "cvPath" | "cvName">) => {
       if (!userId) throw new Error("not_authenticated");
       check(
         await db()
           .from("profiles")
           .update({
             full_name: profile.name.trim(),
+            phone: profile.phone.trim(),
             username: profile.username.trim() || null,
             bio: profile.bio.trim(),
             headline: profile.headline.trim() || null,

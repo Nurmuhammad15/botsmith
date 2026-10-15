@@ -260,6 +260,7 @@ export function SellerProfile() {
   const setCv = useSetCv(account?.id);
   const [profile, setProfile] = useState({
     name: "",
+    phone: "",
     username: "",
     bio: "",
     headline: "",
@@ -277,6 +278,7 @@ export function SellerProfile() {
     if (saved && !loaded) {
       setProfile({
         name: saved.name,
+        phone: saved.phone,
         username: saved.username,
         bio: saved.bio,
         headline: saved.headline,
@@ -299,6 +301,7 @@ export function SellerProfile() {
     try {
       await update.mutateAsync({
         name: profile.name,
+        phone: profile.phone,
         username: profile.username,
         bio: profile.bio,
         headline: profile.headline,
@@ -430,6 +433,16 @@ export function SellerProfile() {
           <label className="block space-y-2 text-sm">
             <span>Ism</span>
             <Input value={profile.name} onChange={(e) => edit({ name: e.target.value })} required />
+          </label>
+          <label className="block space-y-2 text-sm">
+            <span>Telefon raqami</span>
+            <Input
+              type="tel"
+              value={profile.phone}
+              onChange={(e) => edit({ phone: e.target.value })}
+              placeholder="+998 90 123 45 67"
+              required
+            />
           </label>
           <label className="block space-y-2 text-sm">
             <span>Telegram username</span>

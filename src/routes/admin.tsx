@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, Check, ChevronDown, MessageCircle, Pencil, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, MessageCircle, Pencil, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,11 @@ import {
   useSuperAdminIds,
   type UserRole,
 } from "@/lib/api-roles";
+import {
+  useAdminSendNotification,
+  useAudienceCount,
+  type NotificationAudience,
+} from "@/lib/api-notifications";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { adminNav } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -658,6 +663,7 @@ function UsersTab({
   const [banTarget, setBanTarget] = useState<(typeof users)[number] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<(typeof users)[number] | null>(null);
   const [editTarget, setEditTarget] = useState<(typeof users)[number] | null>(null);
+  const [notifyOpen, setNotifyOpen] = useState(false);
   const ban = useAdminBanUser();
   const account = useMarketplaceAccount();
   const { data: superIds = [] } = useSuperAdminIds(true);
@@ -668,6 +674,13 @@ function UsersTab({
   const visible = filter === "all" ? users : users.filter((u) => u.role === filter);
   return (
     <>
+      <div className="mb-3 flex justify-end">
+        <Button size="sm" onClick={() => setNotifyOpen(true)}>
+          <Send />
+          Xabar yuborish
+        </Button>
+      </div>
+      <SendNotificationDialog open={notifyOpen} onClose={() => setNotifyOpen(false)} />
       <div className="mb-4 flex flex-wrap gap-2">
         {(
           [
@@ -863,6 +876,117 @@ function UsersTab({
       <BanDialog user={banTarget} onClose={() => setBanTarget(null)} />
       <DeleteUserDialog user={deleteTarget} onClose={() => setDeleteTarget(null)} />
     </>
+  );
+}
+
+const AUDIENCES: { value: NotificationAudience; label: string }[] = [
+  { value: "incomplete", label: "Sotuvchilar: Telegram yoki telefon yo‘q" },
+  { value: "seller", label: "Barcha sotuvchilar" },
+  { value: "buyer", label: "Barcha xaridorlar" },
+  { value: "all", label: "Hamma foydalanuvchilar" },
+];
+
+const NOTIFY_TEMPLATE = {
+  title: "Profilingizni to‘ldiring",
+  body: "Iltimos, profilingizda haqiqiy telefon raqamingiz va Telegram username’ingizni kiriting. Shunda xaridorlar va BotHub jamoasi siz bilan bog‘lana oladi.",
+};
+
+function SendNotificationDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const send = useAdminSendNotification();
+  const [audience, setAudience] = useState<NotificationAudience>("incomplete");
+  const [title, setTitle] = useState(NOTIFY_TEMPLATE.title);
+  const [body, setBody] = useState(NOTIFY_TEMPLATE.body);
+  const [toProfile, setToProfile] = useState(true);
+  const { data: count } = useAudienceCount(audience, open);
+  // The profile page exists for sellers only.
+  const sellersOnly = audience === "seller" || audience === "incomplete";
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (
+      !window.confirm(`Xabar ${count ?? "barcha"} ta foydalanuvchiga yuboriladi. Davom etasizmi?`)
+    ) {
+      return;
+    }
+    send.mutate(
+      { audience, title, body, link: toProfile && sellersOnly ? "/seller-profile" : null },
+      {
+        onSuccess: (sent) => {
+          toast.success(`Xabar ${sent} ta foydalanuvchiga yuborildi`);
+          onClose();
+        },
+        onError: fail,
+      },
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <form onSubmit={submit} className="space-y-3">
+          <DialogHeader>
+            <DialogTitle>Foydalanuvchilarga xabar yuborish</DialogTitle>
+            <DialogDescription>
+              Xabar sayt nomidan yuboriladi va foydalanuvchi sahifasidagi xabarlar belgisida (📣)
+              ko‘rinadi.
+            </DialogDescription>
+          </DialogHeader>
+          <label className="block space-y-1 text-sm">
+            <span>Kimga</span>
+            <select
+              className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+              value={audience}
+              onChange={(event) => setAudience(event.target.value as NotificationAudience)}
+            >
+              {AUDIENCES.map((a) => (
+                <option key={a.value} value={a.value}>
+                  {a.label}
+                </option>
+              ))}
+            </select>
+            <span className="block text-xs text-muted-foreground">
+              {count === undefined ? "Hisoblanmoqda…" : `${count} ta foydalanuvchiga yetadi`}
+            </span>
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span>Sarlavha</span>
+            <input
+              required
+              maxLength={120}
+              className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+            />
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span>Matn</span>
+            <textarea
+              required
+              maxLength={1000}
+              className="min-h-28 w-full rounded-md border bg-background p-3 text-sm"
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
+            />
+          </label>
+          <label className={cn("flex items-center gap-2 text-sm", !sellersOnly && "hidden")}>
+            <input
+              type="checkbox"
+              checked={toProfile}
+              onChange={(event) => setToProfile(event.target.checked)}
+            />
+            “Ochish” tugmasi profil sahifasiga olib borsin
+          </label>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Bekor qilish
+            </Button>
+            <Button type="submit" disabled={send.isPending || !title.trim() || !body.trim()}>
+              {send.isPending ? "Yuborilmoqda…" : "Yuborish"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
