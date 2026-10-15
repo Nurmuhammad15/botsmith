@@ -79,15 +79,30 @@ export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
   // Supabase only blocks new sign-ins for banned users, so ask the database regularly and sign
   // the user out as soon as a ban appears.
   const signedInId = account?.id;
+  const signedInRole = account?.role;
   useEffect(() => {
     if (!signedInId || !isSupabaseConfigured()) return;
     const supabase = getSupabaseClient();
     let stopped = false;
     async function check() {
       const { data, error } = await supabase.rpc("my_ban_status");
-      if (stopped || error || !data) return;
-      setBanUntil(String(data));
-      await supabase.auth.signOut();
+      if (stopped) return;
+      if (!error && data) {
+        setBanUntil(String(data));
+        await supabase.auth.signOut();
+        return;
+      }
+      // An admin changed this user's role: reload into the new role's interface.
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", signedInId)
+        .maybeSingle();
+      if (stopped || !profile?.role || profile.role === signedInRole) return;
+      stopped = true;
+      window.location.assign(
+        profile.role === "admin" ? "/admin" : profile.role === "seller" ? "/seller" : "/bots",
+      );
     }
     void check();
     const timer = window.setInterval(() => void check(), 15_000);
@@ -98,7 +113,7 @@ export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
       window.clearInterval(timer);
       window.removeEventListener("focus", onFocus);
     };
-  }, [signedInId]);
+  }, [signedInId, signedInRole]);
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return;
