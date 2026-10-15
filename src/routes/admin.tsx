@@ -811,6 +811,14 @@ function UsersTab({
                         <dd className="break-words font-medium">{value || "—"}</dd>
                       </div>
                     ))}
+                    {u.bannedUntil && (
+                      <div className="sm:col-span-2 lg:col-span-3">
+                        <dt className="text-xs text-muted-foreground">Ban sababi</dt>
+                        <dd className="whitespace-pre-wrap font-medium text-destructive">
+                          {u.banReason || "—"}
+                        </dd>
+                      </div>
+                    )}
                     {u.bio && (
                       <div className="sm:col-span-2 lg:col-span-3">
                         <dt className="text-xs text-muted-foreground">Haqida</dt>
@@ -847,6 +855,7 @@ type DialogUser = { id: string; email: string; fullName: string } | null;
 function BanDialog({ user, onClose }: { user: DialogUser; onClose: () => void }) {
   const ban = useAdminBanUser();
   const [choice, setChoice] = useState("24");
+  const [reason, setReason] = useState("");
   const hours = choice === "forever" ? null : Number(choice);
   return (
     <Dialog open={Boolean(user)} onOpenChange={(open) => !open && onClose()}>
@@ -875,6 +884,16 @@ function BanDialog({ user, onClose }: { user: DialogUser; onClose: () => void })
             );
           })}
         </div>
+        <label className="block space-y-1 text-sm">
+          <span>Sabab (foydalanuvchiga ko‘rsatiladi)</span>
+          <textarea
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            maxLength={500}
+            placeholder="Masalan: spam yoki qoidalarni buzish"
+            className="min-h-20 w-full rounded-md border bg-background p-3"
+          />
+        </label>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             Bekor qilish
@@ -885,10 +904,11 @@ function BanDialog({ user, onClose }: { user: DialogUser; onClose: () => void })
             onClick={() =>
               user &&
               ban.mutate(
-                { userId: user.id, hours },
+                { userId: user.id, hours, reason },
                 {
                   onSuccess: () => {
                     toast.success("Foydalanuvchi ban qilindi");
+                    setReason("");
                     onClose();
                   },
                   onError: fail,

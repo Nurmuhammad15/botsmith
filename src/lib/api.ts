@@ -769,6 +769,8 @@ export type AdminUser = {
   sales: number;
   /** Set while the account is banned. */
   bannedUntil: string | null;
+  /** Why the admin banned the account (while the ban lasts). */
+  banReason: string;
   phone: string;
   /** Telegram @username. */
   username: string;
@@ -796,6 +798,7 @@ export function useAdminUsers(enabled: boolean) {
         purchases: num(r["purchases"]),
         sales: num(r["sales"]),
         bannedUntil: r["banned_until"] ? str(r["banned_until"]) : null,
+        banReason: str(r["ban_reason"]),
         phone: str(r["phone"]),
         username: str(r["username"]),
         headline: str(r["headline"]),
@@ -1140,11 +1143,20 @@ export function useAdminBanUser() {
   const queryClient = useQueryClient();
   return useMutation({
     /** hours = null bans for life; unban = true lifts the ban. */
-    mutationFn: async (input: { userId: string; hours: number | null; unban?: boolean }) => {
+    mutationFn: async (input: {
+      userId: string;
+      hours: number | null;
+      reason?: string;
+      unban?: boolean;
+    }) => {
       check(
         input.unban
           ? await db().rpc("admin_unban_user", { p_user: input.userId })
-          : await db().rpc("admin_ban_user", { p_user: input.userId, p_hours: input.hours }),
+          : await db().rpc("admin_ban_user", {
+              p_user: input.userId,
+              p_hours: input.hours,
+              p_reason: input.reason?.trim() || null,
+            }),
       );
     },
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["admin", "users"] }),

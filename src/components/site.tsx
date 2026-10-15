@@ -73,7 +73,7 @@ export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
   const [authError, setAuthError] = useState("");
   const [ready, setReady] = useState(!isSupabaseConfigured());
   // End of the ban when an admin banned the signed-in account; shown in a dialog after sign-out.
-  const [banUntil, setBanUntil] = useState<string | null>(null);
+  const [ban, setBan] = useState<{ until: string; reason: string } | null>(null);
   useInboxRealtime(account?.id);
 
   // Supabase only blocks new sign-ins for banned users, so ask the database regularly and sign
@@ -85,10 +85,11 @@ export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
     const supabase = getSupabaseClient();
     let stopped = false;
     async function check() {
-      const { data, error } = await supabase.rpc("my_ban_status");
+      const { data, error } = await supabase.rpc("my_ban_info");
       if (stopped) return;
-      if (!error && data) {
-        setBanUntil(String(data));
+      const info = Array.isArray(data) ? data[0] : null;
+      if (!error && info?.banned_until) {
+        setBan({ until: String(info.banned_until), reason: String(info.reason ?? "") });
         await supabase.auth.signOut();
         return;
       }
@@ -160,19 +161,20 @@ export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
       )}
       {children}
       <ApiKeyGate isSeller={Boolean(account?.isSeller)} />
-      <Dialog open={banUntil !== null} onOpenChange={(open) => !open && setBanUntil(null)}>
+      <Dialog open={ban !== null} onOpenChange={(open) => !open && setBan(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Akkauntingiz bloklandi</DialogTitle>
             <DialogDescription>
-              {banUntil !== null && Date.parse(banUntil) - Date.now() > 50 * 365 * 24 * 3600 * 1000
+              {ban !== null && Date.parse(ban.until) - Date.now() > 50 * 365 * 24 * 3600 * 1000
                 ? "Administrator akkauntingizni umrbod bloklagan."
-                : `Administrator akkauntingizni ${banUntil ? formatDateTime(banUntil) : ""} gacha bloklagan.`}{" "}
-              Shu vaqtgacha saytga kira olmaysiz. Savollar bo‘lsa, qo‘llab-quvvatlashga yozing.
+                : `Administrator akkauntingizni ${ban ? formatDateTime(ban.until) : ""} gacha bloklagan.`}{" "}
+              {ban?.reason ? ` Sabab: ${ban.reason}.` : ""} Shu vaqtgacha saytga kira olmaysiz.
+              Savollar bo‘lsa, qo‘llab-quvvatlashga yozing.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setBanUntil(null)}>Tushunarli</Button>
+            <Button onClick={() => setBan(null)}>Tushunarli</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
