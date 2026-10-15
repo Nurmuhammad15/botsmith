@@ -78,3 +78,28 @@ export function useAdminSendNotification() {
       ),
   });
 }
+
+/** Sends a site message to specific people by e-mail; reports addresses that match no account. */
+export function useAdminSendNotificationToEmails() {
+  return useMutation({
+    mutationFn: async (input: {
+      emails: string[];
+      title: string;
+      body: string;
+      link: string | null;
+    }): Promise<{ sent: number; missing: string[] }> => {
+      const result = check(
+        await db().rpc("admin_send_notification_to_emails", {
+          p_emails: input.emails,
+          p_title: input.title,
+          p_body: input.body,
+          p_link: input.link,
+        }),
+      ) as { sent?: unknown; missing?: unknown };
+      return {
+        sent: num(result.sent),
+        missing: Array.isArray(result.missing) ? result.missing.map((m) => str(m)) : [],
+      };
+    },
+  });
+}

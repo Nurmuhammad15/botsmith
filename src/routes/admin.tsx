@@ -47,6 +47,7 @@ import {
 } from "@/lib/api-roles";
 import {
   useAdminSendNotification,
+  useAdminSendNotificationToEmails,
   useAudienceCount,
   type NotificationAudience,
 } from "@/lib/api-notifications";
@@ -664,6 +665,8 @@ function UsersTab({
   const [deleteTarget, setDeleteTarget] = useState<(typeof users)[number] | null>(null);
   const [editTarget, setEditTarget] = useState<(typeof users)[number] | null>(null);
   const [notifyOpen, setNotifyOpen] = useState(false);
+  // E-mail to prefill when the message is opened from one user's card ("" = pick an audience).
+  const [notifyEmail, setNotifyEmail] = useState("");
   const ban = useAdminBanUser();
   const account = useMarketplaceAccount();
   const { data: superIds = [] } = useSuperAdminIds(true);
@@ -675,12 +678,23 @@ function UsersTab({
   return (
     <>
       <div className="mb-3 flex justify-end">
-        <Button size="sm" onClick={() => setNotifyOpen(true)}>
+        <Button
+          size="sm"
+          onClick={() => {
+            setNotifyEmail("");
+            setNotifyOpen(true);
+          }}
+        >
           <Send />
           Xabar yuborish
         </Button>
       </div>
-      <SendNotificationDialog open={notifyOpen} onClose={() => setNotifyOpen(false)} />
+      <SendNotificationDialog
+        key={notifyEmail}
+        open={notifyOpen}
+        presetEmail={notifyEmail}
+        onClose={() => setNotifyOpen(false)}
+      />
       <div className="mb-4 flex flex-wrap gap-2">
         {(
           [
@@ -811,6 +825,21 @@ function UsersTab({
                 </div>
                 {isOpen && (
                   <div className="relative border-t bg-muted/40">
+                    <button
+                      type="button"
+                      aria-label="Xabar yuborish"
+                      title="Xabar yuborish"
+                      onClick={() => {
+                        setNotifyEmail(u.email);
+                        setNotifyOpen(true);
+                      }}
+                      className={cn(
+                        "absolute top-3 grid h-9 w-9 place-items-center rounded-full border bg-background hover:bg-muted",
+                        u.role !== "admin" ? "right-14" : "right-3",
+                      )}
+                    >
+                      <Send className="h-4 w-4" />
+                    </button>
                     {u.role !== "admin" && (
                       <button
                         type="button"
@@ -822,7 +851,7 @@ function UsersTab({
                         <Pencil className="h-4 w-4" />
                       </button>
                     )}
-                    <dl className="grid gap-x-6 gap-y-3 p-4 pr-14 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                    <dl className="grid gap-x-6 gap-y-3 p-4 pr-28 text-sm sm:grid-cols-2 lg:grid-cols-3">
                       {(
                         [
                           ["Telegram", u.username],
@@ -879,7 +908,10 @@ function UsersTab({
   );
 }
 
-const AUDIENCES: { value: NotificationAudience; label: string }[] = [
+type Audience = NotificationAudience | "selected";
+
+const AUDIENCES: { value: Audience; label: string }[] = [
+  { value: "selected", label: "Aniq foydalanuvchilar (email bo‘yicha)" },
   { value: "incomplete", label: "Sotuvchilar: Telegram yoki telefon yo‘q" },
   { value: "seller", label: "Barcha sotuvchilar" },
   { value: "buyer", label: "Barcha xaridorlar" },
@@ -891,18 +923,58 @@ const NOTIFY_TEMPLATE = {
   body: "Iltimos, profilingizda haqiqiy telefon raqamingiz va Telegram username’ingizni kiriting. Shunda xaridorlar va BotHub jamoasi siz bilan bog‘lana oladi.",
 };
 
-function SendNotificationDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function SendNotificationDialog({
+  open,
+  presetEmail,
+  onClose,
+}: {
+  open: boolean;
+  presetEmail: string;
+  onClose: () => void;
+}) {
   const send = useAdminSendNotification();
-  const [audience, setAudience] = useState<NotificationAudience>("incomplete");
-  const [title, setTitle] = useState(NOTIFY_TEMPLATE.title);
-  const [body, setBody] = useState(NOTIFY_TEMPLATE.body);
+  const sendToEmails = useAdminSendNotificationToEmails();
+  const [audience, setAudience] = useState<Audience>(presetEmail ? "selected" : "incomplete");
+  const [emails, setEmails] = useState(presetEmail);
+  const [title, setTitle] = useState(presetEmail ? "" : NOTIFY_TEMPLATE.title);
+  const [body, setBody] = useState(presetEmail ? "" : NOTIFY_TEMPLATE.body);
   const [toProfile, setToProfile] = useState(true);
-  const { data: count } = useAudienceCount(audience, open);
+  const selected = audience === "selected";
+  const emailList = Array.from(
+    new Set(
+      emails
+        .split(/[\s,;]+/)
+        .map((e) => e.trim().toLowerCase())
+        .filter((e) => e.includes("@")),
+    ),
+  );
+  const { data: count } = useAudienceCount(selected ? "all" : audience, open && !selected);
   // The profile page exists for sellers only.
-  const sellersOnly = audience === "seller" || audience === "incomplete";
+  const sellersOnly = !selected && (audience === "seller" || audience === "incomplete");
 
   function submit(event: FormEvent) {
     event.preventDefault();
+    if (selected) {
+      if (emailList.length === 0) {
+        toast.error("Kamida bitta email manzil kiriting.");
+        return;
+      }
+      if (!window.confirm(`Xabar ${emailList.length} ta manzilga yuboriladi. Davom etasizmi?`)) {
+        return;
+      }
+      sendToEmails.mutate(
+        { emails: emailList, title, body, link: null },
+        {
+          onSuccess: ({ sent, missing }) => {
+            toast.success(`Xabar ${sent} ta foydalanuvchiga yuborildi`);
+            if (missing.length > 0) toast.error(`Topilmadi: ${missing.join(", ")}`);
+            onClose();
+          },
+          onError: fail,
+        },
+      );
+      return;
+    }
     if (
       !window.confirm(`Xabar ${count ?? "barcha"} ta foydalanuvchiga yuboriladi. Davom etasizmi?`)
     ) {
@@ -936,7 +1008,7 @@ function SendNotificationDialog({ open, onClose }: { open: boolean; onClose: () 
             <select
               className="h-10 w-full rounded-md border bg-background px-3 text-sm"
               value={audience}
-              onChange={(event) => setAudience(event.target.value as NotificationAudience)}
+              onChange={(event) => setAudience(event.target.value as Audience)}
             >
               {AUDIENCES.map((a) => (
                 <option key={a.value} value={a.value}>
@@ -945,9 +1017,25 @@ function SendNotificationDialog({ open, onClose }: { open: boolean; onClose: () 
               ))}
             </select>
             <span className="block text-xs text-muted-foreground">
-              {count === undefined ? "Hisoblanmoqda…" : `${count} ta foydalanuvchiga yetadi`}
+              {selected
+                ? `${emailList.length} ta email manzil`
+                : count === undefined
+                  ? "Hisoblanmoqda…"
+                  : `${count} ta foydalanuvchiga yetadi`}
             </span>
           </label>
+          {selected && (
+            <label className="block space-y-1 text-sm">
+              <span>Email manzillar (bittadan, vergul yoki yangi qator bilan)</span>
+              <textarea
+                required
+                className="min-h-20 w-full rounded-md border bg-background p-3 text-sm"
+                placeholder="ali@gmail.com, vali@gmail.com"
+                value={emails}
+                onChange={(event) => setEmails(event.target.value)}
+              />
+            </label>
+          )}
           <label className="block space-y-1 text-sm">
             <span>Sarlavha</span>
             <input
@@ -980,8 +1068,11 @@ function SendNotificationDialog({ open, onClose }: { open: boolean; onClose: () 
             <Button type="button" variant="outline" onClick={onClose}>
               Bekor qilish
             </Button>
-            <Button type="submit" disabled={send.isPending || !title.trim() || !body.trim()}>
-              {send.isPending ? "Yuborilmoqda…" : "Yuborish"}
+            <Button
+              type="submit"
+              disabled={send.isPending || sendToEmails.isPending || !title.trim() || !body.trim()}
+            >
+              {send.isPending || sendToEmails.isPending ? "Yuborilmoqda…" : "Yuborish"}
             </Button>
           </DialogFooter>
         </form>
