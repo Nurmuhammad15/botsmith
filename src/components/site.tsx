@@ -32,7 +32,7 @@ import { formatDateTime } from "@/lib/format";
 import { ApiKeyGate } from "@/components/api-key-gate";
 import { BotCover, FavoriteButton } from "@/components/bot-media";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { PushToggle } from "@/components/push-toggle";
+import { PushAutoEnable, PushToggle } from "@/components/push-toggle";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { useInboxRealtime, useUnreadCount } from "@/lib/api-chat";
 import { useT, type Lang } from "@/lib/i18n";
@@ -161,6 +161,7 @@ export function MarketplaceAuthProvider({ children }: { children: ReactNode }) {
         </p>
       )}
       {children}
+      <PushAutoEnable userId={account?.id} />
       <ApiKeyGate isSeller={Boolean(account?.isSeller)} />
       <Dialog open={ban !== null} onOpenChange={(open) => !open && setBan(null)}>
         <DialogContent>
