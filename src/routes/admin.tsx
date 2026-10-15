@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowLeft, Check, ChevronDown, MessageCircle, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, MessageCircle, Pencil, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,7 +39,12 @@ import {
 import { categories, formatUZS, orderCode } from "@/lib/data";
 import { PLATFORM_SALES_COMMISSION_RATE, subscriptionLabel } from "@/lib/subscription";
 import { WITHDRAWAL_FEE_RATE } from "@/lib/wallet";
-import { useAdminSetUserRole, useSuperAdminIds, type UserRole } from "@/lib/api-roles";
+import {
+  useAdminSetUserRole,
+  useAdminUpdateUserProfile,
+  useSuperAdminIds,
+  type UserRole,
+} from "@/lib/api-roles";
 import { useMarketplaceAccount } from "@/lib/marketplace-auth-context";
 import { adminNav } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -652,6 +657,7 @@ function UsersTab({
   const [target, setTarget] = useState<(typeof users)[number] | null>(null);
   const [banTarget, setBanTarget] = useState<(typeof users)[number] | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<(typeof users)[number] | null>(null);
+  const [editTarget, setEditTarget] = useState<(typeof users)[number] | null>(null);
   const ban = useAdminBanUser();
   const account = useMarketplaceAccount();
   const { data: superIds = [] } = useSuperAdminIds(true);
@@ -791,51 +797,239 @@ function UsersTab({
                   </div>
                 </div>
                 {isOpen && (
-                  <dl className="grid gap-x-6 gap-y-3 border-t bg-muted/40 p-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
-                    {(
-                      [
-                        ["Telegram", u.username],
-                        ["Telefon", u.phone],
-                        ["Email", u.email],
-                        ["Ro‘yxatdan o‘tgan", date(u.createdAt)],
-                        ["Oxirgi kirish", date(u.lastSignInAt)],
-                        ["Botlar / Xaridlar / Sotuvlar", `${u.bots} / ${u.purchases} / ${u.sales}`],
-                        ["Lavozim", u.headline],
-                        ["Joylashuv", u.location],
-                        ["Tajriba", u.experienceYears === null ? "" : `${u.experienceYears} yil`],
-                        ["Sayt", u.website],
-                      ] as const
-                    ).map(([label, value]) => (
-                      <div key={label}>
-                        <dt className="text-xs text-muted-foreground">{label}</dt>
-                        <dd className="break-words font-medium">{value || "—"}</dd>
-                      </div>
-                    ))}
-                    {u.bannedUntil && (
-                      <div className="sm:col-span-2 lg:col-span-3">
-                        <dt className="text-xs text-muted-foreground">Ban sababi</dt>
-                        <dd className="whitespace-pre-wrap font-medium text-destructive">
-                          {u.banReason || "—"}
-                        </dd>
-                      </div>
+                  <div className="relative border-t bg-muted/40">
+                    {u.role !== "admin" && (
+                      <button
+                        type="button"
+                        aria-label="Ma’lumotlarni tahrirlash"
+                        title="Ma’lumotlarni tahrirlash"
+                        onClick={() => setEditTarget(u)}
+                        className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full border bg-background hover:bg-muted"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
                     )}
-                    {u.bio && (
-                      <div className="sm:col-span-2 lg:col-span-3">
-                        <dt className="text-xs text-muted-foreground">Haqida</dt>
-                        <dd className="whitespace-pre-wrap">{u.bio}</dd>
-                      </div>
-                    )}
-                  </dl>
+                    <dl className="grid gap-x-6 gap-y-3 p-4 pr-14 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                      {(
+                        [
+                          ["Telegram", u.username],
+                          ["Telefon", u.phone],
+                          ["Email", u.email],
+                          ["Ro‘yxatdan o‘tgan", date(u.createdAt)],
+                          ["Oxirgi kirish", date(u.lastSignInAt)],
+                          [
+                            "Botlar / Xaridlar / Sotuvlar",
+                            `${u.bots} / ${u.purchases} / ${u.sales}`,
+                          ],
+                          ["Lavozim", u.headline],
+                          ["Joylashuv", u.location],
+                          ["Tajriba", u.experienceYears === null ? "" : `${u.experienceYears} yil`],
+                          ["Sayt", u.website],
+                        ] as const
+                      ).map(([label, value]) => (
+                        <div key={label}>
+                          <dt className="text-xs text-muted-foreground">{label}</dt>
+                          <dd className="break-words font-medium">{value || "—"}</dd>
+                        </div>
+                      ))}
+                      {u.bannedUntil && (
+                        <div className="sm:col-span-2 lg:col-span-3">
+                          <dt className="text-xs text-muted-foreground">Ban sababi</dt>
+                          <dd className="whitespace-pre-wrap font-medium text-destructive">
+                            {u.banReason || "—"}
+                          </dd>
+                        </div>
+                      )}
+                      {u.bio && (
+                        <div className="sm:col-span-2 lg:col-span-3">
+                          <dt className="text-xs text-muted-foreground">Haqida</dt>
+                          <dd className="whitespace-pre-wrap">{u.bio}</dd>
+                        </div>
+                      )}
+                    </dl>
+                  </div>
                 )}
               </div>
             );
           })}
         </div>
       )}
+      <EditUserDialog
+        key={editTarget?.id ?? "none"}
+        user={editTarget}
+        onClose={() => setEditTarget(null)}
+      />
       <PasswordDialog user={target} onClose={() => setTarget(null)} />
       <BanDialog user={banTarget} onClose={() => setBanTarget(null)} />
       <DeleteUserDialog user={deleteTarget} onClose={() => setDeleteTarget(null)} />
     </>
+  );
+}
+
+type EditableUser = {
+  id: string;
+  email: string;
+  fullName: string;
+  phone: string;
+  username: string;
+  headline: string;
+  location: string;
+  experienceYears: number | null;
+  website: string;
+  bio: string;
+};
+
+function EditUserDialog({ user, onClose }: { user: EditableUser | null; onClose: () => void }) {
+  const update = useAdminUpdateUserProfile();
+  const [form, setForm] = useState({
+    fullName: user?.fullName ?? "",
+    phone: user?.phone ?? "",
+    username: user?.username ?? "",
+    headline: user?.headline ?? "",
+    location: user?.location ?? "",
+    experienceYears: user?.experienceYears === null || !user ? "" : String(user.experienceYears),
+    website: user?.website ?? "",
+    bio: user?.bio ?? "",
+  });
+  const set = (key: keyof typeof form) => (event: { target: { value: string } }) =>
+    setForm((previous) => ({ ...previous, [key]: event.target.value }));
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!user) return;
+    let username = form.username.trim();
+    if (username && !username.startsWith("@")) username = `@${username}`;
+    if (username && !/^@[A-Za-z0-9_]{5,32}$/.test(username)) {
+      toast.error("Telegram username noto‘g‘ri: 5–32 ta harf, raqam yoki _ bo‘lishi kerak.");
+      return;
+    }
+    const years = form.experienceYears.trim() === "" ? null : Number(form.experienceYears);
+    if (years !== null && (!Number.isInteger(years) || years < 0 || years > 60)) {
+      toast.error("Tajriba 0 dan 60 gacha butun son bo‘lishi kerak.");
+      return;
+    }
+    const website = form.website.trim();
+    if (website && !/^https?:\/\/\S+$/i.test(website)) {
+      toast.error("Sayt manzili http:// yoki https:// bilan boshlanishi kerak.");
+      return;
+    }
+    update.mutate(
+      {
+        userId: user.id,
+        profile: {
+          fullName: form.fullName,
+          phone: form.phone,
+          username,
+          headline: form.headline,
+          location: form.location,
+          experienceYears: years,
+          website,
+          bio: form.bio,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Ma’lumotlar saqlandi");
+          onClose();
+        },
+        onError: fail,
+      },
+    );
+  }
+
+  const field = "h-10 w-full rounded-md border bg-background px-3 text-sm";
+  return (
+    <Dialog open={Boolean(user)} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <form onSubmit={submit} className="space-y-3">
+          <DialogHeader>
+            <DialogTitle>Ma’lumotlarni tahrirlash</DialogTitle>
+            <DialogDescription>{user?.email}</DialogDescription>
+          </DialogHeader>
+          <label className="block space-y-1 text-sm">
+            <span>Ism</span>
+            <input
+              required
+              minLength={2}
+              className={field}
+              value={form.fullName}
+              onChange={set("fullName")}
+            />
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span>Telefon</span>
+            <input className={field} value={form.phone} onChange={set("phone")} />
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span>Telegram username</span>
+            <input
+              className={field}
+              placeholder="@username"
+              value={form.username}
+              onChange={set("username")}
+            />
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span>Lavozim</span>
+            <input
+              className={field}
+              maxLength={80}
+              value={form.headline}
+              onChange={set("headline")}
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block space-y-1 text-sm">
+              <span>Joylashuv</span>
+              <input
+                className={field}
+                maxLength={80}
+                value={form.location}
+                onChange={set("location")}
+              />
+            </label>
+            <label className="block space-y-1 text-sm">
+              <span>Tajriba (yil)</span>
+              <input
+                className={field}
+                type="number"
+                min={0}
+                max={60}
+                value={form.experienceYears}
+                onChange={set("experienceYears")}
+              />
+            </label>
+          </div>
+          <label className="block space-y-1 text-sm">
+            <span>Sayt</span>
+            <input
+              className={field}
+              placeholder="https://"
+              maxLength={200}
+              value={form.website}
+              onChange={set("website")}
+            />
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span>Haqida</span>
+            <textarea
+              className="min-h-24 w-full rounded-md border bg-background p-3 text-sm"
+              maxLength={2000}
+              value={form.bio}
+              onChange={set("bio")}
+            />
+          </label>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Bekor qilish
+            </Button>
+            <Button type="submit" disabled={update.isPending}>
+              {update.isPending ? "Saqlanmoqda…" : "Saqlash"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
