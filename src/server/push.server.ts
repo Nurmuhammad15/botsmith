@@ -47,6 +47,21 @@ function secretMatches(given: string | null, expected: string) {
 
 type Subscription = { endpoint: string; keys: { p256dh: string; auth: string } };
 
+async function removeDeadSubscriptions(endpoints: string[]) {
+  const url = read("SUPABASE_URL") ?? import.meta.env["VITE_SUPABASE_URL"];
+  const serviceKey = read("SUPABASE_SERVICE_ROLE_KEY");
+  if (!url || !serviceKey) return;
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const client = createClient(url, serviceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    await client.from("push_subscriptions").delete().in("endpoint", endpoints);
+  } catch (error) {
+    console.error("Could not remove dead push subscriptions", error);
+  }
+}
+
 export async function handlePush(request: Request) {
   if (request.method !== "POST") return json(405, { error: "method_not_allowed" });
 
@@ -87,5 +102,17 @@ export async function handlePush(request: Request) {
     subscriptions.map((s) => webpush.sendNotification(s, payload, { TTL: 3600 })),
   );
   const sent = results.filter((r) => r.status === "fulfilled").length;
-  return json(200, { sent, failed: results.length - sent });
+
+  // Subscriptions the push service reports as gone (404/410) never work again: remove them.
+  const statuses = results.map((r) =>
+    r.status === "rejected" ? ((r.reason as { statusCode?: number })?.statusCode ?? 0) : 200,
+  );
+  const gone = subscriptions
+    .filter((_, i) => statuses[i] === 404 || statuses[i] === 410)
+    .map((sub) => sub.endpoint);
+  if (gone.length > 0) await removeDeadSubscriptions(gone);
+
+  // Status codes of the failures (no endpoints) so a failed delivery can be diagnosed.
+  const errors = statuses.filter((code) => code !== 200);
+  return json(200, { sent, failed: results.length - sent, removed: gone.length, errors });
 }
