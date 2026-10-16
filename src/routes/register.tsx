@@ -57,15 +57,13 @@ function Register() {
             return;
           }
 
-          // Sellers give their Telegram username so buyers and the team can reach them.
-          let telegram = "";
-          if (role === "seller") {
-            const raw = String(formData.get("telegram") ?? "").trim();
-            telegram = raw.startsWith("@") ? raw : "@" + raw;
-            if (!/^@[A-Za-z0-9_]{5,32}$/.test(telegram)) {
-              setMessage("Telegram username noto‘g‘ri: 5–32 ta harf, raqam yoki _ bo‘lishi kerak.");
-              return;
-            }
+          const rawTelegram = String(formData.get("telegram") ?? "").trim();
+          const telegram = rawTelegram.startsWith("@") ? rawTelegram : "@" + rawTelegram;
+          if (!/^@[A-Za-z0-9_]{5,32}$/.test(telegram)) {
+            setMessage(
+              "Telegram username majburiy va noto‘g‘ri: 5–32 ta harf, raqam yoki _ kiriting.",
+            );
+            return;
           }
 
           setIsSubmitting(true);
@@ -187,20 +185,19 @@ function Register() {
             className={field}
           />
         </label>
-        {role === "seller" && (
-          <label className="mt-4 block text-sm">
-            Telegram username
-            <input
-              name="telegram"
-              type="text"
-              required
-              minLength={5}
-              maxLength={33}
-              placeholder="@username"
-              className={field}
-            />
-          </label>
-        )}
+        <label className="mt-4 block text-sm">
+          Telegram username
+          <input
+            name="telegram"
+            type="text"
+            autoComplete="username"
+            required
+            minLength={5}
+            maxLength={33}
+            placeholder="@username"
+            className={field}
+          />
+        </label>
         <label className="mt-4 block text-sm">
           Email
           <input
