@@ -8,6 +8,7 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
+import { Analytics } from "@vercel/analytics/react";
 import { useEffect, type ReactNode } from "react";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -131,6 +132,7 @@ function RootComponent() {
         <MarketplaceAuthProvider>
           <Outlet />
           <Toaster />
+          <Analytics />
         </MarketplaceAuthProvider>
       </I18nProvider>
     </QueryClientProvider>
