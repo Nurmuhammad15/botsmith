@@ -13,11 +13,7 @@ export const dict2: Entry[] = [
     "Модерация новых ботов, продавцов, заказов и платежей.",
     "Moderate new bots, sellers, orders and payments.",
   ],
-  [
-    "Bot ma'lumotlari — BotHub Admin",
-    "Данные бота — BotHub Admin",
-    "Bot details — BotHub Admin",
-  ],
+  ["Bot ma'lumotlari — BotHub Admin", "Данные бота — BotHub Admin", "Bot details — BotHub Admin"],
   ["Botlar yo'q.", "Ботов нет.", "No bots."],
   ["Buyurtmalar yo'q.", "Заказов нет.", "No orders."],
   ["Foydalanuvchilar yo'q.", "Пользователей нет.", "No users."],
