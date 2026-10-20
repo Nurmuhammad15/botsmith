@@ -14,16 +14,22 @@ export const Route = createFileRoute("/")({
       { property: "og:site_name", content: "BotHub" },
       { property: "og:url", content: "https://bothub.work/" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "BotHub — Telegram botlarni xarid qiling yoki soting" },
+      { title: "BotHub — Telegram bot marketplace | Bot sotib olish va sotish | Botshop" },
       {
         name: "description",
         content:
-          "Tayyor Telegram botlar, ishonchli dasturchilar va xavfsiz to'lov. Payme va Click orqali.",
+          "BotHub — Telegram botlar marketplace (botshop): tayyor botlarni xarid qiling yoki o'z botingizni soting. Покупка и продажа Telegram ботов, Payme va Click orqali xavfsiz to'lov.",
       },
-      { property: "og:title", content: "BotHub — Telegram botlar marketplace" },
+      {
+        name: "keywords",
+        content:
+          "bothub, bot, botshop, bot marketplace, telegram bot, telegram bot sotib olish, bot sotish, buy telegram bot, купить телеграм бота, бот маркетплейс",
+      },
+      { property: "og:title", content: "BotHub — Telegram bot marketplace" },
       {
         property: "og:description",
-        content: "Tayyor Telegram botlarni xarid qiling yoki o'zingizning botingizni soting.",
+        content:
+          "Tayyor Telegram botlarni xarid qiling yoki o'zingizning botingizni soting. Buy & sell Telegram bots.",
       },
     ],
     links: [{ rel: "canonical", href: "https://bothub.work/" }],
@@ -34,7 +40,7 @@ export const Route = createFileRoute("/")({
           "@context": "https://schema.org",
           "@type": "WebSite",
           name: "BotHub",
-          alternateName: ["BotHub.work", "bothub.work"],
+          alternateName: ["BotHub.work", "bothub.work", "BotHub bot marketplace", "Botshop"],
           url: "https://bothub.work/",
           description: "Telegram botlar marketplace: tayyor botlarni xarid qiling yoki soting.",
           inLanguage: ["uz", "ru", "en"],
